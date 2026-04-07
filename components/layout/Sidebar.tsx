@@ -84,19 +84,22 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="flex flex-col w-64 bg-gray-900 min-h-screen">
+    <aside className="flex flex-col w-64 min-h-screen" style={{ background: "linear-gradient(180deg, #1e1b4b 0%, #312e81 40%, #1e293b 100%)" }}>
       {/* Logo */}
-      <div className="flex items-center gap-3 px-6 py-5 border-b border-gray-700">
-        <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0">
-          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div className="flex items-center gap-3 px-6 py-5 border-b border-indigo-700/50">
+        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-400 to-violet-500 flex items-center justify-center flex-shrink-0 shadow-lg">
+          <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
           </svg>
         </div>
-        <span className="text-white font-semibold text-sm">Gestão Interna</span>
+        <div>
+          <span className="text-white font-bold text-sm tracking-wide">Grupo F5</span>
+          <p className="text-indigo-300 text-xs">Gestão Interna</p>
+        </div>
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+      <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
         {navItems.map((item) => {
           const active = pathname === item.href || pathname.startsWith(item.href + "/");
           return (
@@ -104,27 +107,32 @@ export function Sidebar() {
               key={item.href}
               href={item.href}
               className={clsx(
-                "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150",
                 active
-                  ? "bg-blue-600 text-white"
-                  : "text-gray-400 hover:bg-gray-800 hover:text-white"
+                  ? "bg-white/15 text-white shadow-sm border border-white/10"
+                  : "text-indigo-200 hover:bg-white/10 hover:text-white"
               )}
             >
-              {item.icon}
+              <span className={clsx("flex-shrink-0", active ? "text-indigo-300" : "text-indigo-400")}>
+                {item.icon}
+              </span>
               {item.label}
+              {active && (
+                <span className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-300"></span>
+              )}
             </Link>
           );
         })}
       </nav>
 
       {/* Footer */}
-      <div className="px-3 py-4 border-t border-gray-700">
+      <div className="px-3 py-4 border-t border-indigo-700/50">
         <form action={logoutAction}>
           <button
             type="submit"
-            className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium text-gray-400 hover:bg-gray-800 hover:text-white transition-colors"
+            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-indigo-300 hover:bg-white/10 hover:text-white transition-all duration-150"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
             </svg>
             Sair
