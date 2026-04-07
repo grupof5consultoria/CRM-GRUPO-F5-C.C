@@ -273,6 +273,7 @@ model Client {
   status       ClientStatus  @default(active)
   health       ClientHealth  @default(stable)
   healthNote   String?
+  monthlyValue Decimal?      @db.Decimal(10, 2)
   ownerId      String
   owner        User          @relation("ClientOwner", fields: [ownerId], references: [id])
   notes        String?

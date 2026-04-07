@@ -176,6 +176,14 @@ export default async function ClientDetailPage({ params }: PageProps) {
               <CardHeader><CardTitle>Informações</CardTitle></CardHeader>
               <CardContent className="space-y-3 text-sm">
                 <div><p className="text-gray-500">Responsável</p><p className="font-medium">{client.owner.name}</p></div>
+                {client.monthlyValue != null && (
+                  <div className="bg-emerald-50 dark:bg-emerald-950 rounded-xl px-3 py-2.5">
+                    <p className="text-emerald-600 dark:text-emerald-400 text-xs font-medium">Valor Mensal</p>
+                    <p className="text-emerald-700 dark:text-emerald-300 text-xl font-bold">
+                      R$ {Number(client.monthlyValue).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                    </p>
+                  </div>
+                )}
                 {client.document && <div><p className="text-gray-500">CPF / CNPJ</p><p className="font-medium">{client.document}</p></div>}
                 {client.email && <div><p className="text-gray-500">Email</p><p className="font-medium">{client.email}</p></div>}
                 {client.phone && <div><p className="text-gray-500">Telefone</p><p className="font-medium">{client.phone}</p></div>}

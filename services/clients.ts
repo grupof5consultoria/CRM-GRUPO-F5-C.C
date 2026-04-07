@@ -67,6 +67,7 @@ export async function createClient(data: {
   phone?: string;
   document?: string;
   notes?: string;
+  monthlyValue?: number;
   ownerId: string;
 }) {
   return prisma.client.create({
@@ -76,6 +77,7 @@ export async function createClient(data: {
       phone: data.phone || null,
       document: data.document || null,
       notes: data.notes || null,
+      monthlyValue: data.monthlyValue ?? null,
       ownerId: data.ownerId,
     },
   });
@@ -91,9 +93,18 @@ export async function updateClient(
     notes?: string;
     status?: ClientStatus;
     ownerId?: string;
+    monthlyValue?: number | null;
   }
 ) {
   return prisma.client.update({ where: { id }, data });
+}
+
+export async function getTotalMRR() {
+  const result = await prisma.client.aggregate({
+    where: { status: "active", monthlyValue: { not: null } },
+    _sum: { monthlyValue: true },
+  });
+  return Number(result._sum.monthlyValue ?? 0);
 }
 
 export async function addClientContact(data: {

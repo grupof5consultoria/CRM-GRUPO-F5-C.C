@@ -25,6 +25,7 @@ export function NewClientForm({ users }: { users: User[] }) {
         <Input label="Email" name="email" type="email" placeholder="email@empresa.com" />
         <Input label="Telefone" name="phone" placeholder="(11) 99999-9999" />
         <Input label="CPF / CNPJ" name="document" placeholder="00.000.000/0001-00" />
+        <Input label="Valor Mensal (R$)" name="monthlyValue" type="number" step="0.01" placeholder="0,00" />
         <Select label="Responsável" name="ownerId" options={userOptions} placeholder="Selecione..." />
       </div>
       <Textarea label="Observações" name="notes" placeholder="Contexto, histórico, informações importantes..." />

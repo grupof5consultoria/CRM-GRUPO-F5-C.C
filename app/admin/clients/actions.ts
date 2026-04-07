@@ -12,12 +12,14 @@ export async function createClientAction(_prev: { error?: string }, formData: Fo
   const name = formData.get("name") as string;
   if (!name?.trim()) return { error: "Nome obrigatório" };
 
+  const monthlyValueRaw = formData.get("monthlyValue") as string;
   const client = await createClient({
     name,
     email: (formData.get("email") as string) || undefined,
     phone: (formData.get("phone") as string) || undefined,
     document: (formData.get("document") as string) || undefined,
     notes: (formData.get("notes") as string) || undefined,
+    monthlyValue: monthlyValueRaw ? parseFloat(monthlyValueRaw.replace(",", ".")) : undefined,
     ownerId: (formData.get("ownerId") as string) || session.userId,
   });
 
@@ -31,6 +33,7 @@ export async function updateClientAction(_prev: { error?: string }, formData: Fo
   const name = formData.get("name") as string;
   if (!name?.trim()) return { error: "Nome obrigatório" };
 
+  const monthlyValueRaw = formData.get("monthlyValue") as string;
   await updateClient(id, {
     name,
     email: (formData.get("email") as string) || undefined,
@@ -39,6 +42,7 @@ export async function updateClientAction(_prev: { error?: string }, formData: Fo
     notes: (formData.get("notes") as string) || undefined,
     status: (formData.get("status") as ClientStatus) || undefined,
     ownerId: (formData.get("ownerId") as string) || undefined,
+    monthlyValue: monthlyValueRaw ? parseFloat(monthlyValueRaw.replace(",", ".")) : null,
   });
 
   revalidatePath(`/admin/clients/${id}`);

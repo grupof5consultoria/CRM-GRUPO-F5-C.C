@@ -7,7 +7,7 @@ import { Select } from "@/components/ui/Select";
 import { Textarea } from "@/components/ui/Textarea";
 import { Button } from "@/components/ui/Button";
 
-interface Client { id: string; name: string; email: string | null; phone: string | null; document: string | null; notes: string | null; status: string; ownerId: string; }
+interface Client { id: string; name: string; email: string | null; phone: string | null; document: string | null; notes: string | null; status: string; ownerId: string; monthlyValue?: { toString(): string } | number | null; }
 interface User { id: string; name: string; }
 const initialState = { error: undefined as string | undefined };
 
@@ -30,6 +30,7 @@ export function EditClientForm({ client, users }: { client: Client; users: User[
         <Input label="Email" name="email" type="email" defaultValue={client.email ?? ""} />
         <Input label="Telefone" name="phone" defaultValue={client.phone ?? ""} />
         <Input label="CPF / CNPJ" name="document" defaultValue={client.document ?? ""} />
+        <Input label="Valor Mensal (R$)" name="monthlyValue" type="number" step="0.01" placeholder="0,00" defaultValue={client.monthlyValue != null ? Number(client.monthlyValue).toFixed(2) : ""} />
         <Select label="Status" name="status" options={STATUS_OPTIONS} defaultValue={client.status} />
         <Select label="Responsável" name="ownerId" options={userOptions} defaultValue={client.ownerId} />
       </div>
