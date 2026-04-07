@@ -15,6 +15,11 @@ const PIPELINE: LeadStatus[] = [
   "negotiation",
   "closed_won",
   "closed_lost",
+  "onboarding",
+  "active_client",
+  "upsell_opportunity",
+  "at_risk_churn",
+  "churned",
 ];
 
 export function UpdateStatusForm({

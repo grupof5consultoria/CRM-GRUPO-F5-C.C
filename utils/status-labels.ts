@@ -1,13 +1,18 @@
 import type { LeadStatus, ProposalStatus, ContractStatus, ClientStatus, ClientHealth, TaskStatus, ChargeStatus } from "@prisma/client";
 
 export const LEAD_STATUS_LABELS: Record<LeadStatus, string> = {
-  new: "Novo",
-  contacted: "Contatado",
+  new: "Novo Lead",
+  contacted: "Em Contato",
   qualified: "Qualificado",
   proposal_sent: "Proposta Enviada",
   negotiation: "Em Negociação",
   closed_won: "Fechado (Ganho)",
   closed_lost: "Fechado (Perdido)",
+  onboarding: "Onboarding",
+  active_client: "Cliente Ativo",
+  upsell_opportunity: "Oportunidade Upsell",
+  at_risk_churn: "Risco de Churn",
+  churned: "Churn",
 };
 
 export const LEAD_STATUS_VARIANTS: Record<LeadStatus, "default" | "success" | "warning" | "danger" | "info" | "gray"> = {
@@ -18,6 +23,11 @@ export const LEAD_STATUS_VARIANTS: Record<LeadStatus, "default" | "success" | "w
   negotiation: "info",
   closed_won: "success",
   closed_lost: "danger",
+  onboarding: "info",
+  active_client: "success",
+  upsell_opportunity: "success",
+  at_risk_churn: "danger",
+  churned: "gray",
 };
 
 export const PROPOSAL_STATUS_LABELS: Record<ProposalStatus, string> = {
