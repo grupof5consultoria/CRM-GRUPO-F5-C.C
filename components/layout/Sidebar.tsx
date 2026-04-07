@@ -87,9 +87,27 @@ export function Sidebar() {
     <aside className="flex flex-col w-64 min-h-screen" style={{ background: "linear-gradient(180deg, #1e1b4b 0%, #312e81 40%, #1e293b 100%)" }}>
       {/* Logo */}
       <div className="flex items-center gap-3 px-6 py-5 border-b border-indigo-700/50">
-        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-400 to-violet-500 flex items-center justify-center flex-shrink-0 shadow-lg">
-          <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-400 via-violet-500 to-purple-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-violet-900/40">
+          <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            {/* Raio duplo estilizado */}
+            <path
+              d="M14 2L5 13.5H11.5L10 22L19 10.5H12.5L14 2Z"
+              fill="white"
+              fillOpacity="0.95"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M14 2L5 13.5H11.5L10 22L19 10.5H12.5L14 2Z"
+              stroke="rgba(255,255,255,0.3)"
+              strokeWidth="0.5"
+              strokeLinejoin="round"
+            />
+            {/* Brilho interno */}
+            <path
+              d="M13 5L7.5 13H12L11 19L17 11H13L13 5Z"
+              fill="rgba(255,255,255,0.25)"
+              strokeLinejoin="round"
+            />
           </svg>
         </div>
         <div>
