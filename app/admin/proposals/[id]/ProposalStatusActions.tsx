@@ -4,7 +4,7 @@ import { useState } from "react";
 import { changeProposalStatusAction } from "../actions";
 import { Button } from "@/components/ui/Button";
 import { ProposalStatus } from "@prisma/client";
-import { PROPOSAL_STATUS_LABELS } from "@/services/proposals";
+import { PROPOSAL_STATUS_LABELS } from "@/utils/status-labels";
 
 export function ProposalStatusActions({
   proposalId,

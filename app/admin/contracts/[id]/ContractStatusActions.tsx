@@ -4,7 +4,7 @@ import { useState } from "react";
 import { updateContractStatusAction } from "../actions";
 import { Button } from "@/components/ui/Button";
 import { ContractStatus } from "@prisma/client";
-import { CONTRACT_STATUS_LABELS } from "@/services/contracts";
+import { CONTRACT_STATUS_LABELS } from "@/utils/status-labels";
 
 const TRANSITIONS: Record<ContractStatus, { status: ContractStatus; label: string; variant: "primary" | "secondary" | "danger" | "ghost" }[]> = {
   draft: [

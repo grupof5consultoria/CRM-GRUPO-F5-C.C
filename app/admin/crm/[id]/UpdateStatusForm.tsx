@@ -4,7 +4,7 @@ import { useState } from "react";
 import { updateLeadStatusAction } from "../actions";
 import { Button } from "@/components/ui/Button";
 import { LeadStatus } from "@prisma/client";
-import { LEAD_STATUS_LABELS, LEAD_STATUS_VARIANTS } from "@/services/leads";
+import { LEAD_STATUS_LABELS, LEAD_STATUS_VARIANTS } from "@/utils/status-labels";
 import { Badge } from "@/components/ui/Badge";
 
 const PIPELINE: LeadStatus[] = [

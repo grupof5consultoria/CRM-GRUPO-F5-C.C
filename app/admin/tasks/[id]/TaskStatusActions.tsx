@@ -4,7 +4,7 @@ import { useState } from "react";
 import { updateTaskStatusAction } from "../actions";
 import { Button } from "@/components/ui/Button";
 import { TaskStatus } from "@prisma/client";
-import { TASK_STATUS_LABELS, TASK_STATUS_VARIANTS } from "@/services/tasks";
+import { TASK_STATUS_LABELS, TASK_STATUS_VARIANTS } from "@/utils/status-labels";
 import { Badge } from "@/components/ui/Badge";
 
 const PIPELINE: TaskStatus[] = ["pending", "in_progress", "waiting_client", "done", "cancelled"];

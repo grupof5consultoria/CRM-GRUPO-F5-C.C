@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifySession } from "./lib/auth";
+import { verifySession } from "./lib/auth-edge";
 
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
