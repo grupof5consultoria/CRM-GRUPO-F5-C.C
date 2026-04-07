@@ -1,0 +1,414 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  owner
+  admin
+  operations_manager
+  sales
+  finance
+  operations
+  client_admin
+  client_team
+  client_viewer
+}
+
+enum LeadStatus {
+  new
+  contacted
+  qualified
+  proposal_sent
+  negotiation
+  closed_won
+  closed_lost
+}
+
+enum ProposalStatus {
+  draft
+  sent
+  accepted
+  rejected
+  expired
+}
+
+enum ContractStatus {
+  draft
+  pending_signature
+  active
+  paused
+  cancelled
+  finished
+}
+
+enum ClientStatus {
+  active
+  inactive
+  blocked
+}
+
+enum TaskStatus {
+  pending
+  in_progress
+  waiting_client
+  done
+  cancelled
+}
+
+enum ChargeStatus {
+  pending
+  paid
+  overdue
+  cancelled
+  refunded
+}
+
+enum ChargeType {
+  one_time
+  recurring
+  hourly
+}
+
+// ─── Usuários ─────────────────────────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         UserRole
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  assignedLeads    Lead[]         @relation("LeadOwner")
+  assignedClients  Client[]       @relation("ClientOwner")
+  assignedTasks    Task[]         @relation("TaskOwner")
+  createdProposals Proposal[]     @relation("ProposalCreator")
+  createdContracts Contract[]     @relation("ContractCreator")
+  leadActivities   LeadActivity[]
+  clientUser       ClientUser?
+  auditLogs        AuditLog[]
+
+  @@map("users")
+}
+
+// ─── CRM / Leads ──────────────────────────────────────────────────────────────
+
+model Lead {
+  id           String     @id @default(cuid())
+  name         String
+  email        String?
+  phone        String?
+  company      String?
+  status       LeadStatus @default(new)
+  lostReason   String?
+  nextFollowUp DateTime?
+  notes        String?
+  ownerId      String
+  owner        User       @relation("LeadOwner", fields: [ownerId], references: [id])
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  activities LeadActivity[]
+  proposals  Proposal[]
+
+  @@map("leads")
+}
+
+model LeadActivity {
+  id          String   @id @default(cuid())
+  leadId      String
+  lead        Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  type        String
+  description String
+  createdAt   DateTime @default(now())
+
+  @@map("lead_activities")
+}
+
+// ─── Catálogo de Serviços ─────────────────────────────────────────────────────
+
+model ServiceCategory {
+  id        String    @id @default(cuid())
+  name      String
+  createdAt DateTime  @default(now())
+  services  Service[]
+
+  @@map("service_categories")
+}
+
+model Service {
+  id           String          @id @default(cuid())
+  name         String
+  description  String?
+  categoryId   String
+  category     ServiceCategory @relation(fields: [categoryId], references: [id])
+  defaultHours Decimal?        @db.Decimal(10, 2)
+  defaultValue Decimal         @db.Decimal(10, 2)
+  chargeType   ChargeType      @default(one_time)
+  isActive     Boolean         @default(true)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  proposalItems ProposalItem[]
+
+  @@map("service_catalog")
+}
+
+// ─── Propostas ────────────────────────────────────────────────────────────────
+
+model Proposal {
+  id         String         @id @default(cuid())
+  token      String         @unique @default(cuid())
+  title      String
+  status     ProposalStatus @default(draft)
+  leadId     String?
+  lead       Lead?          @relation(fields: [leadId], references: [id])
+  clientId   String?
+  client     Client?        @relation(fields: [clientId], references: [id])
+  creatorId  String
+  creator    User           @relation("ProposalCreator", fields: [creatorId], references: [id])
+  totalValue Decimal        @default(0) @db.Decimal(10, 2)
+  validUntil DateTime?
+  notes      String?
+  acceptedAt DateTime?
+  acceptedBy String?
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  items    ProposalItem[]
+  events   ProposalEvent[]
+  contract Contract?
+
+  @@map("proposals")
+}
+
+model ProposalItem {
+  id          String   @id @default(cuid())
+  proposalId  String
+  proposal    Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  serviceId   String?
+  service     Service? @relation(fields: [serviceId], references: [id])
+  description String
+  quantity    Decimal  @db.Decimal(10, 2)
+  unitValue   Decimal  @db.Decimal(10, 2)
+  totalValue  Decimal  @db.Decimal(10, 2)
+  createdAt   DateTime @default(now())
+
+  @@map("proposal_items")
+}
+
+model ProposalEvent {
+  id          String   @id @default(cuid())
+  proposalId  String
+  proposal    Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  type        String
+  description String?
+  createdAt   DateTime @default(now())
+
+  @@map("proposal_events")
+}
+
+// ─── Contratos ────────────────────────────────────────────────────────────────
+
+model Contract {
+  id         String         @id @default(cuid())
+  title      String
+  status     ContractStatus @default(draft)
+  proposalId String?        @unique
+  proposal   Proposal?      @relation(fields: [proposalId], references: [id])
+  clientId   String
+  client     Client         @relation(fields: [clientId], references: [id])
+  creatorId  String
+  creator    User           @relation("ContractCreator", fields: [creatorId], references: [id])
+  startDate  DateTime?
+  endDate    DateTime?
+  value      Decimal?       @db.Decimal(10, 2)
+  notes      String?
+  signedAt   DateTime?
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  events  ContractEvent[]
+  charges Charge[]
+
+  @@map("contracts")
+}
+
+model ContractEvent {
+  id          String   @id @default(cuid())
+  contractId  String
+  contract    Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  type        String
+  description String?
+  createdAt   DateTime @default(now())
+
+  @@map("contract_events")
+}
+
+// ─── Clientes ─────────────────────────────────────────────────────────────────
+
+model Client {
+  id        String       @id @default(cuid())
+  name      String
+  email     String?
+  phone     String?
+  document  String?
+  status    ClientStatus @default(active)
+  ownerId   String
+  owner     User         @relation("ClientOwner", fields: [ownerId], references: [id])
+  notes     String?
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  contacts    ClientContact[]
+  clientUsers ClientUser[]
+  proposals   Proposal[]
+  contracts   Contract[]
+  tasks       Task[]
+  charges     Charge[]
+
+  @@map("clients")
+}
+
+model ClientContact {
+  id        String   @id @default(cuid())
+  clientId  String
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  name      String
+  email     String?
+  phone     String?
+  role      String?
+  isPrimary Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@map("client_contacts")
+}
+
+model ClientUser {
+  id        String   @id @default(cuid())
+  clientId  String
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@map("client_users")
+}
+
+// ─── Tarefas ──────────────────────────────────────────────────────────────────
+
+model Task {
+  id              String     @id @default(cuid())
+  title           String
+  description     String?
+  status          TaskStatus @default(pending)
+  clientId        String?
+  client          Client?    @relation(fields: [clientId], references: [id])
+  assigneeId      String
+  assignee        User       @relation("TaskOwner", fields: [assigneeId], references: [id])
+  dueDate         DateTime?
+  isClientVisible Boolean    @default(false)
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  checklistItems TaskChecklistItem[]
+  comments       TaskComment[]
+  events         TaskEvent[]
+
+  @@map("tasks")
+}
+
+model TaskChecklistItem {
+  id        String   @id @default(cuid())
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  text      String
+  isDone    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@map("task_checklist_items")
+}
+
+model TaskComment {
+  id        String   @id @default(cuid())
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  authorId  String
+  content   String
+  createdAt DateTime @default(now())
+
+  @@map("task_comments")
+}
+
+model TaskEvent {
+  id          String   @id @default(cuid())
+  taskId      String
+  task        Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  type        String
+  description String?
+  createdAt   DateTime @default(now())
+
+  @@map("task_events")
+}
+
+// ─── Financeiro ───────────────────────────────────────────────────────────────
+
+model Charge {
+  id              String       @id @default(cuid())
+  clientId        String
+  client          Client       @relation(fields: [clientId], references: [id])
+  contractId      String?
+  contract        Contract?    @relation(fields: [contractId], references: [id])
+  description     String
+  value           Decimal      @db.Decimal(10, 2)
+  status          ChargeStatus @default(pending)
+  dueDate         DateTime
+  paidAt          DateTime?
+  externalId      String?
+  paymentLink     String?
+  gatewayResponse Json?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  events ChargeEvent[]
+
+  @@map("charges")
+}
+
+model ChargeEvent {
+  id          String   @id @default(cuid())
+  chargeId    String
+  charge      Charge   @relation(fields: [chargeId], references: [id], onDelete: Cascade)
+  type        String
+  description String?
+  createdAt   DateTime @default(now())
+
+  @@map("charge_events")
+}
+
+// ─── Auditoria ────────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  action    String
+  entity    String
+  entityId  String?
+  before    Json?
+  after     Json?
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  @@map("audit_logs")
+}

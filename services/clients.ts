@@ -1,0 +1,120 @@
+import { prisma } from "@/lib/prisma";
+import { ClientStatus } from "@prisma/client";
+
+export async function getClients(filters?: { status?: ClientStatus; search?: string }) {
+  return prisma.client.findMany({
+    where: {
+      ...(filters?.status ? { status: filters.status } : {}),
+      ...(filters?.search
+        ? {
+            OR: [
+              { name: { contains: filters.search, mode: "insensitive" } },
+              { email: { contains: filters.search, mode: "insensitive" } },
+            ],
+          }
+        : {}),
+    },
+    include: {
+      owner: { select: { id: true, name: true } },
+      _count: { select: { contracts: true, charges: true, tasks: true } },
+    },
+    orderBy: { name: "asc" },
+  });
+}
+
+export async function getClientById(id: string) {
+  return prisma.client.findUnique({
+    where: { id },
+    include: {
+      owner: { select: { id: true, name: true } },
+      contacts: { orderBy: { isPrimary: "desc" } },
+      contracts: {
+        select: { id: true, title: true, status: true, value: true, startDate: true },
+        orderBy: { createdAt: "desc" },
+      },
+      charges: {
+        select: { id: true, description: true, value: true, status: true, dueDate: true },
+        orderBy: { dueDate: "desc" },
+        take: 5,
+      },
+      tasks: {
+        select: { id: true, title: true, status: true, dueDate: true },
+        orderBy: { createdAt: "desc" },
+        take: 5,
+      },
+    },
+  });
+}
+
+export async function createClient(data: {
+  name: string;
+  email?: string;
+  phone?: string;
+  document?: string;
+  notes?: string;
+  ownerId: string;
+}) {
+  return prisma.client.create({
+    data: {
+      name: data.name,
+      email: data.email || null,
+      phone: data.phone || null,
+      document: data.document || null,
+      notes: data.notes || null,
+      ownerId: data.ownerId,
+    },
+  });
+}
+
+export async function updateClient(
+  id: string,
+  data: {
+    name?: string;
+    email?: string;
+    phone?: string;
+    document?: string;
+    notes?: string;
+    status?: ClientStatus;
+    ownerId?: string;
+  }
+) {
+  return prisma.client.update({ where: { id }, data });
+}
+
+export async function addClientContact(data: {
+  clientId: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  role?: string;
+  isPrimary?: boolean;
+}) {
+  return prisma.clientContact.create({ data });
+}
+
+export async function deleteClientContact(id: string) {
+  return prisma.clientContact.delete({ where: { id } });
+}
+
+export async function getInternalUsersForSelect() {
+  return prisma.user.findMany({
+    where: {
+      isActive: true,
+      role: { in: ["owner", "admin", "operations_manager", "sales", "finance", "operations"] },
+    },
+    select: { id: true, name: true },
+    orderBy: { name: "asc" },
+  });
+}
+
+export const CLIENT_STATUS_LABELS: Record<ClientStatus, string> = {
+  active: "Ativo",
+  inactive: "Inativo",
+  blocked: "Bloqueado",
+};
+
+export const CLIENT_STATUS_VARIANTS: Record<ClientStatus, "success" | "gray" | "danger"> = {
+  active: "success",
+  inactive: "gray",
+  blocked: "danger",
+};
