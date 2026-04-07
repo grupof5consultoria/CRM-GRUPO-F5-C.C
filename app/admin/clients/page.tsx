@@ -4,31 +4,73 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Table, TableHead, TableBody, TableRow, TableTh, TableTd, EmptyRow } from "@/components/ui/Table";
 import { getClients, CLIENT_STATUS_LABELS, CLIENT_STATUS_VARIANTS } from "@/services/clients";
+import { CLIENT_HEALTH_LABELS, CLIENT_HEALTH_VARIANTS, CLIENT_HEALTH_COLORS } from "@/utils/status-labels";
+import { ClientHealth } from "@prisma/client";
 
 export const metadata = { title: "Clientes | Gestão Interna" };
 
+const HEALTH_EMOJI: Record<ClientHealth, string> = {
+  thriving: "🟢",
+  stable: "🔵",
+  attention: "🟡",
+  at_risk: "🔴",
+};
+
 interface PageProps {
-  searchParams: Promise<{ search?: string; status?: string }>;
+  searchParams: Promise<{ search?: string; status?: string; health?: string }>;
 }
 
 export default async function ClientsPage({ searchParams }: PageProps) {
   const params = await searchParams;
-  const clients = await getClients({ search: params.search, status: params.status as "active" | "inactive" | "blocked" | undefined });
+  const clients = await getClients({
+    search: params.search,
+    status: params.status as "active" | "inactive" | "blocked" | undefined,
+    health: params.health as ClientHealth | undefined,
+  });
+
+  const atRisk = clients.filter(c => c.health === "at_risk").length;
+  const attention = clients.filter(c => c.health === "attention").length;
 
   return (
     <>
       <Topbar title="Clientes" />
       <main className="flex-1 p-6">
+
+        {/* Cards de alerta rápido */}
+        {(atRisk > 0 || attention > 0) && (
+          <div className="flex gap-3 mb-5">
+            {atRisk > 0 && (
+              <div className="flex items-center gap-2 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-xl px-4 py-2.5 text-sm">
+                <span>🔴</span>
+                <span className="font-semibold text-red-700 dark:text-red-400">{atRisk} cliente{atRisk > 1 ? "s" : ""} em risco</span>
+              </div>
+            )}
+            {attention > 0 && (
+              <div className="flex items-center gap-2 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-xl px-4 py-2.5 text-sm">
+                <span>🟡</span>
+                <span className="font-semibold text-amber-700 dark:text-amber-400">{attention} requere{attention > 1 ? "m" : ""} atenção</span>
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="flex flex-col sm:flex-row gap-3 mb-6">
-          <form className="flex gap-2 flex-1">
+          <form className="flex gap-2 flex-1 flex-wrap">
             <input
               name="search"
               defaultValue={params.search}
               placeholder="Buscar por nome ou email..."
-              className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 min-w-40 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
-            <select name="status" defaultValue={params.status ?? ""} className="rounded-lg border border-gray-300 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option value="">Todos</option>
+            <select name="health" defaultValue={params.health ?? ""} className="rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <option value="">Toda saúde</option>
+              <option value="thriving">🟢 Ativo e Engajado</option>
+              <option value="stable">🔵 Estável</option>
+              <option value="attention">🟡 Requer Atenção</option>
+              <option value="at_risk">🔴 Em Risco</option>
+            </select>
+            <select name="status" defaultValue={params.status ?? ""} className="rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <option value="">Todo status</option>
               <option value="active">Ativos</option>
               <option value="inactive">Inativos</option>
               <option value="blocked">Bloqueados</option>
@@ -43,6 +85,7 @@ export default async function ClientsPage({ searchParams }: PageProps) {
         <Table>
           <TableHead>
             <TableRow>
+              <TableTh>Saúde</TableTh>
               <TableTh>Nome</TableTh>
               <TableTh>Contato</TableTh>
               <TableTh>Status</TableTh>
@@ -54,12 +97,20 @@ export default async function ClientsPage({ searchParams }: PageProps) {
           </TableHead>
           <TableBody>
             {clients.length === 0 ? (
-              <EmptyRow cols={7} message="Nenhum cliente encontrado." />
+              <EmptyRow cols={8} message="Nenhum cliente encontrado." />
             ) : (
               clients.map((c) => (
                 <TableRow key={c.id}>
                   <TableTd>
-                    <span className="font-medium text-gray-900">{c.name}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">{HEALTH_EMOJI[c.health]}</span>
+                      <span className={`text-xs font-semibold ${CLIENT_HEALTH_COLORS[c.health]}`}>
+                        {CLIENT_HEALTH_LABELS[c.health]}
+                      </span>
+                    </div>
+                  </TableTd>
+                  <TableTd>
+                    <span className="font-medium text-gray-900 dark:text-gray-100">{c.name}</span>
                     {c.document && <p className="text-xs text-gray-400">{c.document}</p>}
                   </TableTd>
                   <TableTd>
@@ -77,7 +128,7 @@ export default async function ClientsPage({ searchParams }: PageProps) {
                   <TableTd>{c._count.contracts}</TableTd>
                   <TableTd>{c._count.tasks}</TableTd>
                   <TableTd>
-                    <Link href={`/admin/clients/${c.id}`} className="text-blue-600 hover:underline text-xs font-medium">
+                    <Link href={`/admin/clients/${c.id}`} className="text-indigo-600 hover:underline text-xs font-medium">
                       Ver ficha
                     </Link>
                   </TableTd>

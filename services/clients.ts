@@ -1,10 +1,11 @@
 import { prisma } from "@/lib/prisma";
-import { ClientStatus } from "@prisma/client";
+import { ClientStatus, ClientHealth } from "@prisma/client";
 
-export async function getClients(filters?: { status?: ClientStatus; search?: string }) {
+export async function getClients(filters?: { status?: ClientStatus; search?: string; health?: ClientHealth }) {
   return prisma.client.findMany({
     where: {
       ...(filters?.status ? { status: filters.status } : {}),
+      ...(filters?.health ? { health: filters.health } : {}),
       ...(filters?.search
         ? {
             OR: [
@@ -22,12 +23,26 @@ export async function getClients(filters?: { status?: ClientStatus; search?: str
   });
 }
 
+export async function updateClientHealth(clientId: string, health: ClientHealth, note?: string) {
+  await prisma.client.update({ where: { id: clientId }, data: { health, healthNote: note || null } });
+  await prisma.clientHealthLog.create({ data: { clientId, health, note: note || null } });
+}
+
+export async function getClientHealthLogs(clientId: string) {
+  return prisma.clientHealthLog.findMany({
+    where: { clientId },
+    orderBy: { createdAt: "desc" },
+    take: 10,
+  });
+}
+
 export async function getClientById(id: string) {
   return prisma.client.findUnique({
     where: { id },
     include: {
       owner: { select: { id: true, name: true } },
       contacts: { orderBy: { isPrimary: "desc" } },
+      healthLogs: { orderBy: { createdAt: "desc" }, take: 8 },
       contracts: {
         select: { id: true, title: true, status: true, value: true, startDate: true },
         orderBy: { createdAt: "desc" },

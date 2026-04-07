@@ -53,6 +53,13 @@ enum ClientStatus {
   blocked
 }
 
+enum ClientHealth {
+  thriving
+  stable
+  attention
+  at_risk
+}
+
 enum TaskStatus {
   pending
   in_progress
@@ -258,26 +265,40 @@ model ContractEvent {
 // ─── Clientes ─────────────────────────────────────────────────────────────────
 
 model Client {
-  id        String       @id @default(cuid())
-  name      String
-  email     String?
-  phone     String?
-  document  String?
-  status    ClientStatus @default(active)
-  ownerId   String
-  owner     User         @relation("ClientOwner", fields: [ownerId], references: [id])
-  notes     String?
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
+  id           String        @id @default(cuid())
+  name         String
+  email        String?
+  phone        String?
+  document     String?
+  status       ClientStatus  @default(active)
+  health       ClientHealth  @default(stable)
+  healthNote   String?
+  ownerId      String
+  owner        User          @relation("ClientOwner", fields: [ownerId], references: [id])
+  notes        String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
 
-  contacts    ClientContact[]
-  clientUsers ClientUser[]
-  proposals   Proposal[]
-  contracts   Contract[]
-  tasks       Task[]
-  charges     Charge[]
+  contacts     ClientContact[]
+  clientUsers  ClientUser[]
+  proposals    Proposal[]
+  contracts    Contract[]
+  tasks        Task[]
+  charges      Charge[]
+  healthLogs   ClientHealthLog[]
 
   @@map("clients")
+}
+
+model ClientHealthLog {
+  id        String       @id @default(cuid())
+  clientId  String
+  client    Client       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  health    ClientHealth
+  note      String?
+  createdAt DateTime     @default(now())
+
+  @@map("client_health_logs")
 }
 
 model ClientContact {

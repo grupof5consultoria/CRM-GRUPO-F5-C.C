@@ -3,8 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireInternalAuth } from "@/lib/auth";
-import { createClient, updateClient, addClientContact, deleteClientContact } from "@/services/clients";
-import { ClientStatus } from "@prisma/client";
+import { createClient, updateClient, addClientContact, deleteClientContact, updateClientHealth } from "@/services/clients";
+import { ClientStatus, ClientHealth } from "@prisma/client";
 
 export async function createClientAction(_prev: { error?: string }, formData: FormData) {
   const session = await requireInternalAuth();
@@ -69,4 +69,11 @@ export async function deleteContactAction(contactId: string, clientId: string) {
   await requireInternalAuth();
   await deleteClientContact(contactId);
   revalidatePath(`/admin/clients/${clientId}`);
+}
+
+export async function updateClientHealthAction(clientId: string, health: ClientHealth, note?: string) {
+  await requireInternalAuth();
+  await updateClientHealth(clientId, health, note);
+  revalidatePath(`/admin/clients/${clientId}`);
+  revalidatePath("/admin/clients");
 }

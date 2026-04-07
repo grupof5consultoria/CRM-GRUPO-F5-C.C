@@ -7,9 +7,11 @@ import { getClientById, getInternalUsersForSelect, CLIENT_STATUS_LABELS, CLIENT_
 import { CONTRACT_STATUS_LABELS, CONTRACT_STATUS_VARIANTS } from "@/services/contracts";
 import { CHARGE_STATUS_LABELS, CHARGE_STATUS_VARIANTS } from "@/services/billing";
 import { TASK_STATUS_LABELS, TASK_STATUS_VARIANTS } from "@/services/tasks";
+import { CLIENT_HEALTH_LABELS, CLIENT_HEALTH_VARIANTS, CLIENT_HEALTH_COLORS } from "@/utils/status-labels";
 import { EditClientForm } from "./EditClientForm";
 import { AddContactForm } from "./AddContactForm";
 import { DeleteContactButton } from "./DeleteContactButton";
+import { UpdateHealthForm } from "./UpdateHealthForm";
 
 interface PageProps { params: Promise<{ id: string }> }
 
@@ -131,7 +133,45 @@ export default async function ClientDetailPage({ params }: PageProps) {
           </div>
 
           {/* Sidebar */}
-          <div>
+          <div className="space-y-6">
+            {/* Saúde do Cliente */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle>Saúde do Cliente</CardTitle>
+                  <Badge variant={CLIENT_HEALTH_VARIANTS[client.health]}>
+                    {CLIENT_HEALTH_LABELS[client.health]}
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {client.healthNote && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2">
+                    {client.healthNote}
+                  </p>
+                )}
+                <UpdateHealthForm clientId={client.id} currentHealth={client.health} />
+
+                {client.healthLogs.length > 0 && (
+                  <div className="border-t dark:border-gray-700 pt-3 mt-3">
+                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">Histórico</p>
+                    <div className="space-y-1.5">
+                      {client.healthLogs.map((log) => (
+                        <div key={log.id} className="flex items-start gap-2 text-xs">
+                          <span className={`mt-0.5 font-bold ${CLIENT_HEALTH_COLORS[log.health]}`}>●</span>
+                          <div>
+                            <span className="font-medium text-gray-700 dark:text-gray-300">{CLIENT_HEALTH_LABELS[log.health]}</span>
+                            {log.note && <span className="text-gray-400"> — {log.note}</span>}
+                            <p className="text-gray-400">{new Date(log.createdAt).toLocaleDateString("pt-BR")}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
             <Card>
               <CardHeader><CardTitle>Informações</CardTitle></CardHeader>
               <CardContent className="space-y-3 text-sm">
@@ -140,7 +180,7 @@ export default async function ClientDetailPage({ params }: PageProps) {
                 {client.email && <div><p className="text-gray-500">Email</p><p className="font-medium">{client.email}</p></div>}
                 {client.phone && <div><p className="text-gray-500">Telefone</p><p className="font-medium">{client.phone}</p></div>}
                 <div><p className="text-gray-500">Cliente desde</p><p className="font-medium">{new Date(client.createdAt).toLocaleDateString("pt-BR")}</p></div>
-                {client.notes && <div><p className="text-gray-500">Observações</p><p className="text-gray-700">{client.notes}</p></div>}
+                {client.notes && <div><p className="text-gray-500">Observações</p><p className="text-gray-700 dark:text-gray-300">{client.notes}</p></div>}
               </CardContent>
             </Card>
           </div>

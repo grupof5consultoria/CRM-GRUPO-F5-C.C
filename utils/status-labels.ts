@@ -1,4 +1,4 @@
-import type { LeadStatus, ProposalStatus, ContractStatus, ClientStatus, TaskStatus, ChargeStatus } from "@prisma/client";
+import type { LeadStatus, ProposalStatus, ContractStatus, ClientStatus, ClientHealth, TaskStatus, ChargeStatus } from "@prisma/client";
 
 export const LEAD_STATUS_LABELS: Record<LeadStatus, string> = {
   new: "Novo",
@@ -96,6 +96,27 @@ export const CHARGE_STATUS_VARIANTS: Record<ChargeStatus, "default" | "success" 
   overdue: "danger",
   cancelled: "gray",
   refunded: "info",
+};
+
+export const CLIENT_HEALTH_LABELS: Record<ClientHealth, string> = {
+  thriving: "Ativo e Engajado",
+  stable: "Estável",
+  attention: "Requer Atenção",
+  at_risk: "Em Risco",
+};
+
+export const CLIENT_HEALTH_VARIANTS: Record<ClientHealth, "success" | "default" | "warning" | "danger"> = {
+  thriving: "success",
+  stable: "default",
+  attention: "warning",
+  at_risk: "danger",
+};
+
+export const CLIENT_HEALTH_COLORS: Record<ClientHealth, string> = {
+  thriving: "text-emerald-500",
+  stable: "text-indigo-500",
+  attention: "text-amber-500",
+  at_risk: "text-red-500",
 };
 
 export const CHARGE_TYPE_LABELS = {
