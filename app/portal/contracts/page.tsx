@@ -13,21 +13,21 @@ export default async function PortalContractsPage() {
   const contracts = await getPortalContracts(session.clientId);
 
   return (
-    <main className="flex-1 p-6">
-      <h1 className="text-xl font-bold text-gray-900 mb-6">Meus Contratos</h1>
+    <main className="flex-1 p-6 bg-[#111111] min-h-screen">
+      <h1 className="text-xl font-bold text-white mb-6">Meus Contratos</h1>
 
       {contracts.length === 0 ? (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-10 text-center">
-          <p className="text-gray-400 text-sm">Nenhum contrato encontrado.</p>
+        <div className="bg-[#1a1a1a] rounded-2xl border border-[#262626] p-10 text-center">
+          <p className="text-gray-600 text-sm">Nenhum contrato encontrado.</p>
         </div>
       ) : (
         <div className="space-y-4">
           {contracts.map((c) => (
-            <div key={c.id} className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+            <div key={c.id} className="bg-[#1a1a1a] rounded-2xl border border-[#262626] p-6">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h2 className="text-base font-semibold text-gray-900">{c.title}</h2>
-                  <div className="flex items-center gap-3 mt-1 text-sm text-gray-500 flex-wrap">
+                  <h2 className="text-base font-semibold text-white">{c.title}</h2>
+                  <div className="flex items-center gap-3 mt-1 text-xs text-gray-500 flex-wrap">
                     {c.startDate && (
                       <span>Início: {new Date(c.startDate).toLocaleDateString("pt-BR")}</span>
                     )}
@@ -35,7 +35,7 @@ export default async function PortalContractsPage() {
                       <span>Término: {new Date(c.endDate).toLocaleDateString("pt-BR")}</span>
                     )}
                     {c.signedAt && (
-                      <span className="text-green-600">
+                      <span className="text-emerald-400">
                         Assinado em {new Date(c.signedAt).toLocaleDateString("pt-BR")}
                       </span>
                     )}
@@ -43,7 +43,7 @@ export default async function PortalContractsPage() {
                 </div>
                 <div className="flex items-center gap-3 flex-shrink-0">
                   {c.value && (
-                    <span className="text-sm font-semibold text-gray-700">
+                    <span className="text-sm font-semibold text-gray-300">
                       R$ {Number(c.value).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                     </span>
                   )}
@@ -54,8 +54,8 @@ export default async function PortalContractsPage() {
               </div>
 
               {c.notes && (
-                <div className="mt-4 pt-4 border-t border-gray-100">
-                  <p className="text-sm text-gray-600 whitespace-pre-line">{c.notes}</p>
+                <div className="mt-4 pt-4 border-t border-[#262626]">
+                  <p className="text-sm text-gray-500 whitespace-pre-line">{c.notes}</p>
                 </div>
               )}
             </div>

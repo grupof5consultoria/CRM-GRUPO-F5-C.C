@@ -1,4 +1,7 @@
 import { getSession } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { NotificationBell } from "@/components/ui/NotificationBell";
+import { ProfileMenu } from "@/components/layout/ProfileMenu";
 
 interface TopbarProps {
   title?: string;
@@ -8,6 +11,50 @@ interface TopbarProps {
 
 export async function Topbar({ title, backHref, backLabel }: TopbarProps) {
   const session = await getSession();
+
+  // Fetch fresh user data (includes avatarUrl)
+  const user = session
+    ? await prisma.user.findUnique({
+        where: { id: session.userId },
+        select: { avatarUrl: true },
+      })
+    : null;
+
+  const now = new Date();
+
+  const [overdueTasks, overdueCharges] = await Promise.all([
+    prisma.task.findMany({
+      where: { dueDate: { lt: now }, status: { notIn: ["done", "cancelled"] } },
+      include: { client: { select: { id: true, name: true } } },
+      orderBy: { dueDate: "asc" },
+      take: 10,
+    }),
+    prisma.charge.findMany({
+      where: { dueDate: { lt: now }, status: "pending" },
+      include: { client: { select: { id: true, name: true } } },
+      orderBy: { dueDate: "asc" },
+      take: 10,
+    }),
+  ]);
+
+  const notifications = [
+    ...overdueTasks.map((t) => ({
+      id: `task-${t.id}`,
+      type: "task" as const,
+      title: t.title,
+      subtitle: t.client?.name ?? "Sem cliente",
+      href: `/admin/tasks/${t.id}`,
+      date: `Prazo: ${new Date(t.dueDate!).toLocaleDateString("pt-BR")}`,
+    })),
+    ...overdueCharges.map((c) => ({
+      id: `charge-${c.id}`,
+      type: "charge" as const,
+      title: c.description,
+      subtitle: c.client.name,
+      href: `/admin/billing`,
+      date: `Venceu: ${new Date(c.dueDate).toLocaleDateString("pt-BR")}`,
+    })),
+  ];
 
   return (
     <header className="bg-[#171717] border-b border-[#262626] px-6 py-3.5 flex items-center justify-between">
@@ -29,13 +76,14 @@ export async function Topbar({ title, backHref, backLabel }: TopbarProps) {
         )}
       </div>
       <div className="flex items-center gap-3">
-        <div className="text-right">
-          <p className="text-sm font-medium text-gray-300">{session?.name}</p>
-          <p className="text-xs text-gray-600">{session?.email}</p>
-        </div>
-        <div className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-          {session?.name?.charAt(0).toUpperCase()}
-        </div>
+        <NotificationBell notifications={notifications} />
+        {session && (
+          <ProfileMenu
+            name={session.name}
+            email={session.email}
+            avatarUrl={user?.avatarUrl}
+          />
+        )}
       </div>
     </header>
   );
