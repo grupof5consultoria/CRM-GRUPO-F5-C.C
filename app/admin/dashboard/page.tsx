@@ -88,9 +88,24 @@ export default async function DashboardPage() {
             { label: "Cobranças Pendentes", value: data.pendingCharges, href: "/admin/billing" },
           ].map((stat) => (
             <Link key={stat.label} href={stat.href}>
-              <div className="bg-[#1a1a1a] border border-[#262626] rounded-2xl p-5 hover:border-violet-500/40 hover:bg-[#1f1f1f] transition-all group cursor-pointer">
-                <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">{stat.label}</p>
-                <p className="text-4xl font-bold text-white mt-2 group-hover:text-violet-400 transition-colors">{stat.value}</p>
+              <div
+                className="relative rounded-2xl p-5 overflow-hidden cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-violet-900/40"
+                style={{ background: "linear-gradient(135deg, #6d28d9 0%, #7c3aed 40%, #5b21b6 100%)" }}
+              >
+                {/* Shine diagonal */}
+                <div
+                  className="absolute inset-0 pointer-events-none"
+                  style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.04) 40%, transparent 60%)" }}
+                />
+                {/* Brilho no topo */}
+                <div
+                  className="absolute top-0 left-0 right-0 h-px pointer-events-none"
+                  style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)" }}
+                />
+                <div className="relative z-10">
+                  <p className="text-xs text-violet-200/70 font-medium uppercase tracking-wider">{stat.label}</p>
+                  <p className="text-4xl font-bold text-white mt-2 drop-shadow-sm">{stat.value}</p>
+                </div>
               </div>
             </Link>
           ))}
