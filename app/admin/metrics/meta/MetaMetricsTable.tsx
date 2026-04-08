@@ -91,13 +91,16 @@ function fmtPeriodLabel(period: string) {
 // ─── Presets ─────────────────────────────────────────────────────────────────
 
 const PRESETS = [
-  { key: "7d",       label: "7 dias" },
-  { key: "30d",      label: "30 dias" },
-  { key: "3m",       label: "3 meses" },
-  { key: "6m",       label: "6 meses" },
-  { key: "1y",       label: "1 ano" },
-  { key: "thisyear", label: "Este ano" },
-  { key: "lastyear", label: "Ano passado" },
+  { key: "today",     label: "Hoje" },
+  { key: "yesterday", label: "Ontem" },
+  { key: "7d",        label: "Últimos 7 dias" },
+  { key: "30d",       label: "Últimos 30 dias" },
+  { key: "thismonth", label: "Este mês" },
+  { key: "lastmonth", label: "Mês passado" },
+  { key: "3m",        label: "3 meses" },
+  { key: "6m",        label: "6 meses" },
+  { key: "thisyear",  label: "Este ano" },
+  { key: "lastyear",  label: "Ano passado" },
 ] as const;
 
 function applyPreset(key: string): { from: string; to: string } {
@@ -111,15 +114,116 @@ function applyPreset(key: string): { from: string; to: string } {
     new Date(now.getFullYear(), now.getMonth() - monthsBack, 1).toISOString().split("T")[0];
 
   switch (key) {
-    case "7d":       return { from: d(6), to: t };
-    case "30d":      return { from: d(29), to: t };
-    case "3m":       return { from: m(2), to: t };
-    case "6m":       return { from: m(5), to: t };
-    case "1y":       return { from: m(11), to: t };
-    case "thisyear": return { from: `${now.getFullYear()}-01-01`, to: t };
-    case "lastyear": return { from: `${now.getFullYear() - 1}-01-01`, to: `${now.getFullYear() - 1}-12-31` };
-    default:         return { from: firstOfMonth(), to: t };
+    case "today":     return { from: t, to: t };
+    case "yesterday": { const y = d(1); return { from: y, to: y }; }
+    case "7d":        return { from: d(6), to: t };
+    case "30d":       return { from: d(29), to: t };
+    case "thismonth": return { from: new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0], to: t };
+    case "lastmonth": {
+      const lmStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const lmEnd   = new Date(now.getFullYear(), now.getMonth(), 0);
+      return { from: lmStart.toISOString().split("T")[0], to: lmEnd.toISOString().split("T")[0] };
+    }
+    case "3m":        return { from: m(2), to: t };
+    case "6m":        return { from: m(5), to: t };
+    case "thisyear":  return { from: `${now.getFullYear()}-01-01`, to: t };
+    case "lastyear":  return { from: `${now.getFullYear() - 1}-01-01`, to: `${now.getFullYear() - 1}-12-31` };
+    default:          return { from: firstOfMonth(), to: t };
   }
+}
+
+// ─── Date range picker (compact dropdown) ─────────────────────────────────────
+
+function fmtDateShort(iso: string) {
+  const [, mm, dd] = iso.split("-");
+  return `${dd}/${mm}`;
+}
+
+function DateRangePicker({
+  dateFrom, dateTo, activePreset,
+  onPreset, onFromChange, onToChange,
+}: {
+  dateFrom: string; dateTo: string; activePreset: string | null;
+  onPreset: (k: string) => void;
+  onFromChange: (v: string) => void;
+  onToChange:   (v: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, []);
+
+  const label = activePreset
+    ? PRESETS.find(p => p.key === activePreset)?.label ?? `${fmtDateShort(dateFrom)} → ${fmtDateShort(dateTo)}`
+    : dateFrom === dateTo
+      ? fmtDateShort(dateFrom)
+      : `${fmtDateShort(dateFrom)} → ${fmtDateShort(dateTo)}`;
+
+  const dateCls2 = "bg-[#111111] border border-[#333] rounded-lg px-2 py-1.5 text-xs text-gray-300 focus:outline-none focus:border-violet-500 [color-scheme:dark] flex-1";
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-2 bg-[#1a1a1a] border border-[#262626] hover:border-violet-500/40 rounded-xl px-3 py-2 text-sm text-gray-300 transition-all"
+      >
+        <svg className="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+        <span className="font-medium">{label}</span>
+        <svg className={`w-3.5 h-3.5 text-gray-600 transition-transform ${open ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {open && (
+        <div className="absolute left-0 top-11 w-64 bg-[#1a1a1a] border border-[#262626] rounded-2xl shadow-2xl shadow-black/60 z-50 overflow-hidden">
+          {/* Presets list */}
+          <div className="p-2">
+            {PRESETS.map(p => (
+              <button
+                key={p.key}
+                onClick={() => { onPreset(p.key); setOpen(false); }}
+                className={`w-full text-left px-3 py-2 rounded-xl text-sm transition-all ${
+                  activePreset === p.key
+                    ? "bg-violet-600/20 text-violet-300 font-semibold"
+                    : "text-gray-400 hover:bg-[#262626] hover:text-gray-200"
+                }`}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Custom range */}
+          <div className="border-t border-[#262626] px-3 py-3 space-y-2">
+            <p className="text-[11px] text-gray-600 font-semibold uppercase tracking-wider">Personalizado</p>
+            <div className="flex items-center gap-2">
+              <input type="date" value={dateFrom} max={dateTo}
+                onChange={e => { onFromChange(e.target.value); }}
+                className={dateCls2}
+              />
+              <span className="text-gray-600 text-xs">→</span>
+              <input type="date" value={dateTo} min={dateFrom}
+                onChange={e => { onToChange(e.target.value); }}
+                className={dateCls2}
+              />
+            </div>
+            <button
+              onClick={() => setOpen(false)}
+              className="w-full py-1.5 rounded-lg text-xs font-semibold text-white bg-violet-600 hover:bg-violet-500 transition-colors"
+            >
+              Aplicar
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 // ─── Formatters ───────────────────────────────────────────────────────────────
@@ -347,40 +451,15 @@ export function MetaMetricsTable({ clients, allClients }: Props) {
           })}
         </select>
 
-        {/* Date range block */}
-        <div className="flex flex-col gap-2">
-          {/* Date inputs */}
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs text-gray-500 font-medium">De</span>
-              <input type="date" value={dateFrom} onChange={e => handleFromChange(e.target.value)} className={dateCls} />
-            </div>
-            <svg className="w-4 h-4 text-gray-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-            </svg>
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs text-gray-500 font-medium">Até</span>
-              <input type="date" value={dateTo} onChange={e => handleToChange(e.target.value)} className={dateCls} />
-            </div>
-            {/* Range info */}
-            <div className="flex items-center gap-2">
-              <span className="text-xs rounded-lg px-2 py-1 font-medium border bg-violet-500/15 text-violet-400 border-violet-500/20">
-                {numMonths === 1 ? fmtPeriodLabel(periodFrom) : `${numMonths} meses`}
-              </span>
-            </div>
-          </div>
-
-          {/* Presets */}
-          <div className="flex items-center gap-1.5 flex-wrap">
-            {PRESETS.map(p => (
-              <button key={p.key} onClick={() => handlePreset(p.key)}
-                className={`text-xs px-2.5 py-1 rounded-lg border transition-all ${activePreset === p.key ? "bg-violet-600/20 border-violet-500/40 text-violet-300" : "bg-[#1a1a1a] border-[#262626] text-gray-500 hover:border-violet-500/30 hover:text-gray-300"}`}
-              >
-                {p.label}
-              </button>
-            ))}
-          </div>
-        </div>
+        {/* Date range picker */}
+        <DateRangePicker
+          dateFrom={dateFrom}
+          dateTo={dateTo}
+          activePreset={activePreset}
+          onPreset={handlePreset}
+          onFromChange={handleFromChange}
+          onToChange={handleToChange}
+        />
 
         {/* Column filter */}
         <div className="ml-auto mt-0.5">
