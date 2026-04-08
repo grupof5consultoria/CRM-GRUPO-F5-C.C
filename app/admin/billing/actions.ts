@@ -79,3 +79,9 @@ export async function markChargeAsOverdueAction(chargeId: string) {
   await updateChargeStatus(chargeId, "overdue");
   revalidatePath("/admin/billing");
 }
+
+export async function deleteChargeAction(chargeId: string) {
+  await requireInternalAuth();
+  await prisma.charge.delete({ where: { id: chargeId } });
+  revalidatePath("/admin/billing");
+}
