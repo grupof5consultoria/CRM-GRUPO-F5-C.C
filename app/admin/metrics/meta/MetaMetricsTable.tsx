@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { SyncButton } from "../SyncButton";
 import { CampaignInsights } from "./CampaignInsights";
+import { GoalWidget } from "./GoalWidget";
 
 // ─── Column definitions ───────────────────────────────────────────────────────
 
@@ -60,6 +61,7 @@ interface AggEntry {
 
 interface Client {
   id: string; name: string; metaAdAccountId: string | null;
+  metaConvGoal: number | null;
   metricEntries: MetricEntry[];
 }
 
@@ -461,6 +463,21 @@ export function MetaMetricsTable({ clients, allClients }: Props) {
           onToChange={handleToChange}
         />
 
+        {/* PDF button — single client only */}
+        {selectedClientId !== "all" && (
+          <a
+            href={`/admin/reports/${selectedClientId}?period=${dateToPeriod(dateFrom)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 bg-[#1a1a1a] border border-[#262626] hover:border-violet-500/40 rounded-xl px-3 py-2 text-sm text-gray-400 hover:text-gray-200 transition-all"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2v-5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            PDF
+          </a>
+        )}
+
         {/* Column filter */}
         <div className="ml-auto mt-0.5">
           <ColumnFilter selected={visibleCols} onChange={handleColChange} />
@@ -674,17 +691,48 @@ export function MetaMetricsTable({ clients, allClients }: Props) {
         );
       })()}
 
-      {/* Campaign insights — only when a single client is selected */}
+      {/* Campaign insights + Goal — only when a single client is selected */}
       {selectedClientId !== "all" && (() => {
         const client = filteredClients.find(c => c.id === selectedClientId);
-        return client ? (
-          <CampaignInsights
-            clientId={client.id}
-            clientName={client.name}
-            dateFrom={dateFrom}
-            dateTo={dateTo}
-          />
-        ) : null;
+        if (!client) return null;
+
+        // Avg cost per conversation from last 60 days
+        const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 60);
+        const cutoffStr = cutoff.toISOString().split("T")[0];
+        const recent = client.metricEntries.filter(e =>
+          e.platform === "meta" && e.date >= cutoffStr &&
+          (e.conversations ?? 0) > 0
+        );
+        const totalConvRecent  = recent.reduce((s, e) => s + (e.conversations ?? 0), 0);
+        const totalSpendRecent = recent.reduce((s, e) => s + Number(e.spend ?? 0), 0);
+        const avgCostPerConv   = totalConvRecent > 0 ? totalSpendRecent / totalConvRecent : null;
+
+        // Current month conversations
+        const thisMonth = new Date().toISOString().substring(0, 7);
+        const thisMonthConv = client.metricEntries
+          .filter(e => e.platform === "meta" && e.date.startsWith(thisMonth))
+          .reduce((s, e) => s + (e.conversations ?? 0), 0);
+
+        const periodLabel = new Date().toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+
+        return (
+          <>
+            <CampaignInsights
+              clientId={client.id}
+              clientName={client.name}
+              dateFrom={dateFrom}
+              dateTo={dateTo}
+            />
+            <GoalWidget
+              clientId={client.id}
+              clientName={client.name}
+              currentGoal={client.metaConvGoal}
+              currentConversations={thisMonthConv}
+              avgCostPerConv={avgCostPerConv}
+              periodLabel={periodLabel}
+            />
+          </>
+        );
       })()}
     </div>
   );

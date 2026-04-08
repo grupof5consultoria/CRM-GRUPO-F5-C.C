@@ -13,6 +13,7 @@ export async function getMetricsClients(platform: "meta" | "google") {
       name: true,
       metaAdAccountId: true,
       googleAdsCustomerId: true,
+      metaConvGoal: true,
       metricEntries: {
         where: { platform },
         orderBy: { date: "desc" },

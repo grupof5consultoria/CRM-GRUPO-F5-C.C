@@ -1,6 +1,10 @@
 {
   "crons": [
     {
+      "path": "/api/cron/sync-metrics",
+      "schedule": "0 9 * * *"
+    },
+    {
       "path": "/api/cron/renew-meta-tokens",
       "schedule": "0 9 1 * *"
     }

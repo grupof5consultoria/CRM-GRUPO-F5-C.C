@@ -316,6 +316,9 @@ model Client {
   googleAdsCustomerId String?
   googleRefreshToken  String?
 
+  // Metas mensais
+  metaConvGoal        Int?     // meta mensal de conversas WhatsApp
+
   contacts        ClientContact[]
   clientUsers     ClientUser[]
   proposals       Proposal[]

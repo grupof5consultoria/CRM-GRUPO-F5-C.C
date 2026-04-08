@@ -111,6 +111,18 @@ export async function saveClientCredentialsAction(
   return { success: true };
 }
 
+export async function saveMetaGoalAction(
+  clientId: string,
+  metaConvGoal: number | null
+): Promise<{ error?: string; success?: boolean }> {
+  await requireInternalAuth();
+  await prisma.client.update({
+    where: { id: clientId },
+    data: { metaConvGoal },
+  });
+  return { success: true };
+}
+
 export async function fetchCampaignsAction(
   clientId: string,
   dateFrom: string,
