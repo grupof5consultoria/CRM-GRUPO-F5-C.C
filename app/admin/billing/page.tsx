@@ -121,10 +121,17 @@ export default async function BillingPage({ searchParams }: PageProps) {
                           R$ {Number(charge.value).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                         </TableTd>
                         <TableTd>
-                          <span className={isOverdue ? "text-red-600 font-medium" : ""}>
-                            {new Date(charge.dueDate).toLocaleDateString("pt-BR")}
-                            {isOverdue && " ⚠️"}
-                          </span>
+                          <div>
+                            <span className={isOverdue ? "text-red-600 font-medium" : ""}>
+                              {new Date(charge.dueDate).toLocaleDateString("pt-BR")}
+                              {isOverdue && " ⚠️"}
+                            </span>
+                            {charge.isRecurring && (
+                              <p className="text-xs text-indigo-500 mt-0.5">
+                                🔄 todo dia {charge.recurrenceDay ?? new Date(charge.dueDate).getDate()}
+                              </p>
+                            )}
+                          </div>
                         </TableTd>
                         <TableTd>
                           <div className="text-xs space-y-0.5">
