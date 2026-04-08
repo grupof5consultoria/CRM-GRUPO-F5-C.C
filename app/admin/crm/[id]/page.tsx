@@ -20,7 +20,7 @@ export default async function LeadDetailPage({ params }: PageProps) {
 
   const ACTIVITY_ICONS: Record<string, string> = {
     created: "🟢",
-    updated: "✏️",
+    updated: "·",
     status_changed: "🔄",
     call: "📞",
     email: "📧",
@@ -30,14 +30,8 @@ export default async function LeadDetailPage({ params }: PageProps) {
 
   return (
     <>
-      <Topbar title="Detalhe do Lead" />
-      <main className="flex-1 p-6">
-        <div className="mb-4">
-          <Link href="/admin/crm" className="text-sm text-blue-600 hover:underline">
-            ← Voltar ao CRM
-          </Link>
-        </div>
-
+      <Topbar title="Detalhe do Lead" backHref="/admin/crm" backLabel="CRM" />
+      <main className="flex-1 p-6 bg-[#111111] min-h-screen">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Coluna principal */}
           <div className="lg:col-span-2 space-y-6">
@@ -70,11 +64,9 @@ export default async function LeadDetailPage({ params }: PageProps) {
                   ) : (
                     lead.activities.map((activity) => (
                       <div key={activity.id} className="flex gap-3 text-sm">
-                        <span className="text-base flex-shrink-0">
-                          {ACTIVITY_ICONS[activity.type] ?? "📌"}
-                        </span>
+                        <div className="w-1.5 h-1.5 rounded-full bg-violet-500 flex-shrink-0 mt-1.5" />
                         <div>
-                          <p className="text-gray-800">{activity.description}</p>
+                          <p className="text-gray-200">{activity.description}</p>
                           <p className="text-xs text-gray-400 mt-0.5">
                             {activity.user.name} ·{" "}
                             {new Date(activity.createdAt).toLocaleString("pt-BR")}
@@ -95,7 +87,7 @@ export default async function LeadDetailPage({ params }: PageProps) {
                   <div className="space-y-2">
                     {lead.proposals.map((p) => (
                       <div key={p.id} className="flex items-center justify-between text-sm">
-                        <Link href={`/admin/proposals/${p.id}`} className="text-blue-600 hover:underline">
+                        <Link href={`/admin/proposals/${p.id}`} className="text-violet-400 hover:text-violet-300 transition-colors">
                           {p.title}
                         </Link>
                         <div className="flex items-center gap-3">
@@ -125,38 +117,38 @@ export default async function LeadDetailPage({ params }: PageProps) {
               <CardHeader><CardTitle>Informações</CardTitle></CardHeader>
               <CardContent className="space-y-3 text-sm">
                 <div>
-                  <p className="text-gray-500">Responsável</p>
+                  <p className="text-xs text-gray-500 mb-0.5">Responsável</p>
                   <p className="font-medium">{lead.owner.name}</p>
                 </div>
                 {lead.nextFollowUp && (
                   <div>
-                    <p className="text-gray-500">Próximo Follow-up</p>
+                    <p className="text-xs text-gray-500 mb-0.5">Próximo Follow-up</p>
                     <p className="font-medium">
                       {new Date(lead.nextFollowUp).toLocaleDateString("pt-BR")}
                     </p>
                   </div>
                 )}
                 <div>
-                  <p className="text-gray-500">Criado em</p>
+                  <p className="text-xs text-gray-500 mb-0.5">Criado em</p>
                   <p className="font-medium">
                     {new Date(lead.createdAt).toLocaleDateString("pt-BR")}
                   </p>
                 </div>
                 {lead.company && (
                   <div>
-                    <p className="text-gray-500">Empresa</p>
+                    <p className="text-xs text-gray-500 mb-0.5">Empresa</p>
                     <p className="font-medium">{lead.company}</p>
                   </div>
                 )}
                 {lead.email && (
                   <div>
-                    <p className="text-gray-500">Email</p>
+                    <p className="text-xs text-gray-500 mb-0.5">Email</p>
                     <p className="font-medium">{lead.email}</p>
                   </div>
                 )}
                 {lead.phone && (
                   <div>
-                    <p className="text-gray-500">Telefone</p>
+                    <p className="text-xs text-gray-500 mb-0.5">Telefone</p>
                     <p className="font-medium">{lead.phone}</p>
                   </div>
                 )}

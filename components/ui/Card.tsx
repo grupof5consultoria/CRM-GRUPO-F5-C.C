@@ -7,7 +7,7 @@ interface CardProps {
 
 export function Card({ children, className }: CardProps) {
   return (
-    <div className={clsx("bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm transition-colors", className)}>
+    <div className={clsx("bg-[#1a1a1a] rounded-2xl border border-[#262626] shadow-sm", className)}>
       {children}
     </div>
   );
@@ -15,7 +15,7 @@ export function Card({ children, className }: CardProps) {
 
 export function CardHeader({ children, className }: CardProps) {
   return (
-    <div className={clsx("px-6 py-4 border-b border-gray-100 dark:border-gray-700", className)}>
+    <div className={clsx("px-6 py-4 border-b border-[#262626]", className)}>
       {children}
     </div>
   );
@@ -23,7 +23,7 @@ export function CardHeader({ children, className }: CardProps) {
 
 export function CardTitle({ children, className }: CardProps) {
   return (
-    <h3 className={clsx("text-base font-bold text-gray-900 dark:text-white tracking-tight", className)}>
+    <h3 className={clsx("text-sm font-semibold text-white uppercase tracking-wider", className)}>
       {children}
     </h3>
   );
@@ -45,50 +45,21 @@ interface StatCardProps {
   variant?: "default" | "warning" | "danger" | "success";
 }
 
-const statVariants = {
-  default: {
-    bg: "from-indigo-500 to-violet-600",
-    iconBg: "bg-white/20",
-    text: "text-white",
-    sub: "text-indigo-100",
-  },
-  warning: {
-    bg: "from-amber-500 to-orange-500",
-    iconBg: "bg-white/20",
-    text: "text-white",
-    sub: "text-amber-100",
-  },
-  danger: {
-    bg: "from-red-500 to-rose-600",
-    iconBg: "bg-white/20",
-    text: "text-white",
-    sub: "text-red-100",
-  },
-  success: {
-    bg: "from-emerald-500 to-teal-600",
-    iconBg: "bg-white/20",
-    text: "text-white",
-    sub: "text-emerald-100",
-  },
-};
-
 export function StatCard({ title, value, description, icon, variant = "default" }: StatCardProps) {
-  const v = statVariants[variant];
   return (
-    <div className={clsx("rounded-2xl bg-gradient-to-br p-5 shadow-md", v.bg)}>
-      <div className="flex items-start justify-between">
+    <div
+      className="relative rounded-2xl p-5 overflow-hidden shadow-lg shadow-violet-900/20"
+      style={{ background: "linear-gradient(135deg, #6d28d9 0%, #7c3aed 40%, #5b21b6 100%)" }}
+    >
+      <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.04) 40%, transparent 60%)" }} />
+      <div className="absolute top-0 left-0 right-0 h-px pointer-events-none" style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent)" }} />
+      <div className="relative z-10 flex items-start justify-between">
         <div>
-          <p className={clsx("text-sm font-medium", v.sub)}>{title}</p>
-          <p className={clsx("text-3xl font-bold mt-1", v.text)}>{value}</p>
-          {description && (
-            <p className={clsx("text-xs mt-1", v.sub)}>{description}</p>
-          )}
+          <p className="text-xs text-violet-200/70 font-medium uppercase tracking-wider">{title}</p>
+          <p className="text-3xl font-bold text-white mt-1">{value}</p>
+          {description && <p className="text-xs text-violet-200/60 mt-1">{description}</p>}
         </div>
-        {icon && (
-          <div className={clsx("p-2.5 rounded-xl", v.iconBg)}>
-            <span className={clsx("text-2xl", v.text)}>{icon}</span>
-          </div>
-        )}
+        {icon && <div className="p-2 rounded-xl bg-white/10 text-white">{icon}</div>}
       </div>
     </div>
   );

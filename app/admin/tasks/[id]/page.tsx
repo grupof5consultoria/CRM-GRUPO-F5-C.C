@@ -20,11 +20,8 @@ export default async function TaskDetailPage({ params }: PageProps) {
 
   return (
     <>
-      <Topbar title="Detalhe da Tarefa" />
-      <main className="flex-1 p-6">
-        <div className="mb-4">
-          <Link href="/admin/tasks" className="text-sm text-blue-600 hover:underline">← Voltar</Link>
-        </div>
+      <Topbar title="Detalhe da Tarefa" backHref="/admin/tasks" backLabel="Tarefas" />
+      <main className="flex-1 p-6 bg-[#111111] min-h-screen">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
             <Card>
@@ -33,7 +30,7 @@ export default async function TaskDetailPage({ params }: PageProps) {
                   <CardTitle>{task.title}</CardTitle>
                   <Badge variant={TASK_STATUS_VARIANTS[task.status]}>{TASK_STATUS_LABELS[task.status]}</Badge>
                 </div>
-                {task.description && <p className="text-sm text-gray-600 mt-2 whitespace-pre-line">{task.description}</p>}
+                {task.description && <p className="text-sm text-gray-500 mt-2 whitespace-pre-line">{task.description}</p>}
               </CardHeader>
             </Card>
 
@@ -71,23 +68,23 @@ export default async function TaskDetailPage({ params }: PageProps) {
             <Card>
               <CardHeader><CardTitle>Detalhes</CardTitle></CardHeader>
               <CardContent className="space-y-3 text-sm">
-                <div><p className="text-gray-500">Responsável</p><p className="font-medium">{task.assignee.name}</p></div>
-                {task.client && <div><p className="text-gray-500">Cliente</p><Link href={`/admin/clients/${task.client.id}`} className="text-blue-600 hover:underline font-medium">{task.client.name}</Link></div>}
+                <div><p className="text-xs text-gray-500 mb-0.5">Responsável</p><p className="font-medium">{task.assignee.name}</p></div>
+                {task.client && <div><p className="text-xs text-gray-500 mb-0.5">Cliente</p><Link href={`/admin/clients/${task.client.id}`} className="text-violet-400 hover:text-violet-300 transition-colors font-medium">{task.client.name}</Link></div>}
                 {task.dueDate && (
                   <div>
-                    <p className="text-gray-500">Prazo</p>
-                    <p className={`font-medium ${isOverdue ? "text-red-600" : ""}`}>
+                    <p className="text-xs text-gray-500 mb-0.5">Prazo</p>
+                    <p className={`font-medium ${isOverdue ? "text-red-400" : ""}`}>
                       {new Date(task.dueDate).toLocaleDateString("pt-BR")}
                       {isOverdue && " ⚠️ Atrasada"}
                     </p>
                   </div>
                 )}
                 <div>
-                  <p className="text-gray-500">Visível ao cliente</p>
+                  <p className="text-xs text-gray-500 mb-0.5">Visível ao cliente</p>
                   <p className="font-medium">{task.isClientVisible ? "Sim" : "Não"}</p>
                 </div>
                 <div>
-                  <p className="text-gray-500">Criada em</p>
+                  <p className="text-xs text-gray-500 mb-0.5">Criada em</p>
                   <p className="font-medium">{new Date(task.createdAt).toLocaleDateString("pt-BR")}</p>
                 </div>
               </CardContent>
@@ -100,7 +97,7 @@ export default async function TaskDetailPage({ params }: PageProps) {
                   {task.events.map((ev) => (
                     <div key={ev.id} className="text-xs text-gray-500">
                       <span>{new Date(ev.createdAt).toLocaleString("pt-BR")}</span>
-                      <p className="text-gray-700">{ev.description}</p>
+                      <p className="text-gray-300">{ev.description}</p>
                     </div>
                   ))}
                 </CardContent>
