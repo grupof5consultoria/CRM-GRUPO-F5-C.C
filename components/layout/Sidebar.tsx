@@ -133,7 +133,6 @@ export function Sidebar() {
               <span className="flex-shrink-0 text-gray-600">{item.icon}</span>
               {item.label}
             </Link>
-          )
           );
         })}
       </nav>

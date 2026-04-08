@@ -2,6 +2,7 @@ import { Topbar } from "@/components/layout/Topbar";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { getSession } from "@/lib/auth";
+import { AnimatedBackground } from "@/components/ui/AnimatedBackground";
 
 export const metadata = { title: "Dashboard | Gestão Interna" };
 
@@ -63,7 +64,11 @@ export default async function DashboardPage() {
   return (
     <>
       <Topbar title="Dashboard" />
-      <main className="flex-1 p-6 space-y-6 bg-[#111111] min-h-screen">
+      <main className="relative flex-1 p-6 space-y-6 bg-[#111111] min-h-screen">
+        <AnimatedBackground />
+
+        {/* Conteúdo acima das partículas */}
+        <div className="relative z-10 space-y-6">
 
         {/* Cabeçalho de boas-vindas */}
         <div className="flex items-center justify-between">
@@ -247,6 +252,7 @@ export default async function DashboardPage() {
           </div>
 
         </div>
+        </div>{/* fecha z-10 */}
       </main>
     </>
   );
