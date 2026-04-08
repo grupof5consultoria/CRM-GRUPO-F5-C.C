@@ -57,6 +57,9 @@ export async function getClientById(id: string) {
         orderBy: { createdAt: "desc" },
         take: 5,
       },
+      clientUsers: {
+        include: { user: { select: { id: true, name: true, email: true, role: true, isActive: true } } },
+      },
     },
   });
 }

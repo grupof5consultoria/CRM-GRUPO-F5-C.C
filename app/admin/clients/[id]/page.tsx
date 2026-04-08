@@ -13,11 +13,18 @@ import { AddContactForm } from "./AddContactForm";
 import { DeleteContactButton } from "./DeleteContactButton";
 import { UpdateHealthForm } from "./UpdateHealthForm";
 import { ClientCredentialsForm } from "./ClientCredentialsForm";
+import { PortalAccessCard } from "./PortalAccessCard";
+import { headers } from "next/headers";
 
 interface PageProps { params: Promise<{ id: string }> }
 
 export default async function ClientDetailPage({ params }: PageProps) {
   const { id } = await params;
+  const headersList = await headers();
+  const host = headersList.get("host") ?? "localhost:3000";
+  const protocol = host.includes("localhost") ? "http" : "https";
+  const portalUrl = `${protocol}://${host}/portal/login`;
+
   const [client, users] = await Promise.all([getClientById(id), getInternalUsersForSelect()]);
   if (!client) notFound();
 
@@ -204,6 +211,22 @@ export default async function ClientDetailPage({ params }: PageProps) {
                 })()}
                 <div><p className="text-xs text-gray-500 mb-0.5">Cadastrado em</p><p className="font-medium">{new Date(client.createdAt).toLocaleDateString("pt-BR")}</p></div>
                 {client.notes && <div><p className="text-xs text-gray-500 mb-0.5">Observações</p><p className="text-gray-300">{client.notes}</p></div>}
+              </CardContent>
+            </Card>
+
+            {/* Acesso ao Portal */}
+            <Card>
+              <CardHeader><CardTitle>Acesso ao Portal</CardTitle></CardHeader>
+              <CardContent>
+                <PortalAccessCard
+                  clientId={client.id}
+                  portalUsers={client.clientUsers.map((cu) => ({
+                    id: cu.id,
+                    userId: cu.userId,
+                    user: cu.user,
+                  }))}
+                  portalUrl={portalUrl}
+                />
               </CardContent>
             </Card>
 
