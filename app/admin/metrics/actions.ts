@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireInternalAuth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { fetchMetaInsights } from "@/lib/meta-api";
-import { fetchGoogleAdsInsights } from "@/lib/google-ads-api";
+import { fetchGoogleAdsInsights, type GoogleInsights } from "@/lib/google-ads-api";
 
 export async function syncMetricsAction(
   clientId: string,
@@ -52,6 +52,10 @@ export async function syncMetricsAction(
         ctr: (data as import("@/lib/meta-api").MetaInsights).ctr,
         costPerResult: (data as import("@/lib/meta-api").MetaInsights).costPerResult,
         budget: (data as import("@/lib/meta-api").MetaInsights).budget,
+      } : {}),
+      ...(platform === "google" ? {
+        cpc: (data as GoogleInsights).cpc,
+        costPerResult: (data as GoogleInsights).costPerResult,
       } : {}),
     };
 

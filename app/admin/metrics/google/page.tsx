@@ -1,7 +1,7 @@
 import { Topbar } from "@/components/layout/Topbar";
 import { getMetricsClients } from "@/services/metrics";
 import { prisma } from "@/lib/prisma";
-import { PlatformMetricsView } from "../PlatformMetricsView";
+import { GoogleMetricsTable } from "./GoogleMetricsTable";
 
 export const metadata = { title: "Google Ads — Métricas | Gestão Interna" };
 
@@ -32,9 +32,8 @@ export default async function GoogleMetricsPage() {
     <>
       <Topbar title="Métricas — Google Ads" backHref="/admin/metrics/google" backLabel="Métricas" />
       <main className="flex-1 p-6 bg-[#111111] min-h-screen space-y-6">
-        <PlatformMetricsView
-          platform="google"
-          clients={clients as Parameters<typeof PlatformMetricsView>[0]["clients"]}
+        <GoogleMetricsTable
+          clients={clients}
           allClients={allClients}
           currentPeriod={currentPeriod}
           periods={periods}

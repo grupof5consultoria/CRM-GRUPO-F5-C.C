@@ -1,4 +1,11 @@
-import type { AdInsights } from "./meta-api";
+export interface GoogleInsights {
+  spend: number;
+  impressions: number;
+  clicks: number;
+  leadsFromAds: number; // conversions
+  cpc: number;          // average CPC
+  costPerResult: number; // cost per conversion
+}
 
 async function getGoogleAccessToken(refreshToken: string): Promise<string> {
   const res = await fetch("https://oauth2.googleapis.com/token", {
@@ -24,7 +31,7 @@ export async function fetchGoogleAdsInsights(
   customerId: string,
   refreshToken: string,
   period: string // "2024-01"
-): Promise<AdInsights | null> {
+): Promise<GoogleInsights | null> {
   const [year, month] = period.split("-").map(Number);
   const startDate = `${year}-${String(month).padStart(2, "0")}-01`;
   const lastDay = new Date(year, month, 0).getDate();
@@ -39,7 +46,9 @@ export async function fetchGoogleAdsInsights(
       metrics.cost_micros,
       metrics.impressions,
       metrics.clicks,
-      metrics.conversions
+      metrics.conversions,
+      metrics.average_cpc,
+      metrics.cost_per_conversion
     FROM customer
     WHERE segments.date BETWEEN '${startDate}' AND '${endDate}'
   `;
@@ -62,8 +71,24 @@ export async function fetchGoogleAdsInsights(
     throw new Error(`Google Ads API: ${msg}`);
   }
 
-  const results: Array<{ metrics?: { costMicros?: number; impressions?: number; clicks?: number; conversions?: number } }> =
-    data.results ?? [];
+  type Row = {
+    metrics?: {
+      costMicros?: number;
+      impressions?: number;
+      clicks?: number;
+      conversions?: number;
+      averageCpc?: number;
+      costPerConversion?: number;
+    };
+  };
+
+  const results: Row[] = data.results ?? [];
+
+  if (results.length === 0) {
+    return {
+      spend: 0, impressions: 0, clicks: 0, leadsFromAds: 0, cpc: 0, costPerResult: 0,
+    };
+  }
 
   const totals = results.reduce(
     (acc, row) => ({
@@ -75,10 +100,22 @@ export async function fetchGoogleAdsInsights(
     { costMicros: 0, impressions: 0, clicks: 0, conversions: 0 }
   );
 
+  // average_cpc and cost_per_conversion are already per-row averages in micros
+  // Use the last non-zero row value, or calculate from totals as fallback
+  const lastRow = results[results.length - 1];
+  const cpcMicros = Number(lastRow?.metrics?.averageCpc ?? 0);
+  const cpcCalc = totals.clicks > 0 ? totals.costMicros / totals.clicks : 0;
+  const cpc = (cpcMicros > 0 ? cpcMicros : cpcCalc) / 1_000_000;
+
+  const costPerConvCalc =
+    totals.conversions > 0 ? totals.costMicros / totals.conversions / 1_000_000 : 0;
+
   return {
     spend: totals.costMicros / 1_000_000,
     impressions: totals.impressions,
     clicks: totals.clicks,
     leadsFromAds: Math.round(totals.conversions),
+    cpc,
+    costPerResult: costPerConvCalc,
   };
 }
