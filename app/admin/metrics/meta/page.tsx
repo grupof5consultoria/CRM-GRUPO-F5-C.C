@@ -1,7 +1,7 @@
 import { Topbar } from "@/components/layout/Topbar";
 import { getMetricsClients } from "@/services/metrics";
 import { prisma } from "@/lib/prisma";
-import { PlatformMetricsView } from "../PlatformMetricsView";
+import { MetaMetricsTable } from "./MetaMetricsTable";
 
 export const metadata = { title: "Meta Ads — Métricas | Gestão Interna" };
 
@@ -32,9 +32,8 @@ export default async function MetaMetricsPage() {
     <>
       <Topbar title="Métricas — Meta Ads" backHref="/admin/metrics/meta" backLabel="Métricas" />
       <main className="flex-1 p-6 bg-[#111111] min-h-screen space-y-6">
-        <PlatformMetricsView
-          platform="meta"
-          clients={clients as Parameters<typeof PlatformMetricsView>[0]["clients"]}
+        <MetaMetricsTable
+          clients={clients}
           allClients={allClients}
           currentPeriod={currentPeriod}
           periods={periods}

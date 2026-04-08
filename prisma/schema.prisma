@@ -319,12 +319,21 @@ model ClientMetricEntry {
   client         Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
   platform       String   // "meta" | "google"
   period         String   // "2024-01" (YYYY-MM)
+  // Shared
   spend          Decimal? @db.Decimal(10, 2)
   impressions    Int?
   clicks         Int?
   leadsFromAds   Int?
   leadsScheduled Int?
   revenue        Decimal? @db.Decimal(10, 2)
+  // Meta-specific
+  reach          Int?
+  cpm            Decimal? @db.Decimal(10, 4)
+  linkClicks     Int?
+  cpc            Decimal? @db.Decimal(10, 4)
+  ctr            Decimal? @db.Decimal(10, 4)
+  costPerResult  Decimal? @db.Decimal(10, 2)
+  budget         Decimal? @db.Decimal(10, 2)
   syncedAt       DateTime?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt

@@ -39,10 +39,26 @@ export async function syncMetricsAction(
 
     if (!data) return { error: "Nenhum dado retornado pela API" };
 
+    const entry = {
+      spend: data.spend,
+      impressions: data.impressions,
+      clicks: data.clicks,
+      leadsFromAds: data.leadsFromAds,
+      ...(platform === "meta" && "reach" in data ? {
+        reach: (data as import("@/lib/meta-api").MetaInsights).reach,
+        cpm: (data as import("@/lib/meta-api").MetaInsights).cpm,
+        linkClicks: (data as import("@/lib/meta-api").MetaInsights).linkClicks,
+        cpc: (data as import("@/lib/meta-api").MetaInsights).cpc,
+        ctr: (data as import("@/lib/meta-api").MetaInsights).ctr,
+        costPerResult: (data as import("@/lib/meta-api").MetaInsights).costPerResult,
+        budget: (data as import("@/lib/meta-api").MetaInsights).budget,
+      } : {}),
+    };
+
     await prisma.clientMetricEntry.upsert({
       where: { clientId_platform_period: { clientId, platform, period } },
-      create: { clientId, platform, period, ...data, syncedAt: new Date() },
-      update: { ...data, syncedAt: new Date() },
+      create: { clientId, platform, period, ...entry, syncedAt: new Date() },
+      update: { ...entry, syncedAt: new Date() },
     });
 
     revalidatePath("/admin/metrics");
