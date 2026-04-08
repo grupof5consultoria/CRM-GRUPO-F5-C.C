@@ -187,7 +187,24 @@ export default async function ClientDetailPage({ params }: PageProps) {
                 {client.document && <div><p className="text-gray-500">CPF / CNPJ</p><p className="font-medium">{client.document}</p></div>}
                 {client.email && <div><p className="text-gray-500">Email</p><p className="font-medium">{client.email}</p></div>}
                 {client.phone && <div><p className="text-gray-500">Telefone</p><p className="font-medium">{client.phone}</p></div>}
-                <div><p className="text-gray-500">Cliente desde</p><p className="font-medium">{new Date(client.createdAt).toLocaleDateString("pt-BR")}</p></div>
+                {client.startDate && (() => {
+                  const start = new Date(client.startDate);
+                  const now = new Date();
+                  const months = (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth());
+                  const years = Math.floor(months / 12);
+                  const remainingMonths = months % 12;
+                  const timeStr = years > 0
+                    ? `${years} ano${years > 1 ? "s" : ""}${remainingMonths > 0 ? ` e ${remainingMonths} mês${remainingMonths > 1 ? "es" : ""}` : ""}`
+                    : `${months} mês${months !== 1 ? "es" : ""}`;
+                  return (
+                    <div className="bg-indigo-50 dark:bg-indigo-950 rounded-xl px-3 py-2.5">
+                      <p className="text-indigo-500 text-xs font-medium">⏱️ Tempo de cliente</p>
+                      <p className="text-indigo-700 dark:text-indigo-300 font-bold">{timeStr}</p>
+                      <p className="text-indigo-400 text-xs">desde {start.toLocaleDateString("pt-BR")}</p>
+                    </div>
+                  );
+                })()}
+                <div><p className="text-gray-500">Cadastrado em</p><p className="font-medium">{new Date(client.createdAt).toLocaleDateString("pt-BR")}</p></div>
                 {client.notes && <div><p className="text-gray-500">Observações</p><p className="text-gray-700 dark:text-gray-300">{client.notes}</p></div>}
               </CardContent>
             </Card>

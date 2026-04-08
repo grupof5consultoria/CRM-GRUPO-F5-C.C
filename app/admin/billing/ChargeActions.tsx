@@ -1,45 +1,53 @@
 "use client";
 
 import { useState } from "react";
-import { markChargeAsPaidAction, cancelChargeAction } from "./actions";
+import { markChargeAsPaidAction, markChargeAsOverdueAction } from "./actions";
 import { ChargeStatus } from "@prisma/client";
 
 export function ChargeActions({ chargeId, status }: { chargeId: string; status: ChargeStatus }) {
   const [loading, setLoading] = useState(false);
 
-  if (status === "paid" || status === "cancelled" || status === "refunded") {
+  if (status === "paid") {
+    return <span className="text-emerald-500 text-lg" title="Pago">✅</span>;
+  }
+
+  if (status === "overdue") {
+    return <span className="text-red-400 text-lg" title="Não pago">❌</span>;
+  }
+
+  if (status === "cancelled" || status === "refunded") {
     return null;
   }
 
   async function handlePaid() {
-    if (!confirm("Marcar cobrança como paga?")) return;
     setLoading(true);
     await markChargeAsPaidAction(chargeId);
     setLoading(false);
   }
 
-  async function handleCancel() {
-    if (!confirm("Cancelar esta cobrança?")) return;
+  async function handleNotPaid() {
     setLoading(true);
-    await cancelChargeAction(chargeId);
+    await markChargeAsOverdueAction(chargeId);
     setLoading(false);
   }
 
   return (
-    <div className="flex gap-2">
+    <div className="flex gap-1">
       <button
         onClick={handlePaid}
         disabled={loading}
-        className="text-xs text-green-600 hover:underline disabled:opacity-50"
+        title="Pagou ✅"
+        className="text-2xl hover:scale-110 transition-transform disabled:opacity-50 leading-none"
       >
-        Pago
+        ✅
       </button>
       <button
-        onClick={handleCancel}
+        onClick={handleNotPaid}
         disabled={loading}
-        className="text-xs text-red-400 hover:underline disabled:opacity-50"
+        title="Não pagou ❌"
+        className="text-2xl hover:scale-110 transition-transform disabled:opacity-50 leading-none"
       >
-        Cancelar
+        ❌
       </button>
     </div>
   );

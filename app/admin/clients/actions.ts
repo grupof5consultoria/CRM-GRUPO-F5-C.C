@@ -20,6 +20,7 @@ export async function createClientAction(_prev: { error?: string }, formData: Fo
     document: (formData.get("document") as string) || undefined,
     notes: (formData.get("notes") as string) || undefined,
     monthlyValue: monthlyValueRaw ? parseFloat(monthlyValueRaw.replace(",", ".")) : undefined,
+    startDate: (formData.get("startDate") as string) || undefined,
     ownerId: (formData.get("ownerId") as string) || session.userId,
   });
 
@@ -34,6 +35,7 @@ export async function updateClientAction(_prev: { error?: string }, formData: Fo
   if (!name?.trim()) return { error: "Nome obrigatório" };
 
   const monthlyValueRaw = formData.get("monthlyValue") as string;
+  const startDateRaw = formData.get("startDate") as string;
   await updateClient(id, {
     name,
     email: (formData.get("email") as string) || undefined,
@@ -43,6 +45,7 @@ export async function updateClientAction(_prev: { error?: string }, formData: Fo
     status: (formData.get("status") as ClientStatus) || undefined,
     ownerId: (formData.get("ownerId") as string) || undefined,
     monthlyValue: monthlyValueRaw ? parseFloat(monthlyValueRaw.replace(",", ".")) : null,
+    startDate: startDateRaw ? new Date(startDateRaw) : null,
   });
 
   revalidatePath(`/admin/clients/${id}`);

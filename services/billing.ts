@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { ChargeStatus } from "@prisma/client";
+import { ChargeStatus, PaymentMethod } from "@prisma/client";
 
 export async function getCharges(filters?: { clientId?: string; contractId?: string; status?: ChargeStatus }) {
   return prisma.charge.findMany({
@@ -33,6 +33,9 @@ export async function createCharge(data: {
   description: string;
   value: string;
   dueDate: string;
+  paymentMethod?: PaymentMethod;
+  isRecurring?: boolean;
+  recurrenceDay?: number;
 }) {
   const charge = await prisma.charge.create({
     data: {
@@ -41,6 +44,9 @@ export async function createCharge(data: {
       description: data.description,
       value: parseFloat(data.value),
       dueDate: new Date(data.dueDate),
+      paymentMethod: data.paymentMethod ?? "pix",
+      isRecurring: data.isRecurring ?? false,
+      recurrenceDay: data.recurrenceDay ?? null,
     },
   });
 

@@ -89,8 +89,8 @@ export default async function BillingPage({ searchParams }: PageProps) {
                   <TableTh>Cliente</TableTh>
                   <TableTh>Valor</TableTh>
                   <TableTh>Vencimento</TableTh>
+                  <TableTh>Pagamento</TableTh>
                   <TableTh>Status</TableTh>
-                  <TableTh>Link</TableTh>
                   <TableTh></TableTh>
                 </TableRow>
               </TableHead>
@@ -127,16 +127,21 @@ export default async function BillingPage({ searchParams }: PageProps) {
                           </span>
                         </TableTd>
                         <TableTd>
+                          <div className="text-xs">
+                            <span>{{
+                              pix: "💠 PIX",
+                              boleto: "📄 Boleto",
+                              credit_card: "💳 Cartão",
+                              bank_transfer: "🏦 Transf.",
+                              cash: "💵 Dinheiro",
+                            }[charge.paymentMethod]}</span>
+                            {charge.isRecurring && <span className="ml-1 text-indigo-500">🔄</span>}
+                          </div>
+                        </TableTd>
+                        <TableTd>
                           <Badge variant={CHARGE_STATUS_VARIANTS[charge.status]}>
                             {CHARGE_STATUS_LABELS[charge.status]}
                           </Badge>
-                        </TableTd>
-                        <TableTd>
-                          {charge.paymentLink ? (
-                            <a href={charge.paymentLink} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline">
-                              Pagar
-                            </a>
-                          ) : "—"}
                         </TableTd>
                         <TableTd>
                           <ChargeActions chargeId={charge.id} status={charge.status} />

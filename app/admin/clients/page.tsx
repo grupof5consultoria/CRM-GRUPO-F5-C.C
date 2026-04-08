@@ -102,8 +102,8 @@ export default async function ClientsPage({ searchParams }: PageProps) {
               <TableTh>Nome</TableTh>
               <TableTh>Contato</TableTh>
               <TableTh>Valor/mês</TableTh>
+              <TableTh>Tempo</TableTh>
               <TableTh>Status</TableTh>
-              <TableTh>Responsável</TableTh>
               <TableTh></TableTh>
             </TableRow>
           </TableHead>
@@ -139,6 +139,17 @@ export default async function ClientsPage({ searchParams }: PageProps) {
                     ) : (
                       <span className="text-gray-400 text-xs">—</span>
                     )}
+                  </TableTd>
+                  <TableTd>
+                    {c.startDate ? (() => {
+                      const months = (new Date().getFullYear() - new Date(c.startDate).getFullYear()) * 12 + (new Date().getMonth() - new Date(c.startDate).getMonth());
+                      const years = Math.floor(months / 12);
+                      return (
+                        <span className="text-xs font-medium text-indigo-600 dark:text-indigo-400">
+                          {years > 0 ? `${years}a ${months % 12}m` : `${months}m`}
+                        </span>
+                      );
+                    })() : <span className="text-gray-300 text-xs">—</span>}
                   </TableTd>
                   <TableTd>
                     <Badge variant={CLIENT_STATUS_VARIANTS[c.status]}>

@@ -87,6 +87,14 @@ enum ChargeType {
   hourly
 }
 
+enum PaymentMethod {
+  pix
+  boleto
+  credit_card
+  bank_transfer
+  cash
+}
+
 // ─── Usuários ─────────────────────────────────────────────────────────────────
 
 model User {
@@ -279,6 +287,7 @@ model Client {
   health       ClientHealth  @default(stable)
   healthNote   String?
   monthlyValue Decimal?      @db.Decimal(10, 2)
+  startDate    DateTime?
   ownerId      String
   owner        User          @relation("ClientOwner", fields: [ownerId], references: [id])
   notes        String?
@@ -398,7 +407,10 @@ model Charge {
   contract        Contract?    @relation(fields: [contractId], references: [id])
   description     String
   value           Decimal      @db.Decimal(10, 2)
-  status          ChargeStatus @default(pending)
+  status          ChargeStatus  @default(pending)
+  isRecurring     Boolean       @default(false)
+  recurrenceDay   Int?
+  paymentMethod   PaymentMethod @default(pix)
   dueDate         DateTime
   paidAt          DateTime?
   externalId      String?

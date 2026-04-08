@@ -5,7 +5,7 @@ import { requireInternalAuth } from "@/lib/auth";
 import { createCharge, updateChargeStatus } from "@/services/billing";
 import { prisma } from "@/lib/prisma";
 import { createGatewayCharge } from "@/lib/gateway";
-import { ChargeStatus } from "@prisma/client";
+import { ChargeStatus, PaymentMethod } from "@prisma/client";
 
 export async function createChargeAction(_prev: { error?: string }, formData: FormData) {
   await requireInternalAuth();
@@ -20,12 +20,19 @@ export async function createChargeAction(_prev: { error?: string }, formData: Fo
   if (!value || parseFloat(value) <= 0) return { error: "Valor inválido" };
   if (!dueDate) return { error: "Data de vencimento obrigatória" };
 
+  const paymentMethod = (formData.get("paymentMethod") as PaymentMethod) || "pix";
+  const isRecurring = formData.get("isRecurring") === "true";
+  const recurrenceDayRaw = formData.get("recurrenceDay") as string;
+
   const charge = await createCharge({
     clientId,
     contractId: (formData.get("contractId") as string) || undefined,
     description,
     value,
     dueDate,
+    paymentMethod,
+    isRecurring,
+    recurrenceDay: recurrenceDayRaw ? parseInt(recurrenceDayRaw) : undefined,
   });
 
   // Tenta enviar ao gateway
@@ -64,5 +71,11 @@ export async function markChargeAsPaidAction(chargeId: string) {
 export async function cancelChargeAction(chargeId: string) {
   await requireInternalAuth();
   await updateChargeStatus(chargeId, "cancelled");
+  revalidatePath("/admin/billing");
+}
+
+export async function markChargeAsOverdueAction(chargeId: string) {
+  await requireInternalAuth();
+  await updateChargeStatus(chargeId, "overdue");
   revalidatePath("/admin/billing");
 }
