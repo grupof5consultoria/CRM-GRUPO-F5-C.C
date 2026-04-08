@@ -288,7 +288,7 @@ export function MetaMetricsTable({ clients, allClients }: Props) {
   const filteredClients = clients.filter(c => selectedClientId === "all" || c.id === selectedClientId);
   const cols = ALL_COLUMNS.filter(c => visibleCols.includes(c.key));
 
-  // Totals
+  // Totals (current period)
   const totals: AggEntry = { spend: 0, impressions: 0, reach: 0, linkClicks: 0, leadsFromAds: 0, conversations: 0, leadsScheduled: 0, revenue: 0, budget: 0, cpm: null, cpc: null, ctr: null, costPerResult: null, syncedAt: null, count: 0 };
   filteredClients.forEach(c => {
     const a = aggregateEntries(c.metricEntries, "meta", dateFrom, dateTo);
@@ -302,6 +302,30 @@ export function MetaMetricsTable({ clients, allClients }: Props) {
   if (totals.impressions > 0) { totals.cpm = (totals.spend / totals.impressions) * 1000; totals.ctr = (totals.linkClicks / totals.impressions) * 100; }
   if (totals.linkClicks > 0) totals.cpc = totals.spend / totals.linkClicks;
   if (totals.leadsFromAds > 0) totals.costPerResult = totals.spend / totals.leadsFromAds;
+
+  // Previous period (same duration immediately before dateFrom)
+  const daysInRange = Math.round((new Date(dateTo).getTime() - new Date(dateFrom).getTime()) / 86400000) + 1;
+  const prevTo   = new Date(new Date(dateFrom).getTime() - 86400000).toISOString().split("T")[0];
+  const prevFrom = new Date(new Date(dateFrom).getTime() - daysInRange * 86400000).toISOString().split("T")[0];
+  const prevTotals: AggEntry = { spend: 0, impressions: 0, reach: 0, linkClicks: 0, leadsFromAds: 0, conversations: 0, leadsScheduled: 0, revenue: 0, budget: 0, cpm: null, cpc: null, ctr: null, costPerResult: null, syncedAt: null, count: 0 };
+  filteredClients.forEach(c => {
+    const a = aggregateEntries(c.metricEntries, "meta", prevFrom, prevTo);
+    if (!a) return;
+    prevTotals.spend += a.spend; prevTotals.conversations += a.conversations;
+    prevTotals.leadsFromAds += a.leadsFromAds; prevTotals.count += a.count;
+  });
+  function pctChange(curr: number, prev: number) {
+    if (prev === 0) return null;
+    return ((curr - prev) / prev) * 100;
+  }
+
+  // Daily trend data for chart (single client only)
+  const trendEntries = selectedClientId !== "all" && filteredClients.length === 1
+    ? filteredClients[0].metricEntries.filter(e =>
+        e.platform === "meta" && e.date >= dateFrom && e.date <= dateTo
+      ).sort((a, b) => a.date.localeCompare(b.date))
+    : [];
+  const hasTrend = trendEntries.some(e => (e.conversations ?? 0) > 0);
 
   return (
     <div className="space-y-5">
@@ -401,7 +425,10 @@ export function MetaMetricsTable({ clients, allClients }: Props) {
           {/* Totals */}
           {totals.count > 0 && (
             <div className="border-t border-[#262626] bg-[#111111] px-4 py-3 flex items-center gap-6 flex-wrap text-sm">
-              {visibleCols.includes("spend")         && <div><p className="text-xs text-gray-600">Valor Usado</p><p className="font-bold text-amber-400">{fmtR(totals.spend)}</p></div>}
+              {visibleCols.includes("spend") && (() => {
+                const chg = pctChange(totals.spend, prevTotals.spend);
+                return <div><p className="text-xs text-gray-600">Valor Usado</p><p className="font-bold text-amber-400">{fmtR(totals.spend)}</p>{chg !== null && <p className={`text-[10px] font-semibold ${chg >= 0 ? "text-red-400" : "text-emerald-400"}`}>{chg >= 0 ? "▲" : "▼"} {Math.abs(chg).toFixed(0)}% vs anterior</p>}</div>;
+              })()}
               {visibleCols.includes("budget")        && <div><p className="text-xs text-gray-600">Orçamento</p><p className="font-bold text-amber-300">{fmtR(totals.budget)}</p></div>}
               {visibleCols.includes("impressions")   && <div><p className="text-xs text-gray-600">Impressões</p><p className="font-bold text-gray-300">{totals.impressions.toLocaleString("pt-BR")}</p></div>}
               {visibleCols.includes("reach")         && <div><p className="text-xs text-gray-600">Alcance</p><p className="font-bold text-gray-300">{totals.reach.toLocaleString("pt-BR")}</p></div>}
@@ -409,8 +436,14 @@ export function MetaMetricsTable({ clients, allClients }: Props) {
               {visibleCols.includes("cpm")           && <div><p className="text-xs text-gray-600">CPM Médio</p><p className="font-bold text-gray-300">{fmtR(totals.cpm)}</p></div>}
               {visibleCols.includes("cpc")           && <div><p className="text-xs text-gray-600">CPC Médio</p><p className="font-bold text-gray-300">{fmtR(totals.cpc)}</p></div>}
               {visibleCols.includes("ctr")           && <div><p className="text-xs text-gray-600">CTR Médio</p><p className="font-bold text-gray-300">{fmtPct(totals.ctr)}</p></div>}
-              {visibleCols.includes("leadsFromAds")  && <div><p className="text-xs text-gray-600">Leads (ads)</p><p className="font-bold text-gray-300">{totals.leadsFromAds.toLocaleString("pt-BR")}</p></div>}
-              {visibleCols.includes("conversations")  && <div><p className="text-xs text-gray-600">Conversas</p><p className="font-bold text-blue-300">{totals.conversations.toLocaleString("pt-BR")}</p></div>}
+              {visibleCols.includes("leadsFromAds") && (() => {
+                const chg = pctChange(totals.leadsFromAds, prevTotals.leadsFromAds);
+                return <div><p className="text-xs text-gray-600">Leads (ads)</p><p className="font-bold text-gray-300">{totals.leadsFromAds.toLocaleString("pt-BR")}</p>{chg !== null && <p className={`text-[10px] font-semibold ${chg >= 0 ? "text-emerald-400" : "text-red-400"}`}>{chg >= 0 ? "▲" : "▼"} {Math.abs(chg).toFixed(0)}%</p>}</div>;
+              })()}
+              {visibleCols.includes("conversations") && (() => {
+                const chg = pctChange(totals.conversations, prevTotals.conversations);
+                return <div><p className="text-xs text-gray-600">Conversas</p><p className="font-bold text-blue-300">{totals.conversations.toLocaleString("pt-BR")}</p>{chg !== null && <p className={`text-[10px] font-semibold ${chg >= 0 ? "text-emerald-400" : "text-red-400"}`}>{chg >= 0 ? "▲" : "▼"} {Math.abs(chg).toFixed(0)}%</p>}</div>;
+              })()}
               {visibleCols.includes("leadsScheduled")&& <div><p className="text-xs text-gray-600">Leads Agendados</p><p className="font-bold text-violet-400">{totals.leadsScheduled.toLocaleString("pt-BR")}</p></div>}
               {visibleCols.includes("revenue")       && <div><p className="text-xs text-gray-600">Faturamento</p><p className="font-bold text-emerald-400">{fmtR(totals.revenue)}</p></div>}
               {visibleCols.includes("roi") && (() => {
@@ -419,6 +452,71 @@ export function MetaMetricsTable({ clients, allClients }: Props) {
               })()}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Daily trend chart — single client, when there are conversation data points */}
+      {hasTrend && (
+        <div className="bg-[#1a1a1a] border border-[#262626] rounded-2xl p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <p className="text-sm font-semibold text-white">Evolução Diária — Conversas</p>
+              <p className="text-xs text-gray-600 mt-0.5">{dateFrom} → {dateTo}</p>
+            </div>
+            <div className="flex items-center gap-3 text-xs">
+              <span className="flex items-center gap-1"><span className="w-3 h-2 rounded bg-blue-500/70 inline-block" />Conversas</span>
+              <span className="flex items-center gap-1"><span className="w-3 h-2 rounded bg-amber-500/50 inline-block" />Investimento</span>
+            </div>
+          </div>
+          {(() => {
+            const maxConv  = Math.max(...trendEntries.map(e => e.conversations ?? 0), 1);
+            const maxSpend = Math.max(...trendEntries.map(e => Number(e.spend ?? 0)), 1);
+            // Group by week if > 45 days
+            type Bucket = { label: string; conversations: number; spend: number };
+            let buckets: Bucket[];
+            if (trendEntries.length > 45) {
+              const weekMap = new Map<string, Bucket>();
+              trendEntries.forEach(e => {
+                const d = new Date(e.date);
+                const weekStart = new Date(d);
+                weekStart.setDate(d.getDate() - d.getDay());
+                const key = weekStart.toISOString().split("T")[0];
+                const [, mm, dd] = key.split("-");
+                const existing = weekMap.get(key);
+                if (!existing) weekMap.set(key, { label: `${dd}/${mm}`, conversations: e.conversations ?? 0, spend: Number(e.spend ?? 0) });
+                else { existing.conversations += e.conversations ?? 0; existing.spend += Number(e.spend ?? 0); }
+              });
+              buckets = Array.from(weekMap.values());
+            } else {
+              buckets = trendEntries.map(e => {
+                const [, mm, dd] = e.date.split("-");
+                return { label: `${dd}/${mm}`, conversations: e.conversations ?? 0, spend: Number(e.spend ?? 0) };
+              });
+            }
+            const maxBConv  = Math.max(...buckets.map(b => b.conversations), 1);
+            const maxBSpend = Math.max(...buckets.map(b => b.spend), 1);
+            return (
+              <div className="flex items-end gap-1 overflow-x-auto pb-2" style={{ minHeight: 80 }}>
+                {buckets.map((b, i) => (
+                  <div key={i} className="flex flex-col items-center gap-0.5 flex-shrink-0" style={{ minWidth: buckets.length > 30 ? 12 : 20 }}>
+                    <div className="flex items-end gap-0.5" style={{ height: 60 }}>
+                      <div
+                        title={`Conversas: ${b.conversations}`}
+                        className="rounded-t bg-blue-500/70 transition-all w-2"
+                        style={{ height: `${Math.max((b.conversations / maxBConv) * 100, b.conversations > 0 ? 4 : 0)}%` }}
+                      />
+                      <div
+                        title={`Investimento: R$ ${b.spend.toFixed(2)}`}
+                        className="rounded-t bg-amber-500/50 transition-all w-2"
+                        style={{ height: `${Math.max((b.spend / maxBSpend) * 100, b.spend > 0 ? 4 : 0)}%` }}
+                      />
+                    </div>
+                    {buckets.length <= 31 && <span className="text-[9px] text-gray-700 rotate-0">{b.label.split("/")[0]}</span>}
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
         </div>
       )}
 

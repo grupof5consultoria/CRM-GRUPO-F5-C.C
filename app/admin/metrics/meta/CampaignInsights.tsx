@@ -101,7 +101,14 @@ export function CampaignInsights({ clientId, clientName, dateFrom, dateTo }: Pro
         </div>
       )}
 
-      {campaigns && campaigns.length > 0 && (
+      {campaigns && campaigns.length > 0 && (() => {
+        // Performance alert: compute avg cost per conversation
+        const withConv = campaigns.filter(c => c.conversations > 0 && c.costPerConversation > 0);
+        const avgCpC = withConv.length > 0
+          ? withConv.reduce((s, c) => s + c.costPerConversation, 0) / withConv.length
+          : null;
+
+        return (
         <div className="divide-y divide-[#1e1e1e]">
           {/* Totals */}
           <div className="px-5 py-3 bg-[#111111] flex items-center gap-6 flex-wrap text-xs">
@@ -117,13 +124,26 @@ export function CampaignInsights({ clientId, clientName, dateFrom, dateTo }: Pro
               <p className="text-gray-600">Total investido</p>
               <p className="font-bold text-amber-400 text-sm">{fmtR(campaigns.reduce((s, c) => s + c.spend, 0))}</p>
             </div>
+            {avgCpC && (
+              <div>
+                <p className="text-gray-600">Custo médio/conv</p>
+                <p className="font-bold text-blue-300 text-sm">{fmtR(avgCpC)}</p>
+              </div>
+            )}
             <div>
               <p className="text-gray-600">{campaigns.length} campanha{campaigns.length !== 1 ? "s" : ""}</p>
             </div>
           </div>
 
           {/* Campaign rows */}
-          {campaigns.map((c, i) => (
+          {campaigns.map((c, i) => {
+            const alertLevel = avgCpC && c.costPerConversation > 0
+              ? c.costPerConversation >= avgCpC * 2 ? "red"
+              : c.costPerConversation >= avgCpC * 1.5 ? "yellow"
+              : null
+              : null;
+
+            return (
             <div key={c.campaignId} className="px-5 py-4 hover:bg-[#222] transition-colors">
               <div className="flex items-start gap-3">
                 {/* Medal / rank */}
@@ -133,7 +153,19 @@ export function CampaignInsights({ clientId, clientName, dateFrom, dateTo }: Pro
 
                 {/* Campaign info */}
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-white truncate">{c.campaignName}</p>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-sm font-semibold text-white truncate">{c.campaignName}</p>
+                    {alertLevel === "red" && (
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-red-500/15 text-red-400 border border-red-500/20 flex-shrink-0">
+                        Custo alto
+                      </span>
+                    )}
+                    {alertLevel === "yellow" && (
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-500/15 text-amber-400 border border-amber-500/20 flex-shrink-0">
+                        Atenção
+                      </span>
+                    )}
+                  </div>
 
                   {/* Metrics grid */}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-3">
@@ -166,9 +198,11 @@ export function CampaignInsights({ clientId, clientName, dateFrom, dateTo }: Pro
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
-      )}
+        );
+      })()}
     </div>
   );
 }

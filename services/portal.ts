@@ -105,12 +105,14 @@ export async function getPortalReport(clientId: string, period: string) {
 
   // Aggregate daily entries into a single summary
   let spend = 0, impressions = 0, leadsFromAds = 0, reach = 0, cpmTotal = 0, cpmCount = 0;
+  let conversations = 0;
   let leadsScheduled: number | null = null, revenue: number | null = null;
   for (const e of entries) {
     spend += Number(e.spend ?? 0);
     impressions += e.impressions ?? 0;
     leadsFromAds += e.leadsFromAds ?? 0;
     reach += e.reach ?? 0;
+    conversations += e.conversations ?? 0;
     if (e.cpm != null) { cpmTotal += Number(e.cpm); cpmCount++; }
     if (e.leadsScheduled != null) leadsScheduled = (leadsScheduled ?? 0) + e.leadsScheduled;
     if (e.revenue != null) revenue = (revenue ?? 0) + Number(e.revenue);
@@ -124,6 +126,8 @@ export async function getPortalReport(clientId: string, period: string) {
         leadsScheduled,
         revenue: revenue != null ? { toString: () => String(revenue) } : null,
         reach,
+        conversations,
+        costPerConversation: conversations > 0 && spend > 0 ? spend / conversations : null,
         cpm: cpmCount > 0 ? { toString: () => String(cpmTotal / cpmCount) } : null,
       }
     : null;

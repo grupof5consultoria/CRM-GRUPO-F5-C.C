@@ -173,14 +173,14 @@ export default async function PortalDashboardPage({
           </div>
           <div className="grid grid-cols-2 gap-3">
             {[
-              { label: "Alcance", value: metricEntry.reach?.toLocaleString("pt-BR") ?? "—" },
-              { label: "Impressões", value: metricEntry.impressions?.toLocaleString("pt-BR") ?? "—" },
-              { label: "Leads gerados", value: metricEntry.leadsFromAds?.toLocaleString("pt-BR") ?? "—" },
-              { label: "CPM", value: metricEntry.cpm ? `R$ ${Number(metricEntry.cpm).toFixed(2)}` : "—" },
-            ].map(({ label, value }) => (
+              { label: "Conversas WhatsApp", value: metricEntry.conversations > 0 ? metricEntry.conversations.toLocaleString("pt-BR") : "—", accent: "text-blue-400" },
+              { label: "Custo/Conversa",     value: metricEntry.costPerConversation ? `R$ ${metricEntry.costPerConversation.toFixed(2)}` : "—", accent: "text-blue-300" },
+              { label: "Impressões",         value: metricEntry.impressions?.toLocaleString("pt-BR") ?? "—", accent: "text-gray-200" },
+              { label: "Alcance",            value: metricEntry.reach?.toLocaleString("pt-BR") ?? "—", accent: "text-gray-200" },
+            ].map(({ label, value, accent }) => (
               <div key={label} className="bg-[#111111] rounded-xl px-3 py-2.5">
                 <p className="text-xs text-gray-500">{label}</p>
-                <p className="text-sm font-semibold text-gray-200 mt-0.5">{value}</p>
+                <p className={`text-sm font-semibold mt-0.5 ${accent}`}>{value}</p>
               </div>
             ))}
           </div>
