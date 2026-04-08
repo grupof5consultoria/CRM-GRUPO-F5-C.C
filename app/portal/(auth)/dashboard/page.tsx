@@ -47,10 +47,23 @@ export default async function PortalDashboardPage({
   const { period: rawPeriod } = await searchParams;
   const period = rawPeriod ?? periods[0];
 
-  const [{ metricEntry, attendances }, { metricEntries, attendanceGroups }] = await Promise.all([
-    getPortalReport(session.clientId, period),
-    getPortalTrend(session.clientId, periods.slice(0, 4)),
-  ]);
+  let metricEntry = null as Awaited<ReturnType<typeof getPortalReport>>["metricEntry"];
+  let attendances: Awaited<ReturnType<typeof getPortalReport>>["attendances"] = [];
+  let metricEntries: Awaited<ReturnType<typeof getPortalTrend>>["metricEntries"] = [];
+  let attendanceGroups: Awaited<ReturnType<typeof getPortalTrend>>["attendanceGroups"] = [];
+
+  try {
+    const [report, trend] = await Promise.all([
+      getPortalReport(session.clientId, period),
+      getPortalTrend(session.clientId, periods.slice(0, 4)),
+    ]);
+    metricEntry = report.metricEntry;
+    attendances = report.attendances;
+    metricEntries = trend.metricEntries;
+    attendanceGroups = trend.attendanceGroups;
+  } catch {
+    // DB temporarily unavailable — render with empty state
+  }
 
   // ── KPIs ──────────────────────────────────────────────────────────────────
   const investment = Number(metricEntry?.spend ?? 0);
