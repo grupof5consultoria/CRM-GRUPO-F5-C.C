@@ -83,6 +83,36 @@ export async function getPortalCharges(clientId: string) {
   });
 }
 
+export async function getPortalReport(clientId: string, period: string) {
+  const [metricEntry, attendances] = await Promise.all([
+    prisma.clientMetricEntry.findFirst({
+      where: { clientId, platform: "meta", period },
+    }),
+    prisma.attendance.findMany({
+      where: { clientId, period },
+      include: { service: { select: { name: true } } },
+      orderBy: { contactDate: "desc" },
+    }).catch(() => []), // graceful if table doesn't exist yet
+  ]);
+  return { metricEntry, attendances };
+}
+
+export async function getPortalTrend(clientId: string, periods: string[]) {
+  const [metricEntries, attendanceGroups] = await Promise.all([
+    prisma.clientMetricEntry.findMany({
+      where: { clientId, platform: "meta", period: { in: periods } },
+      select: { period: true, spend: true },
+    }),
+    prisma.attendance.groupBy({
+      by: ["period", "status"],
+      where: { clientId, period: { in: periods } },
+      _count: { id: true },
+      _sum: { valueClosed: true },
+    }).catch(() => []),
+  ]);
+  return { metricEntries, attendanceGroups };
+}
+
 export async function getPortalAccount(clientId: string) {
   return prisma.client.findUnique({
     where: { id: clientId },
