@@ -44,6 +44,13 @@ interface MetricEntry {
   syncedAt: Date | null;
 }
 
+interface AggEntry {
+  spend: number; impressions: number; clicks: number;
+  leadsFromAds: number; leadsScheduled: number; revenue: number;
+  cpc: number | null; costPerResult: number | null;
+  syncedAt: Date | null; count: number;
+}
+
 interface Client {
   id: string;
   name: string;
@@ -62,33 +69,73 @@ interface Props {
 
 // ─── Formatters ───────────────────────────────────────────────────────────────
 
-function fmtR(v: { toString(): string } | null | undefined) {
+function fmtR(v: number | null | undefined) {
   if (v == null) return "—";
-  return `R$ ${Number(v).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
+  return `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
 }
 function fmtN(v: number | null | undefined) {
-  return v == null ? "—" : v.toLocaleString("pt-BR");
+  return v == null || v === 0 ? "—" : v.toLocaleString("pt-BR");
 }
 
-function getCellValue(entry: MetricEntry | undefined, col: ColKey): React.ReactNode {
-  if (!entry) return <span className="text-gray-700">—</span>;
+// ─── Aggregation ─────────────────────────────────────────────────────────────
+
+function aggregateEntries(
+  entries: MetricEntry[], platform: string, from: string, to: string
+): AggEntry | null {
+  const inRange = entries.filter(
+    (e) => e.platform === platform && e.period >= from && e.period <= to
+  );
+  if (inRange.length === 0) return null;
+
+  const sumD = (key: keyof MetricEntry) =>
+    inRange.reduce((a, e) => a + Number(e[key] ?? 0), 0);
+  const sumN = (key: keyof MetricEntry) =>
+    inRange.reduce((a, e) => a + ((e[key] as number) ?? 0), 0);
+
+  const spend = sumD("spend");
+  const impressions = sumN("impressions");
+  const clicks = sumN("clicks");
+  const leadsFromAds = sumN("leadsFromAds");
+  const leadsScheduled = sumN("leadsScheduled");
+  const revenue = sumD("revenue");
+
+  const cpc = clicks > 0 ? spend / clicks : null;
+  const costPerResult = leadsFromAds > 0 ? spend / leadsFromAds : null;
+
+  const syncedAt = inRange.reduce<Date | null>(
+    (latest, e) =>
+      !e.syncedAt ? latest : !latest || e.syncedAt > latest ? e.syncedAt : latest,
+    null
+  );
+
+  return {
+    spend, impressions, clicks, leadsFromAds, leadsScheduled,
+    revenue, cpc, costPerResult, syncedAt, count: inRange.length,
+  };
+}
+
+// ─── Cell renderer ────────────────────────────────────────────────────────────
+
+function Cell({ agg, col }: { agg: AggEntry | null; col: ColKey }) {
+  if (!agg) return <span className="text-gray-700">—</span>;
+  const v = agg;
   switch (col) {
-    case "impressions":    return <span className="text-gray-300">{fmtN(entry.impressions)}</span>;
-    case "clicks":         return <span className="text-blue-300">{fmtN(entry.clicks)}</span>;
-    case "cpc":            return <span className="text-gray-300">{fmtR(entry.cpc)}</span>;
-    case "leadsFromAds":   return <span className="text-gray-300">{fmtN(entry.leadsFromAds)}</span>;
-    case "costPerResult":  return <span className="text-gray-300">{fmtR(entry.costPerResult)}</span>;
-    case "spend":          return <span className={entry.spend ? "text-amber-400 font-medium" : "text-gray-600"}>{fmtR(entry.spend)}</span>;
-    case "leadsScheduled": return <span className={entry.leadsScheduled != null ? "text-violet-400 font-medium" : "text-gray-600"}>{entry.leadsScheduled ?? "—"}</span>;
-    case "revenue":        return <span className={entry.revenue ? "text-emerald-400 font-medium" : "text-gray-600"}>{fmtR(entry.revenue)}</span>;
+    case "impressions":    return <span className="text-gray-300">{fmtN(v.impressions)}</span>;
+    case "clicks":         return <span className="text-blue-300">{fmtN(v.clicks)}</span>;
+    case "cpc":            return <span className="text-gray-300">{fmtR(v.cpc)}</span>;
+    case "leadsFromAds":   return <span className="text-gray-300">{fmtN(v.leadsFromAds)}</span>;
+    case "costPerResult":  return <span className="text-gray-300">{fmtR(v.costPerResult)}</span>;
+    case "spend":          return <span className={v.spend ? "text-amber-400 font-medium" : "text-gray-600"}>{fmtR(v.spend || null)}</span>;
+    case "leadsScheduled": return <span className={v.leadsScheduled ? "text-violet-400 font-medium" : "text-gray-600"}>{v.leadsScheduled || "—"}</span>;
+    case "revenue":        return <span className={v.revenue ? "text-emerald-400 font-medium" : "text-gray-600"}>{fmtR(v.revenue || null)}</span>;
     case "roi": {
-      const s = Number(entry.spend ?? 0);
-      const r = Number(entry.revenue ?? 0);
-      if (!s) return <span className="text-gray-600">—</span>;
-      const pct = ((r - s) / s) * 100;
-      return <span className={`font-semibold ${pct >= 0 ? "text-emerald-400" : "text-red-400"}`}>{pct >= 0 ? "+" : ""}{pct.toFixed(0)}%</span>;
+      if (!v.spend) return <span className="text-gray-600">—</span>;
+      const pct = ((v.revenue - v.spend) / v.spend) * 100;
+      return <span className={`font-semibold ${pct >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+        {pct >= 0 ? "+" : ""}{pct.toFixed(0)}%
+      </span>;
     }
-    default: return "—";
+    default: return <span className="text-gray-700">—</span>;
   }
 }
 
@@ -133,22 +180,11 @@ function ColumnFilter({ selected, onChange }: { selected: ColKey[]; onChange: (c
           <div className="flex items-center justify-between px-4 py-3 border-b border-[#262626]">
             <p className="text-sm font-semibold text-white">Selecionar Colunas</p>
             <div className="flex gap-2">
-              <button
-                onClick={() => onChange(ALL_COLUMNS.map((c) => c.key))}
-                className="text-xs text-violet-400 hover:text-violet-300 transition-colors"
-              >
-                Todas
-              </button>
+              <button onClick={() => onChange(ALL_COLUMNS.map((c) => c.key))} className="text-xs text-violet-400 hover:text-violet-300 transition-colors">Todas</button>
               <span className="text-[#333]">|</span>
-              <button
-                onClick={() => onChange(DEFAULT_COLS)}
-                className="text-xs text-gray-500 hover:text-gray-300 transition-colors"
-              >
-                Padrão
-              </button>
+              <button onClick={() => onChange(DEFAULT_COLS)} className="text-xs text-gray-500 hover:text-gray-300 transition-colors">Padrão</button>
             </div>
           </div>
-
           <div className="p-3 space-y-3 max-h-80 overflow-y-auto">
             {groups.map((group) => (
               <div key={group}>
@@ -157,21 +193,11 @@ function ColumnFilter({ selected, onChange }: { selected: ColKey[]; onChange: (c
                   {ALL_COLUMNS.filter((c) => c.group === group).map((col) => {
                     const active = selected.includes(col.key);
                     return (
-                      <button
-                        key={col.key}
-                        onClick={() => toggle(col.key)}
-                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-all ${
-                          active ? "bg-violet-500/10 text-violet-300" : "text-gray-500 hover:bg-[#222] hover:text-gray-300"
-                        }`}
+                      <button key={col.key} onClick={() => toggle(col.key)}
+                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-all ${active ? "bg-violet-500/10 text-violet-300" : "text-gray-500 hover:bg-[#222] hover:text-gray-300"}`}
                       >
-                        <span className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 border transition-all ${
-                          active ? "bg-violet-600 border-violet-500" : "border-[#333]"
-                        }`}>
-                          {active && (
-                            <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                            </svg>
-                          )}
+                        <span className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 border transition-all ${active ? "bg-violet-600 border-violet-500" : "border-[#333]"}`}>
+                          {active && <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
                         </span>
                         {col.label}
                       </button>
@@ -181,10 +207,8 @@ function ColumnFilter({ selected, onChange }: { selected: ColKey[]; onChange: (c
               </div>
             ))}
           </div>
-
           <div className="px-4 py-3 border-t border-[#262626]">
-            <button
-              onClick={() => setOpen(false)}
+            <button onClick={() => setOpen(false)}
               className="relative w-full py-2 rounded-xl text-sm font-semibold text-white overflow-hidden"
               style={{ background: "linear-gradient(135deg, #6d28d9 0%, #7c3aed 40%, #5b21b6 100%)" }}
             >
@@ -201,7 +225,8 @@ function ColumnFilter({ selected, onChange }: { selected: ColKey[]; onChange: (c
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function GoogleMetricsTable({ clients, allClients, currentPeriod, periods }: Props) {
-  const [period, setPeriod] = useState(currentPeriod);
+  const [periodFrom, setPeriodFrom] = useState(currentPeriod);
+  const [periodTo, setPeriodTo]     = useState(currentPeriod);
   const [selectedClientId, setSelectedClientId] = useState("all");
   const [visibleCols, setVisibleCols] = useState<ColKey[]>(DEFAULT_COLS);
 
@@ -220,11 +245,48 @@ export function GoogleMetricsTable({ clients, allClients, currentPeriod, periods
     localStorage.setItem(LS_KEY, JSON.stringify(cols));
   }
 
-  const filteredClients = clients.filter((c) =>
-    selectedClientId === "all" || c.id === selectedClientId
-  );
+  function handleFromChange(val: string) {
+    setPeriodFrom(val);
+    if (val > periodTo) setPeriodTo(val);
+  }
+  function handleToChange(val: string) {
+    setPeriodTo(val);
+    if (val < periodFrom) setPeriodFrom(val);
+  }
 
+  const isRange = periodFrom !== periodTo;
+  const rangeCount = isRange
+    ? periods.filter((p) => p >= periodFrom && p <= periodTo).length
+    : null;
+
+  const filteredClients = clients.filter(
+    (c) => selectedClientId === "all" || c.id === selectedClientId
+  );
   const cols = ALL_COLUMNS.filter((c) => visibleCols.includes(c.key));
+
+  // Aggregate totals
+  const totalsAgg: AggEntry = {
+    spend: 0, impressions: 0, clicks: 0,
+    leadsFromAds: 0, leadsScheduled: 0, revenue: 0,
+    cpc: null, costPerResult: null, syncedAt: null, count: 0,
+  };
+  filteredClients.forEach((c) => {
+    const a = aggregateEntries(c.metricEntries, "google", periodFrom, periodTo);
+    if (!a) return;
+    totalsAgg.spend += a.spend;
+    totalsAgg.impressions += a.impressions;
+    totalsAgg.clicks += a.clicks;
+    totalsAgg.leadsFromAds += a.leadsFromAds;
+    totalsAgg.leadsScheduled += a.leadsScheduled;
+    totalsAgg.revenue += a.revenue;
+    totalsAgg.count += a.count;
+  });
+  if (totalsAgg.clicks > 0) totalsAgg.cpc = totalsAgg.spend / totalsAgg.clicks;
+  if (totalsAgg.leadsFromAds > 0) totalsAgg.costPerResult = totalsAgg.spend / totalsAgg.leadsFromAds;
+
+  const hasTotals = totalsAgg.count > 0;
+
+  const selectCls = "bg-[#1a1a1a] border border-[#262626] rounded-xl px-3 py-2 text-sm text-gray-300 focus:outline-none focus:border-violet-500";
 
   return (
     <div className="space-y-5">
@@ -236,31 +298,37 @@ export function GoogleMetricsTable({ clients, allClients, currentPeriod, periods
           <span className="text-xs text-gray-600 ml-1">{clients.length} cliente{clients.length !== 1 ? "s" : ""}</span>
         </div>
 
-        <select
-          value={selectedClientId}
-          onChange={(e) => setSelectedClientId(e.target.value)}
-          className="bg-[#1a1a1a] border border-[#262626] rounded-xl px-3 py-2 text-sm text-gray-300 focus:outline-none focus:border-violet-500 min-w-[180px]"
-        >
+        <select value={selectedClientId} onChange={(e) => setSelectedClientId(e.target.value)} className={`${selectCls} min-w-[180px]`}>
           <option value="all">Todos os clientes</option>
           {allClients.map((c) => {
-            const hasCredential = clients.some((gc) => gc.id === c.id);
-            return (
-              <option key={c.id} value={c.id} disabled={!hasCredential}>
-                {c.name}{!hasCredential ? " (sem credencial)" : ""}
-              </option>
-            );
+            const has = clients.some((gc) => gc.id === c.id);
+            return <option key={c.id} value={c.id} disabled={!has}>{c.name}{!has ? " (sem credencial)" : ""}</option>;
           })}
         </select>
 
-        <select
-          value={period}
-          onChange={(e) => setPeriod(e.target.value)}
-          className="bg-[#1a1a1a] border border-[#262626] rounded-xl px-3 py-2 text-sm text-gray-300 focus:outline-none focus:border-violet-500"
-        >
-          {periods.map((p) => (
-            <option key={p} value={p}>{p}</option>
-          ))}
-        </select>
+        {/* Date range */}
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-gray-500 font-medium">De</span>
+            <select value={periodFrom} onChange={(e) => handleFromChange(e.target.value)} className={selectCls}>
+              {periods.map((p) => <option key={p} value={p}>{p}</option>)}
+            </select>
+          </div>
+          <svg className="w-4 h-4 text-gray-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+          </svg>
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-gray-500 font-medium">Até</span>
+            <select value={periodTo} onChange={(e) => handleToChange(e.target.value)} className={selectCls}>
+              {periods.map((p) => <option key={p} value={p}>{p}</option>)}
+            </select>
+          </div>
+          {isRange && (
+            <span className="text-xs bg-red-500/15 text-red-400 border border-red-500/20 rounded-lg px-2 py-1 font-medium">
+              {rangeCount} meses
+            </span>
+          )}
+        </div>
 
         <div className="ml-auto">
           <ColumnFilter selected={visibleCols} onChange={handleColChange} />
@@ -287,32 +355,32 @@ export function GoogleMetricsTable({ clients, allClients, currentPeriod, periods
                       {col.label}
                     </th>
                   ))}
-                  <th className="px-3 py-3" />
+                  {!isRange && <th className="px-3 py-3" />}
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#1e1e1e]">
                 {filteredClients.map((client) => {
-                  const entry = client.metricEntries.find(
-                    (e) => e.platform === "google" && e.period === period
-                  );
+                  const agg = aggregateEntries(client.metricEntries, "google", periodFrom, periodTo);
                   return (
                     <tr key={client.id} className="hover:bg-[#222222] transition-colors">
                       <td className="px-4 py-3 sticky left-0 bg-[#1a1a1a] hover:bg-[#222222] z-10">
                         <p className="text-white font-medium whitespace-nowrap">{client.name}</p>
-                        {entry?.syncedAt ? (
-                          <p className="text-xs text-gray-600">Sync: {new Date(entry.syncedAt).toLocaleDateString("pt-BR")}</p>
+                        {agg?.syncedAt ? (
+                          <p className="text-xs text-gray-600">Sync: {new Date(agg.syncedAt).toLocaleDateString("pt-BR")}</p>
                         ) : (
-                          <p className="text-xs text-gray-700">Não sincronizado</p>
+                          <p className="text-xs text-gray-700">{agg ? "Não sincronizado" : "Sem dados"}</p>
                         )}
                       </td>
                       {cols.map((col) => (
                         <td key={col.key} className="px-4 py-3 text-right whitespace-nowrap">
-                          {getCellValue(entry, col.key)}
+                          <Cell agg={agg} col={col.key} />
                         </td>
                       ))}
-                      <td className="px-3 py-3">
-                        <SyncButton clientId={client.id} platform="google" period={period} />
-                      </td>
+                      {!isRange && (
+                        <td className="px-3 py-3">
+                          <SyncButton clientId={client.id} platform="google" period={periodFrom} />
+                        </td>
+                      )}
                     </tr>
                   );
                 })}
@@ -321,34 +389,19 @@ export function GoogleMetricsTable({ clients, allClients, currentPeriod, periods
           </div>
 
           {/* Totals */}
-          {filteredClients.some((c) => c.metricEntries.some((e) => e.platform === "google" && e.period === period)) && (
+          {hasTotals && (
             <div className="border-t border-[#262626] bg-[#111111] px-4 py-3 flex items-center gap-6 flex-wrap text-sm">
-              {(() => {
-                const entries = filteredClients
-                  .map((c) => c.metricEntries.find((e) => e.platform === "google" && e.period === period))
-                  .filter(Boolean) as MetricEntry[];
-                const totalSpend = entries.reduce((a, e) => a + Number(e.spend ?? 0), 0);
-                const totalRevenue = entries.reduce((a, e) => a + Number(e.revenue ?? 0), 0);
-                const totalImpressions = entries.reduce((a, e) => a + (e.impressions ?? 0), 0);
-                const totalClicks = entries.reduce((a, e) => a + (e.clicks ?? 0), 0);
-                const totalConversions = entries.reduce((a, e) => a + (e.leadsFromAds ?? 0), 0);
-                const totalLeadsSched = entries.reduce((a, e) => a + (e.leadsScheduled ?? 0), 0);
-                const avgCpc = totalClicks > 0 ? totalSpend / totalClicks : 0;
-                const avgCostPerConv = totalConversions > 0 ? totalSpend / totalConversions : 0;
-                const roi = totalSpend ? ((totalRevenue - totalSpend) / totalSpend) * 100 : 0;
-                return (
-                  <>
-                    {visibleCols.includes("impressions") && <div><p className="text-xs text-gray-600">Impressões</p><p className="font-bold text-gray-300">{totalImpressions.toLocaleString("pt-BR")}</p></div>}
-                    {visibleCols.includes("clicks") && <div><p className="text-xs text-gray-600">Cliques</p><p className="font-bold text-blue-300">{totalClicks.toLocaleString("pt-BR")}</p></div>}
-                    {visibleCols.includes("cpc") && <div><p className="text-xs text-gray-600">CPC Médio</p><p className="font-bold text-gray-300">R$ {avgCpc.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p></div>}
-                    {visibleCols.includes("leadsFromAds") && <div><p className="text-xs text-gray-600">Conversões</p><p className="font-bold text-gray-300">{totalConversions.toLocaleString("pt-BR")}</p></div>}
-                    {visibleCols.includes("costPerResult") && <div><p className="text-xs text-gray-600">Custo/Conversão</p><p className="font-bold text-gray-300">R$ {avgCostPerConv.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p></div>}
-                    {visibleCols.includes("spend") && <div><p className="text-xs text-gray-600">Investimento</p><p className="font-bold text-amber-400">R$ {totalSpend.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p></div>}
-                    {visibleCols.includes("leadsScheduled") && <div><p className="text-xs text-gray-600">Leads Agendados</p><p className="font-bold text-violet-400">{totalLeadsSched.toLocaleString("pt-BR")}</p></div>}
-                    {visibleCols.includes("revenue") && <div><p className="text-xs text-gray-600">Faturamento</p><p className="font-bold text-emerald-400">R$ {totalRevenue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p></div>}
-                    {visibleCols.includes("roi") && <div><p className="text-xs text-gray-600">ROI</p><p className={`font-bold ${roi >= 0 ? "text-emerald-400" : "text-red-400"}`}>{roi >= 0 ? "+" : ""}{roi.toFixed(0)}%</p></div>}
-                  </>
-                );
+              {visibleCols.includes("impressions")    && <div><p className="text-xs text-gray-600">Impressões</p><p className="font-bold text-gray-300">{totalsAgg.impressions.toLocaleString("pt-BR")}</p></div>}
+              {visibleCols.includes("clicks")         && <div><p className="text-xs text-gray-600">Cliques</p><p className="font-bold text-blue-300">{totalsAgg.clicks.toLocaleString("pt-BR")}</p></div>}
+              {visibleCols.includes("cpc")            && <div><p className="text-xs text-gray-600">CPC Médio</p><p className="font-bold text-gray-300">{fmtR(totalsAgg.cpc)}</p></div>}
+              {visibleCols.includes("leadsFromAds")   && <div><p className="text-xs text-gray-600">Conversões</p><p className="font-bold text-gray-300">{totalsAgg.leadsFromAds.toLocaleString("pt-BR")}</p></div>}
+              {visibleCols.includes("costPerResult")  && <div><p className="text-xs text-gray-600">Custo/Conversão</p><p className="font-bold text-gray-300">{fmtR(totalsAgg.costPerResult)}</p></div>}
+              {visibleCols.includes("spend")          && <div><p className="text-xs text-gray-600">Investimento</p><p className="font-bold text-amber-400">{fmtR(totalsAgg.spend)}</p></div>}
+              {visibleCols.includes("leadsScheduled") && <div><p className="text-xs text-gray-600">Leads Agendados</p><p className="font-bold text-violet-400">{totalsAgg.leadsScheduled.toLocaleString("pt-BR")}</p></div>}
+              {visibleCols.includes("revenue")        && <div><p className="text-xs text-gray-600">Faturamento</p><p className="font-bold text-emerald-400">{fmtR(totalsAgg.revenue)}</p></div>}
+              {visibleCols.includes("roi")            && (() => {
+                const roi = totalsAgg.spend > 0 ? ((totalsAgg.revenue - totalsAgg.spend) / totalsAgg.spend) * 100 : null;
+                return <div><p className="text-xs text-gray-600">ROI</p><p className={`font-bold ${roi == null ? "text-gray-600" : roi >= 0 ? "text-emerald-400" : "text-red-400"}`}>{roi == null ? "—" : `${roi >= 0 ? "+" : ""}${roi.toFixed(0)}%`}</p></div>;
               })()}
             </div>
           )}
