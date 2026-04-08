@@ -10,8 +10,10 @@ interface Campaign {
   impressions: number;
   leadsFromAds: number;
   conversations: number;
+  newFollowers: number;
   costPerResult: number;
   costPerConversation: number;
+  costPerFollower: number;
 }
 
 interface Props {
@@ -151,6 +153,15 @@ export function CampaignInsights({ clientId, clientName, dateFrom, dateTo }: Pro
                       <p className="text-xs text-gray-600 mb-0.5">Impressões</p>
                       <p className="text-sm font-bold text-gray-400">{fmtN(c.impressions)}</p>
                     </div>
+                    {c.newFollowers > 0 && (
+                      <div className="bg-[#111111] border border-pink-500/20 rounded-xl px-3 py-2">
+                        <p className="text-xs text-gray-600 mb-0.5">Seguidores Ganhos</p>
+                        <p className="text-sm font-bold text-pink-400">{fmtN(c.newFollowers)}</p>
+                        {c.costPerFollower > 0 && (
+                          <p className="text-xs text-gray-600 mt-0.5">{fmtR(c.costPerFollower)}/seguidor</p>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

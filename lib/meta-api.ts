@@ -93,8 +93,10 @@ export interface MetaCampaignInsight {
   impressions: number;
   leadsFromAds: number;
   conversations: number;
+  newFollowers: number;
   costPerResult: number;
   costPerConversation: number;
+  costPerFollower: number;
 }
 
 export async function fetchMetaCampaignInsights(
@@ -136,13 +138,19 @@ export async function fetchMetaCampaignInsights(
       a.action_type === "onsite_conversion.total_messaging_connection" ||
       a.action_type === "onsite_conversion.messaging_first_reply"
     );
+    const followAction       = actions?.find((a) => a.action_type === "follow");
     const costPerLead        = costPerAction?.find((a) => a.action_type === "lead" || a.action_type === "onsite_conversion.lead_grouped");
+    const costPerFollowAction = costPerAction?.find((a) => a.action_type === "follow");
 
     const spend         = parseFloat((row.spend as string) ?? "0");
     const leadsFromAds  = parseInt(leadAction?.value ?? "0");
     const conversations = parseInt(conversationAction?.value ?? "0");
+    const newFollowers  = parseInt(followAction?.value ?? "0");
     const costPerResult = parseFloat(costPerLead?.value ?? "0");
     const costPerConversation = conversations > 0 ? spend / conversations : 0;
+    const costPerFollower = costPerFollowAction
+      ? parseFloat(costPerFollowAction.value)
+      : newFollowers > 0 ? spend / newFollowers : 0;
 
     return {
       campaignId:          (row.campaign_id as string) ?? "",
@@ -151,8 +159,10 @@ export async function fetchMetaCampaignInsights(
       impressions:         parseInt((row.impressions as string) ?? "0"),
       leadsFromAds,
       conversations,
+      newFollowers,
       costPerResult,
       costPerConversation,
+      costPerFollower,
     };
   }).filter((r) => r.campaignId !== "");
 }
