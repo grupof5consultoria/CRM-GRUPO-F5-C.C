@@ -536,63 +536,103 @@ export function MetaMetricsTable({ clients, allClients }: Props) {
 
       {/* Daily trend chart — single client, when there are conversation data points */}
       {hasTrend && (
-        <div className="bg-[#1a1a1a] border border-[#262626] rounded-2xl p-4">
-          <div className="flex items-center justify-between mb-3">
+        <div className="bg-[#1a1a1a] border border-[#262626] rounded-2xl p-5">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-4">
             <div>
               <p className="text-sm font-semibold text-white">Evolução Diária — Conversas</p>
               <p className="text-xs text-gray-600 mt-0.5">{dateFrom} → {dateTo}</p>
             </div>
-            <div className="flex items-center gap-3 text-xs">
-              <span className="flex items-center gap-1"><span className="w-3 h-2 rounded bg-blue-500/70 inline-block" />Conversas</span>
-              <span className="flex items-center gap-1"><span className="w-3 h-2 rounded bg-amber-500/50 inline-block" />Investimento</span>
+            <div className="flex items-center gap-4 text-xs text-gray-500">
+              <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-blue-500/80 inline-block" />Conversas</span>
+              <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-amber-500/60 inline-block" />Investimento</span>
             </div>
           </div>
+
           {(() => {
-            const maxConv  = Math.max(...trendEntries.map(e => e.conversations ?? 0), 1);
-            const maxSpend = Math.max(...trendEntries.map(e => Number(e.spend ?? 0)), 1);
-            // Group by week if > 45 days
-            type Bucket = { label: string; conversations: number; spend: number };
+            type Bucket = { label: string; fullLabel: string; conversations: number; spend: number };
             let buckets: Bucket[];
+
             if (trendEntries.length > 45) {
+              // Group by week
               const weekMap = new Map<string, Bucket>();
               trendEntries.forEach(e => {
                 const d = new Date(e.date);
-                const weekStart = new Date(d);
-                weekStart.setDate(d.getDate() - d.getDay());
-                const key = weekStart.toISOString().split("T")[0];
+                const ws = new Date(d); ws.setDate(d.getDate() - d.getDay());
+                const key = ws.toISOString().split("T")[0];
                 const [, mm, dd] = key.split("-");
-                const existing = weekMap.get(key);
-                if (!existing) weekMap.set(key, { label: `${dd}/${mm}`, conversations: e.conversations ?? 0, spend: Number(e.spend ?? 0) });
-                else { existing.conversations += e.conversations ?? 0; existing.spend += Number(e.spend ?? 0); }
+                const ex = weekMap.get(key);
+                if (!ex) weekMap.set(key, { label: `${dd}/${mm}`, fullLabel: `Semana ${dd}/${mm}`, conversations: e.conversations ?? 0, spend: Number(e.spend ?? 0) });
+                else { ex.conversations += e.conversations ?? 0; ex.spend += Number(e.spend ?? 0); }
               });
               buckets = Array.from(weekMap.values());
             } else {
               buckets = trendEntries.map(e => {
                 const [, mm, dd] = e.date.split("-");
-                return { label: `${dd}/${mm}`, conversations: e.conversations ?? 0, spend: Number(e.spend ?? 0) };
+                return { label: `${dd}/${mm}`, fullLabel: e.date, conversations: e.conversations ?? 0, spend: Number(e.spend ?? 0) };
               });
             }
+
             const maxBConv  = Math.max(...buckets.map(b => b.conversations), 1);
             const maxBSpend = Math.max(...buckets.map(b => b.spend), 1);
+            const CHART_H   = 160;
+            const barW      = buckets.length > 60 ? 6 : buckets.length > 30 ? 10 : 16;
+            const showLabel = buckets.length <= 31;
+
+            // Y-axis reference lines
+            const yTicks = [0, 25, 50, 75, 100];
+
             return (
-              <div className="flex items-end gap-1 overflow-x-auto pb-2" style={{ minHeight: 80 }}>
-                {buckets.map((b, i) => (
-                  <div key={i} className="flex flex-col items-center gap-0.5 flex-shrink-0" style={{ minWidth: buckets.length > 30 ? 12 : 20 }}>
-                    <div className="flex items-end gap-0.5" style={{ height: 60 }}>
-                      <div
-                        title={`Conversas: ${b.conversations}`}
-                        className="rounded-t bg-blue-500/70 transition-all w-2"
-                        style={{ height: `${Math.max((b.conversations / maxBConv) * 100, b.conversations > 0 ? 4 : 0)}%` }}
-                      />
-                      <div
-                        title={`Investimento: R$ ${b.spend.toFixed(2)}`}
-                        className="rounded-t bg-amber-500/50 transition-all w-2"
-                        style={{ height: `${Math.max((b.spend / maxBSpend) * 100, b.spend > 0 ? 4 : 0)}%` }}
-                      />
-                    </div>
-                    {buckets.length <= 31 && <span className="text-[9px] text-gray-700 rotate-0">{b.label.split("/")[0]}</span>}
-                  </div>
-                ))}
+              <div className="relative">
+                {/* Y-axis grid lines */}
+                <div className="absolute inset-0 flex flex-col justify-between pointer-events-none" style={{ bottom: showLabel ? 20 : 0 }}>
+                  {yTicks.slice(0, -1).reverse().map(pct => (
+                    <div key={pct} className="border-t border-[#262626] w-full" style={{ height: 0 }} />
+                  ))}
+                </div>
+
+                {/* Chart bars */}
+                <div
+                  className="flex items-end gap-1 overflow-x-auto"
+                  style={{ height: CHART_H + (showLabel ? 24 : 0) }}
+                >
+                  {buckets.map((b, i) => {
+                    const convH  = Math.max((b.conversations / maxBConv) * CHART_H, b.conversations > 0 ? 3 : 0);
+                    const spendH = Math.max((b.spend / maxBSpend) * CHART_H, b.spend > 0 ? 3 : 0);
+                    return (
+                      <div key={i} className="flex flex-col items-center gap-0.5 flex-shrink-0 group" style={{ minWidth: barW * 2 + 4 }}>
+                        {/* Tooltip on hover */}
+                        <div className="relative flex items-end gap-0.5" style={{ height: CHART_H }}>
+                          <div className="absolute -top-8 left-1/2 -translate-x-1/2 hidden group-hover:flex flex-col items-center z-10 pointer-events-none">
+                            <div className="bg-[#111] border border-[#333] rounded-lg px-2 py-1 whitespace-nowrap text-[10px] text-gray-300 shadow-lg">
+                              <span className="text-blue-400 font-bold">{b.conversations}</span>
+                              <span className="text-gray-600 mx-1">·</span>
+                              <span className="text-amber-400">R${b.spend.toFixed(0)}</span>
+                            </div>
+                          </div>
+                          <div
+                            className="rounded-t-sm bg-blue-500/75 hover:bg-blue-400 transition-colors cursor-default"
+                            style={{ width: barW, height: convH }}
+                          />
+                          <div
+                            className="rounded-t-sm bg-amber-500/55 hover:bg-amber-400/70 transition-colors cursor-default"
+                            style={{ width: barW, height: spendH }}
+                          />
+                        </div>
+                        {showLabel && (
+                          <span className="text-[9px] text-gray-600">{b.label.split("/")[0]}</span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Max value labels */}
+                <div className="flex justify-between mt-2 text-[10px] text-gray-700">
+                  <span>{buckets[0]?.label ?? ""}</span>
+                  <span className="text-blue-500/60">máx {maxBConv} conv</span>
+                  <span>{buckets[buckets.length - 1]?.label ?? ""}</span>
+                </div>
               </div>
             );
           })()}

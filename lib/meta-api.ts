@@ -138,9 +138,19 @@ export async function fetchMetaCampaignInsights(
       a.action_type === "onsite_conversion.total_messaging_connection" ||
       a.action_type === "onsite_conversion.messaging_first_reply"
     );
-    const followAction       = actions?.find((a) => a.action_type === "follow");
+    // "Ganho de seguidores" may report under different action types depending on placement
+    const followAction       = actions?.find((a) =>
+      a.action_type === "follow" ||
+      a.action_type === "like" ||
+      a.action_type === "page_fan" ||
+      a.action_type === "onsite_conversion.post_reactions"
+    );
     const costPerLead        = costPerAction?.find((a) => a.action_type === "lead" || a.action_type === "onsite_conversion.lead_grouped");
-    const costPerFollowAction = costPerAction?.find((a) => a.action_type === "follow");
+    const costPerFollowAction = costPerAction?.find((a) =>
+      a.action_type === "follow" ||
+      a.action_type === "like" ||
+      a.action_type === "page_fan"
+    );
 
     const spend         = parseFloat((row.spend as string) ?? "0");
     const leadsFromAds  = parseInt(leadAction?.value ?? "0");
