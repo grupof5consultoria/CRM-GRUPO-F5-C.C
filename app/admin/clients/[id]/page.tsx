@@ -139,44 +139,46 @@ export default async function ClientDetailPage({ params }: PageProps) {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Saúde do Cliente */}
+
+            {/* Métricas — Plataformas */}
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle>Saúde do Cliente</CardTitle>
-                  <Badge variant={CLIENT_HEALTH_VARIANTS[client.health]}>
-                    {CLIENT_HEALTH_LABELS[client.health]}
-                  </Badge>
+                  <CardTitle>Métricas — Plataformas</CardTitle>
+                  <div className="flex items-center gap-1">
+                    {client.metaAdAccountId && <span className="w-2 h-2 rounded-full bg-blue-400" title="Meta configurado" />}
+                    {client.googleAdsCustomerId && <span className="w-2 h-2 rounded-full bg-red-400" title="Google configurado" />}
+                  </div>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-3">
-                {client.healthNote && (
-                  <p className="text-xs text-gray-500 dark:text-gray-400 bg-[#171717] rounded-xl px-3 py-2">
-                    {client.healthNote}
-                  </p>
-                )}
-                <UpdateHealthForm clientId={client.id} currentHealth={client.health} />
-
-                {client.healthLogs.length > 0 && (
-                  <div className="border-t border-[#262626] pt-3 mt-3">
-                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">Histórico</p>
-                    <div className="space-y-1.5">
-                      {client.healthLogs.map((log) => (
-                        <div key={log.id} className="flex items-start gap-2 text-xs">
-                          <span className={`mt-0.5 font-bold ${CLIENT_HEALTH_COLORS[log.health]}`}>●</span>
-                          <div>
-                            <span className="font-medium text-gray-300">{CLIENT_HEALTH_LABELS[log.health]}</span>
-                            {log.note && <span className="text-gray-400"> — {log.note}</span>}
-                            <p className="text-gray-400">{new Date(log.createdAt).toLocaleDateString("pt-BR")}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+              <CardContent>
+                <ClientCredentialsForm
+                  clientId={client.id}
+                  metaAdAccountId={client.metaAdAccountId ?? null}
+                  googleAdsCustomerId={client.googleAdsCustomerId ?? null}
+                  hasMeta={!!client.metaAdAccountId}
+                  hasGoogle={!!client.googleAdsCustomerId}
+                />
               </CardContent>
             </Card>
 
+            {/* Acesso ao Portal */}
+            <Card>
+              <CardHeader><CardTitle>Acesso ao Portal</CardTitle></CardHeader>
+              <CardContent>
+                <PortalAccessCard
+                  clientId={client.id}
+                  portalUsers={client.clientUsers.map((cu) => ({
+                    id: cu.id,
+                    userId: cu.userId,
+                    user: cu.user,
+                  }))}
+                  portalUrl={portalUrl}
+                />
+              </CardContent>
+            </Card>
+
+            {/* Informações */}
             <Card>
               <CardHeader><CardTitle>Informações</CardTitle></CardHeader>
               <CardContent className="space-y-3 text-sm">
@@ -214,41 +216,40 @@ export default async function ClientDetailPage({ params }: PageProps) {
               </CardContent>
             </Card>
 
-            {/* Acesso ao Portal */}
-            <Card>
-              <CardHeader><CardTitle>Acesso ao Portal</CardTitle></CardHeader>
-              <CardContent>
-                <PortalAccessCard
-                  clientId={client.id}
-                  portalUsers={client.clientUsers.map((cu) => ({
-                    id: cu.id,
-                    userId: cu.userId,
-                    user: cu.user,
-                  }))}
-                  portalUrl={portalUrl}
-                />
-              </CardContent>
-            </Card>
-
-            {/* Métricas — credenciais de plataformas */}
+            {/* Saúde do Cliente */}
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle>Métricas — Plataformas</CardTitle>
-                  <div className="flex items-center gap-1">
-                    {client.metaAdAccountId && <span className="w-2 h-2 rounded-full bg-blue-400" title="Meta configurado" />}
-                    {client.googleAdsCustomerId && <span className="w-2 h-2 rounded-full bg-red-400" title="Google configurado" />}
-                  </div>
+                  <CardTitle>Saúde do Cliente</CardTitle>
+                  <Badge variant={CLIENT_HEALTH_VARIANTS[client.health]}>
+                    {CLIENT_HEALTH_LABELS[client.health]}
+                  </Badge>
                 </div>
               </CardHeader>
-              <CardContent>
-                <ClientCredentialsForm
-                  clientId={client.id}
-                  metaAdAccountId={client.metaAdAccountId ?? null}
-                  googleAdsCustomerId={client.googleAdsCustomerId ?? null}
-                  hasMeta={!!client.metaAdAccountId}
-                  hasGoogle={!!client.googleAdsCustomerId}
-                />
+              <CardContent className="space-y-3">
+                {client.healthNote && (
+                  <p className="text-xs text-gray-500 bg-[#171717] rounded-xl px-3 py-2">
+                    {client.healthNote}
+                  </p>
+                )}
+                <UpdateHealthForm clientId={client.id} currentHealth={client.health} />
+                {client.healthLogs.length > 0 && (
+                  <div className="border-t border-[#262626] pt-3 mt-3">
+                    <p className="text-xs font-semibold text-gray-500 mb-2">Histórico</p>
+                    <div className="space-y-1.5">
+                      {client.healthLogs.map((log) => (
+                        <div key={log.id} className="flex items-start gap-2 text-xs">
+                          <span className={`mt-0.5 font-bold ${CLIENT_HEALTH_COLORS[log.health]}`}>●</span>
+                          <div>
+                            <span className="font-medium text-gray-300">{CLIENT_HEALTH_LABELS[log.health]}</span>
+                            {log.note && <span className="text-gray-400"> — {log.note}</span>}
+                            <p className="text-gray-400">{new Date(log.createdAt).toLocaleDateString("pt-BR")}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
