@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { syncMetricsAction } from "./actions";
 
 interface Props {
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export function SyncButton({ clientId, platform, dateFrom, dateTo }: Props) {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
 
@@ -19,8 +21,12 @@ export function SyncButton({ clientId, platform, dateFrom, dateTo }: Props) {
     setMsg(null);
     const res = await syncMetricsAction(clientId, platform, dateFrom, dateTo);
     setLoading(false);
-    if (res.success) setMsg({ type: "ok", text: "Sincronizado!" });
-    else setMsg({ type: "err", text: res.error ?? "Erro" });
+    if (res.success) {
+      setMsg({ type: "ok", text: `${res.count} dias` });
+      router.refresh(); // atualiza dados sem resetar estado do componente
+    } else {
+      setMsg({ type: "err", text: res.error ?? "Erro" });
+    }
     setTimeout(() => setMsg(null), 3000);
   }
 

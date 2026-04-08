@@ -79,7 +79,6 @@ export async function syncMetricsAction(
       count++;
     }
 
-    revalidatePath("/admin/metrics");
     return { success: true, count };
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Erro ao sincronizar" };
