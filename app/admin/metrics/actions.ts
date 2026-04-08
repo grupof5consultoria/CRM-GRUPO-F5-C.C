@@ -92,13 +92,18 @@ export async function saveClientCredentialsAction(
   await requireInternalAuth();
 
   const clientId = formData.get("clientId") as string;
+
+  // Só atualiza os tokens se o campo foi preenchido — evita apagar tokens salvos via OAuth
+  const metaToken    = (formData.get("metaAccessToken") as string) || undefined;
+  const googleToken  = (formData.get("googleRefreshToken") as string) || undefined;
+
   await prisma.client.update({
     where: { id: clientId },
     data: {
-      metaAdAccountId: (formData.get("metaAdAccountId") as string) || null,
-      metaAccessToken: (formData.get("metaAccessToken") as string) || null,
-      googleAdsCustomerId: (formData.get("googleAdsCustomerId") as string) || null,
-      googleRefreshToken: (formData.get("googleRefreshToken") as string) || null,
+      metaAdAccountId:      (formData.get("metaAdAccountId") as string) || null,
+      ...(metaToken !== undefined   && { metaAccessToken: metaToken }),
+      googleAdsCustomerId:  (formData.get("googleAdsCustomerId") as string) || null,
+      ...(googleToken !== undefined && { googleRefreshToken: googleToken }),
     },
   });
 
