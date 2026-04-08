@@ -97,6 +97,8 @@ export interface MetaCampaignInsight {
   costPerResult: number;
   costPerConversation: number;
   costPerFollower: number;
+  /** All non-zero actions returned by the API — used to surface metrics for any campaign type */
+  rawActions: Array<{ action_type: string; value: number; costPer: number | null }>;
 }
 
 export async function fetchMetaCampaignInsights(
@@ -162,6 +164,20 @@ export async function fetchMetaCampaignInsights(
       ? parseFloat(costPerFollowAction.value)
       : newFollowers > 0 ? spend / newFollowers : 0;
 
+    // Build raw actions list (all non-zero) for surfacing any campaign type result
+    const rawActions = (actions ?? [])
+      .map(a => {
+        const v = parseInt(a.value ?? "0");
+        const cpa = costPerAction?.find(c => c.action_type === a.action_type);
+        return {
+          action_type: a.action_type,
+          value: v,
+          costPer: cpa ? parseFloat(cpa.value) : (v > 0 ? spend / v : null),
+        };
+      })
+      .filter(a => a.value > 0)
+      .sort((a, b) => b.value - a.value);
+
     return {
       campaignId:          (row.campaign_id as string) ?? "",
       campaignName:        (row.campaign_name as string) ?? "Campanha sem nome",
@@ -173,6 +189,7 @@ export async function fetchMetaCampaignInsights(
       costPerResult,
       costPerConversation,
       costPerFollower,
+      rawActions,
     };
   }).filter((r) => r.campaignId !== "");
 }

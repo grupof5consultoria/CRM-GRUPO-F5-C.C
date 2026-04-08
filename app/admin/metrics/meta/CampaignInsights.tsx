@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { fetchCampaignsAction } from "../actions";
 
+interface RawAction { action_type: string; value: number; costPer: number | null; }
+
 interface Campaign {
   campaignId: string;
   campaignName: string;
@@ -14,7 +16,44 @@ interface Campaign {
   costPerResult: number;
   costPerConversation: number;
   costPerFollower: number;
+  rawActions: RawAction[];
 }
+
+// Human-readable labels for Meta action types (pt-BR)
+const ACTION_LABELS: Record<string, string> = {
+  "follow":                                                     "Seguidores Ganhos",
+  "like":                                                       "Curtidas / Seguidores",
+  "page_fan":                                                   "Seguidores da Página",
+  "onsite_conversion.post_reactions":                           "Reações",
+  "onsite_conversion.post_save":                                "Salvamentos",
+  "comment":                                                    "Comentários",
+  "post_engagement":                                            "Engajamento no Post",
+  "page_engagement":                                            "Engajamento na Página",
+  "video_view":                                                 "Visualizações de Vídeo",
+  "link_click":                                                 "Cliques no Link",
+  "lead":                                                       "Leads",
+  "onsite_conversion.lead_grouped":                             "Leads (agrupado)",
+  "onsite_conversion.messaging_conversation_started_7d":        "Conversas Iniciadas (7d)",
+  "onsite_conversion.total_messaging_connection":               "Conexões Mensagens",
+  "onsite_conversion.messaging_first_reply":                    "Primeiras Respostas",
+  "onsite_conversion.messaging_welcome_message_sent":           "Msg de Boas-vindas",
+  "app_install":                                                "Instalações do App",
+  "offsite_conversion.fb_pixel_purchase":                       "Compras",
+  "offsite_conversion.fb_pixel_lead":                           "Leads (pixel)",
+};
+
+function actionLabel(type: string) {
+  return ACTION_LABELS[type] ?? type.split(".").pop()?.replace(/_/g, " ") ?? type;
+}
+
+// Action types already shown in the fixed metric grid (avoid duplicating)
+const KNOWN_TYPES = new Set([
+  "lead", "onsite_conversion.lead_grouped",
+  "onsite_conversion.messaging_conversation_started_7d",
+  "onsite_conversion.total_messaging_connection",
+  "onsite_conversion.messaging_first_reply",
+  "follow", "like", "page_fan", "onsite_conversion.post_reactions",
+]);
 
 interface Props {
   clientId: string;
@@ -195,6 +234,24 @@ export function CampaignInsights({ clientId, clientName, dateFrom, dateTo }: Pro
                       )}
                     </div>
                   </div>
+
+                  {/* Extra actions — anything the API returned that isn't in the fixed grid */}
+                  {c.rawActions.filter(a => !KNOWN_TYPES.has(a.action_type)).length > 0 && (
+                    <div className="mt-3 border-t border-[#1a1a1a] pt-3">
+                      <p className="text-[10px] text-gray-700 uppercase tracking-wider font-semibold mb-2">Todos os resultados da campanha</p>
+                      <div className="flex flex-wrap gap-2">
+                        {c.rawActions.map(a => (
+                          <div key={a.action_type} className="bg-[#111111] rounded-xl px-3 py-2 min-w-[110px]">
+                            <p className="text-[10px] text-gray-600 mb-0.5 leading-tight">{actionLabel(a.action_type)}</p>
+                            <p className="text-sm font-bold text-gray-200">{fmtN(a.value)}</p>
+                            {a.costPer != null && a.costPer > 0 && (
+                              <p className="text-[10px] text-gray-600 mt-0.5">{fmtR(a.costPer)}/result.</p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
