@@ -27,8 +27,8 @@ export default async function PortalMetricsPage() {
       metaAdAccountId: true,
       googleAdsCustomerId: true,
       metricEntries: {
-        orderBy: { period: "desc" },
-        take: 12,
+        orderBy: { date: "desc" },
+        take: 365,
       },
     },
   });
@@ -65,31 +65,55 @@ export default async function PortalMetricsPage() {
       </div>
 
       {/* Summary of latest entries */}
-      {client.metricEntries.length > 0 && (
-        <div className="mb-6 space-y-2">
-          <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-3">Últimos registros</p>
-          {client.metricEntries.slice(0, 4).map((e) => {
-            const hasRevenue = e.revenue != null;
-            const hasLeads = e.leadsScheduled != null;
-            return (
-              <div key={`${e.platform}-${e.period}`} className="bg-[#1a1a1a] border border-[#262626] rounded-xl px-4 py-3 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className={`w-2 h-2 rounded-full ${e.platform === "meta" ? "bg-blue-400" : "bg-red-400"}`} />
-                  <div>
-                    <p className="text-sm font-medium text-gray-300">{e.platform === "meta" ? "Meta" : "Google"} — {e.period}</p>
-                    <p className="text-xs text-gray-600">{hasLeads ? `${e.leadsScheduled} leads` : "sem leads"} · {hasRevenue ? `R$ ${Number(e.revenue).toLocaleString("pt-BR", { minimumFractionDigits: 0 })}` : "sem faturamento"}</p>
+      {client.metricEntries.length > 0 && (() => {
+        // Aggregate daily entries by platform+period for display
+        type Summary = { platform: string; period: string; spend: number; leadsScheduled: number | null; revenue: number | null };
+        const summaryMap = new Map<string, Summary>();
+        for (const e of client.metricEntries) {
+          const period = e.date.substring(0, 7);
+          const key = `${e.platform}-${period}`;
+          const existing = summaryMap.get(key);
+          if (!existing) {
+            summaryMap.set(key, {
+              platform: e.platform,
+              period,
+              spend: Number(e.spend ?? 0),
+              leadsScheduled: e.leadsScheduled ?? null,
+              revenue: e.revenue != null ? Number(e.revenue) : null,
+            });
+          } else {
+            existing.spend += Number(e.spend ?? 0);
+            if (e.leadsScheduled != null) existing.leadsScheduled = (existing.leadsScheduled ?? 0) + e.leadsScheduled;
+            if (e.revenue != null) existing.revenue = (existing.revenue ?? 0) + Number(e.revenue);
+          }
+        }
+        const summaries = Array.from(summaryMap.values()).slice(0, 4);
+        return (
+          <div className="mb-6 space-y-2">
+            <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-3">Últimos registros</p>
+            {summaries.map((e) => {
+              const hasRevenue = e.revenue != null;
+              const hasLeads = e.leadsScheduled != null;
+              return (
+                <div key={`${e.platform}-${e.period}`} className="bg-[#1a1a1a] border border-[#262626] rounded-xl px-4 py-3 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className={`w-2 h-2 rounded-full ${e.platform === "meta" ? "bg-blue-400" : "bg-red-400"}`} />
+                    <div>
+                      <p className="text-sm font-medium text-gray-300">{e.platform === "meta" ? "Meta" : "Google"} — {e.period}</p>
+                      <p className="text-xs text-gray-600">{hasLeads ? `${e.leadsScheduled} leads` : "sem leads"} · {hasRevenue ? `R$ ${Number(e.revenue).toLocaleString("pt-BR", { minimumFractionDigits: 0 })}` : "sem faturamento"}</p>
+                    </div>
                   </div>
+                  {hasRevenue && e.spend > 0 && (
+                    <span className={`text-xs font-bold ${Number(e.revenue) >= e.spend ? "text-emerald-400" : "text-red-400"}`}>
+                      {`${(((Number(e.revenue) - e.spend) / e.spend) * 100).toFixed(0)}% ROI`}
+                    </span>
+                  )}
                 </div>
-                {hasRevenue && e.spend && (
-                  <span className={`text-xs font-bold ${Number(e.revenue) >= Number(e.spend) ? "text-emerald-400" : "text-red-400"}`}>
-                    {Number(e.spend) > 0 ? `${(((Number(e.revenue) - Number(e.spend)) / Number(e.spend)) * 100).toFixed(0)}% ROI` : ""}
-                  </span>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
+              );
+            })}
+          </div>
+        );
+      })()}
 
       <div className="bg-[#1a1a1a] border border-[#262626] rounded-2xl p-5">
         <p className="text-sm font-semibold text-white mb-4">Lançar Resultados</p>

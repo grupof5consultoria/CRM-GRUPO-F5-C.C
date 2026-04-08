@@ -6,17 +6,18 @@ import { syncMetricsAction } from "./actions";
 interface Props {
   clientId: string;
   platform: "meta" | "google";
-  period: string;
+  dateFrom: string;
+  dateTo: string;
 }
 
-export function SyncButton({ clientId, platform, period }: Props) {
+export function SyncButton({ clientId, platform, dateFrom, dateTo }: Props) {
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
 
   async function handleSync() {
     setLoading(true);
     setMsg(null);
-    const res = await syncMetricsAction(clientId, platform, period);
+    const res = await syncMetricsAction(clientId, platform, dateFrom, dateTo);
     setLoading(false);
     if (res.success) setMsg({ type: "ok", text: "Sincronizado!" });
     else setMsg({ type: "err", text: res.error ?? "Erro" });

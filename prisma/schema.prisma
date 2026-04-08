@@ -335,7 +335,7 @@ model ClientMetricEntry {
   clientId       String
   client         Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
   platform       String   // "meta" | "google"
-  period         String   // "2024-01" (YYYY-MM)
+  date           String   // "2024-01-15" (YYYY-MM-DD)
   // Shared
   spend          Decimal? @db.Decimal(10, 2)
   impressions    Int?
@@ -355,7 +355,7 @@ model ClientMetricEntry {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  @@unique([clientId, platform, period])
+  @@unique([clientId, platform, date])
   @@map("client_metric_entries")
 }
 

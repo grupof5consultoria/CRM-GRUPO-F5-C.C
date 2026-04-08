@@ -31,7 +31,7 @@ const LS_KEY = "metrics-google-columns";
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface MetricEntry {
-  platform: string; period: string;
+  platform: string; date: string;
   spend: { toString(): string } | null;
   impressions: number | null; clicks: number | null;
   leadsFromAds: number | null; leadsScheduled: number | null;
@@ -120,7 +120,7 @@ function fmtN(v: number | null | undefined) {
 // ─── Aggregation ─────────────────────────────────────────────────────────────
 
 function aggregateEntries(entries: MetricEntry[], platform: string, from: string, to: string): AggEntry | null {
-  const inRange = entries.filter(e => e.platform === platform && e.period >= from && e.period <= to);
+  const inRange = entries.filter(e => e.platform === platform && e.date >= from && e.date <= to);
   if (inRange.length === 0) return null;
   const sumD = (k: keyof MetricEntry) => inRange.reduce((a, e) => a + Number(e[k] ?? 0), 0);
   const sumN = (k: keyof MetricEntry) => inRange.reduce((a, e) => a + ((e[k] as number) ?? 0), 0);
@@ -246,14 +246,13 @@ export function GoogleMetricsTable({ clients, allClients }: Props) {
   const periodFrom = dateToPeriod(dateFrom);
   const periodTo   = dateToPeriod(dateTo);
   const numMonths  = monthsBetween(periodFrom, periodTo);
-  const isSingle   = numMonths === 1;
 
   const filteredClients = clients.filter(c => selectedClientId === "all" || c.id === selectedClientId);
   const cols = ALL_COLUMNS.filter(c => visibleCols.includes(c.key));
 
   const totals: AggEntry = { spend: 0, impressions: 0, clicks: 0, leadsFromAds: 0, leadsScheduled: 0, revenue: 0, cpc: null, costPerResult: null, syncedAt: null, count: 0 };
   filteredClients.forEach(c => {
-    const a = aggregateEntries(c.metricEntries, "google", periodFrom, periodTo);
+    const a = aggregateEntries(c.metricEntries, "google", dateFrom, dateTo);
     if (!a) return;
     totals.spend += a.spend; totals.impressions += a.impressions; totals.clicks += a.clicks;
     totals.leadsFromAds += a.leadsFromAds; totals.leadsScheduled += a.leadsScheduled;
@@ -294,8 +293,8 @@ export function GoogleMetricsTable({ clients, allClients }: Props) {
               <span className="text-xs text-gray-500 font-medium">Até</span>
               <input type="date" value={dateTo} onChange={e => handleToChange(e.target.value)} className={dateCls} />
             </div>
-            <span className={`text-xs rounded-lg px-2 py-1 font-medium border ${isSingle ? "bg-red-500/10 text-red-400 border-red-500/20" : "bg-red-500/15 text-red-400 border-red-500/20"}`}>
-              {isSingle ? fmtPeriodLabel(periodFrom) : `${numMonths} meses`}
+            <span className="text-xs rounded-lg px-2 py-1 font-medium border bg-red-500/15 text-red-400 border-red-500/20">
+              {numMonths === 1 ? fmtPeriodLabel(periodFrom) : `${numMonths} meses`}
             </span>
           </div>
 
@@ -330,12 +329,12 @@ export function GoogleMetricsTable({ clients, allClients }: Props) {
                 <tr className="border-b border-[#262626] bg-[#111111]">
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider sticky left-0 bg-[#111111] z-10">Cliente</th>
                   {cols.map(col => <th key={col.key} className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">{col.label}</th>)}
-                  {isSingle && <th className="px-3 py-3" />}
+                  <th className="px-3 py-3" />
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#1e1e1e]">
                 {filteredClients.map(client => {
-                  const agg = aggregateEntries(client.metricEntries, "google", periodFrom, periodTo);
+                  const agg = aggregateEntries(client.metricEntries, "google", dateFrom, dateTo);
                   return (
                     <tr key={client.id} className="hover:bg-[#222222] transition-colors">
                       <td className="px-4 py-3 sticky left-0 bg-[#1a1a1a] hover:bg-[#222222] z-10">
@@ -343,7 +342,7 @@ export function GoogleMetricsTable({ clients, allClients }: Props) {
                         {agg?.syncedAt ? <p className="text-xs text-gray-600">Sync: {new Date(agg.syncedAt).toLocaleDateString("pt-BR")}</p> : <p className="text-xs text-gray-700">{agg ? "Não sincronizado" : "Sem dados"}</p>}
                       </td>
                       {cols.map(col => <td key={col.key} className="px-4 py-3 text-right whitespace-nowrap"><Cell agg={agg} col={col.key} /></td>)}
-                      {isSingle && <td className="px-3 py-3"><SyncButton clientId={client.id} platform="google" period={periodFrom} /></td>}
+                      <td className="px-3 py-3"><SyncButton clientId={client.id} platform="google" dateFrom={dateFrom} dateTo={dateTo} /></td>
                     </tr>
                   );
                 })}

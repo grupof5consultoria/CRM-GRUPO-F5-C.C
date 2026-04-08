@@ -3,14 +3,15 @@
 import { revalidatePath } from "next/cache";
 import { requireInternalAuth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { fetchMetaInsights } from "@/lib/meta-api";
-import { fetchGoogleAdsInsights, type GoogleInsights } from "@/lib/google-ads-api";
+import { fetchMetaInsights, type MetaDailyInsight } from "@/lib/meta-api";
+import { fetchGoogleAdsInsights, type GoogleDailyInsight } from "@/lib/google-ads-api";
 
 export async function syncMetricsAction(
   clientId: string,
   platform: "meta" | "google",
-  period: string
-): Promise<{ error?: string; success?: boolean }> {
+  dateFrom: string, // "2024-01-01"
+  dateTo: string    // "2024-01-31"
+): Promise<{ error?: string; success?: boolean; count?: number }> {
   await requireInternalAuth();
 
   const client = await prisma.client.findUnique({
@@ -26,47 +27,59 @@ export async function syncMetricsAction(
   if (!client) return { error: "Cliente não encontrado" };
 
   try {
-    let data;
+    let metaData: MetaDailyInsight[] = [];
+    let googleData: GoogleDailyInsight[] = [];
+
     if (platform === "meta") {
       if (!client.metaAdAccountId || !client.metaAccessToken)
         return { error: "Credenciais Meta não configuradas" };
-      data = await fetchMetaInsights(client.metaAdAccountId, client.metaAccessToken, period);
+      metaData = await fetchMetaInsights(client.metaAdAccountId, client.metaAccessToken, dateFrom, dateTo);
     } else {
       if (!client.googleAdsCustomerId || !client.googleRefreshToken)
         return { error: "Credenciais Google Ads não configuradas" };
-      data = await fetchGoogleAdsInsights(client.googleAdsCustomerId, client.googleRefreshToken, period);
+      googleData = await fetchGoogleAdsInsights(client.googleAdsCustomerId, client.googleRefreshToken, dateFrom, dateTo);
     }
 
-    if (!data) return { error: "Nenhum dado retornado pela API" };
+    const rows = platform === "meta" ? metaData : googleData;
+    if (rows.length === 0) return { error: "Nenhum dado retornado pela API para o período" };
 
-    const entry = {
-      spend: data.spend,
-      impressions: data.impressions,
-      clicks: data.clicks,
-      leadsFromAds: data.leadsFromAds,
-      ...(platform === "meta" && "reach" in data ? {
-        reach: (data as import("@/lib/meta-api").MetaInsights).reach,
-        cpm: (data as import("@/lib/meta-api").MetaInsights).cpm,
-        linkClicks: (data as import("@/lib/meta-api").MetaInsights).linkClicks,
-        cpc: (data as import("@/lib/meta-api").MetaInsights).cpc,
-        ctr: (data as import("@/lib/meta-api").MetaInsights).ctr,
-        costPerResult: (data as import("@/lib/meta-api").MetaInsights).costPerResult,
-        budget: (data as import("@/lib/meta-api").MetaInsights).budget,
-      } : {}),
-      ...(platform === "google" ? {
-        cpc: (data as GoogleInsights).cpc,
-        costPerResult: (data as GoogleInsights).costPerResult,
-      } : {}),
-    };
+    const now = new Date();
+    let count = 0;
 
-    await prisma.clientMetricEntry.upsert({
-      where: { clientId_platform_period: { clientId, platform, period } },
-      create: { clientId, platform, period, ...entry, syncedAt: new Date() },
-      update: { ...entry, syncedAt: new Date() },
-    });
+    for (const row of rows) {
+      const base = {
+        spend: row.spend,
+        impressions: row.impressions,
+        clicks: row.clicks,
+        leadsFromAds: row.leadsFromAds,
+      };
+
+      const entry = platform === "meta"
+        ? {
+            ...base,
+            reach: (row as MetaDailyInsight).reach,
+            cpm: (row as MetaDailyInsight).cpm,
+            linkClicks: (row as MetaDailyInsight).linkClicks,
+            cpc: (row as MetaDailyInsight).cpc,
+            ctr: (row as MetaDailyInsight).ctr,
+            costPerResult: (row as MetaDailyInsight).costPerResult,
+          }
+        : {
+            ...base,
+            cpc: (row as GoogleDailyInsight).cpc,
+            costPerResult: (row as GoogleDailyInsight).costPerResult,
+          };
+
+      await prisma.clientMetricEntry.upsert({
+        where: { clientId_platform_date: { clientId, platform, date: row.date } },
+        create: { clientId, platform, date: row.date, ...entry, syncedAt: now },
+        update: { ...entry, syncedAt: now },
+      });
+      count++;
+    }
 
     revalidatePath("/admin/metrics");
-    return { success: true };
+    return { success: true, count };
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Erro ao sincronizar" };
   }

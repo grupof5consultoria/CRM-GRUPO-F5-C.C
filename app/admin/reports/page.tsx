@@ -45,9 +45,49 @@ export default async function ReportsPage({
     );
   }
 
-  const metricEntry = await prisma.clientMetricEntry.findFirst({
-    where: { clientId: selectedClientId, platform: "meta", period },
+  // Aggregate all daily entries for the selected month
+  const dailyEntries = await prisma.clientMetricEntry.findMany({
+    where: {
+      clientId: selectedClientId,
+      platform: "meta",
+      date: { gte: `${period}-01`, lte: `${period}-31` },
+    },
   });
+  let metricEntry: (typeof dailyEntries)[0] | null = null;
+  if (dailyEntries.length > 0) {
+    let spend = 0, impressions = 0, clicks = 0, leadsFromAds = 0, reach = 0, linkClicks = 0;
+    let leadsScheduled: number | null = null, revenue = 0;
+    for (const e of dailyEntries) {
+      spend += Number(e.spend ?? 0);
+      impressions += e.impressions ?? 0;
+      clicks += e.clicks ?? 0;
+      leadsFromAds += e.leadsFromAds ?? 0;
+      reach += e.reach ?? 0;
+      linkClicks += e.linkClicks ?? 0;
+      if (e.leadsScheduled != null) leadsScheduled = (leadsScheduled ?? 0) + e.leadsScheduled;
+      revenue += Number(e.revenue ?? 0);
+    }
+    const cpm = impressions > 0 ? (spend / impressions) * 1000 : null;
+    const cpc = linkClicks > 0 ? spend / linkClicks : null;
+    const ctr = impressions > 0 ? (linkClicks / impressions) * 100 : null;
+    const costPerResult = leadsFromAds > 0 ? spend / leadsFromAds : null;
+    // Use Prisma's Decimal-compatible representation via type assertion
+    metricEntry = {
+      ...dailyEntries[0],
+      spend: spend as unknown as (typeof dailyEntries)[0]["spend"],
+      impressions,
+      clicks,
+      leadsFromAds,
+      reach,
+      linkClicks,
+      leadsScheduled,
+      revenue: revenue as unknown as (typeof dailyEntries)[0]["revenue"],
+      cpm: cpm as unknown as (typeof dailyEntries)[0]["cpm"],
+      cpc: cpc as unknown as (typeof dailyEntries)[0]["cpc"],
+      ctr: ctr as unknown as (typeof dailyEntries)[0]["ctr"],
+      costPerResult: costPerResult as unknown as (typeof dailyEntries)[0]["costPerResult"],
+    };
+  }
 
   // These tables may not exist yet if prisma db push hasn't been run
   let dbReady = true;

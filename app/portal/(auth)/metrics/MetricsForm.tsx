@@ -7,7 +7,7 @@ type Platform = "meta" | "google";
 
 interface Entry {
   platform: string;
-  period: string;
+  date: string;
   leadsScheduled: number | null;
   revenue: { toString(): string } | null;
   spend: { toString(): string } | null;
@@ -32,7 +32,19 @@ export function MetricsForm({ entries, periods, currentPeriod, hasMeta, hasGoogl
   const [period, setPeriod] = useState(currentPeriod);
   const [state, action, pending] = useActionState(savePortalMetricsAction, {});
 
-  const entry = entries.find((e) => e.platform === tab && e.period === period);
+  // Daily entries: find the manual summary stored at "YYYY-MM-01", or aggregate spend/leadsFromAds
+  const periodEntries = entries.filter((e) => e.platform === tab && e.date.startsWith(period));
+  const manualEntry = periodEntries.find((e) => e.leadsScheduled != null || e.revenue != null);
+  const aggSpend = periodEntries.reduce((s, e) => s + Number(e.spend ?? 0), 0);
+  const aggLeads = periodEntries.reduce((s, e) => s + (e.leadsFromAds ?? 0), 0);
+  const entry = periodEntries.length > 0
+    ? {
+        spend: aggSpend > 0 ? { toString: () => String(aggSpend) } : null,
+        leadsFromAds: aggLeads > 0 ? aggLeads : null,
+        leadsScheduled: manualEntry?.leadsScheduled ?? null,
+        revenue: manualEntry?.revenue ?? null,
+      }
+    : undefined;
 
   const platformLabel = tab === "meta" ? "Meta Ads" : "Google Ads";
   const platformColor = tab === "meta" ? "text-blue-400" : "text-red-400";

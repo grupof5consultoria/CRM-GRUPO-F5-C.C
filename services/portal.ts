@@ -83,25 +83,66 @@ export async function getPortalCharges(clientId: string) {
   });
 }
 
+/**
+ * Returns aggregated metrics for a given month period ("YYYY-MM").
+ * Daily API entries (YYYY-MM-DD) are summed; manual entry at "YYYY-MM-01"
+ * provides leadsScheduled and revenue.
+ */
 export async function getPortalReport(clientId: string, period: string) {
-  const [metricEntry, attendances] = await Promise.all([
-    prisma.clientMetricEntry.findFirst({
-      where: { clientId, platform: "meta", period },
+  const dateFrom = `${period}-01`;
+  const dateTo   = `${period}-31`;
+
+  const [entries, attendances] = await Promise.all([
+    prisma.clientMetricEntry.findMany({
+      where: { clientId, platform: "meta", date: { gte: dateFrom, lte: dateTo } },
     }),
     prisma.attendance.findMany({
       where: { clientId, period },
       include: { service: { select: { name: true } } },
       orderBy: { contactDate: "desc" },
-    }).catch(() => []), // graceful if table doesn't exist yet
+    }).catch(() => []),
   ]);
+
+  // Aggregate daily entries into a single summary
+  let spend = 0, impressions = 0, leadsFromAds = 0, reach = 0, cpmTotal = 0, cpmCount = 0;
+  let leadsScheduled: number | null = null, revenue: number | null = null;
+  for (const e of entries) {
+    spend += Number(e.spend ?? 0);
+    impressions += e.impressions ?? 0;
+    leadsFromAds += e.leadsFromAds ?? 0;
+    reach += e.reach ?? 0;
+    if (e.cpm != null) { cpmTotal += Number(e.cpm); cpmCount++; }
+    if (e.leadsScheduled != null) leadsScheduled = (leadsScheduled ?? 0) + e.leadsScheduled;
+    if (e.revenue != null) revenue = (revenue ?? 0) + Number(e.revenue);
+  }
+
+  const metricEntry = entries.length > 0
+    ? {
+        spend: { toString: () => String(spend) },
+        impressions,
+        leadsFromAds,
+        leadsScheduled,
+        revenue: revenue != null ? { toString: () => String(revenue) } : null,
+        reach,
+        cpm: cpmCount > 0 ? { toString: () => String(cpmTotal / cpmCount) } : null,
+      }
+    : null;
+
   return { metricEntry, attendances };
 }
 
 export async function getPortalTrend(clientId: string, periods: string[]) {
-  const [metricEntries, attendanceGroups] = await Promise.all([
+  // Build a date range covering all requested periods
+  if (periods.length === 0) return { metricEntries: [], attendanceGroups: [] };
+
+  const sorted = [...periods].sort();
+  const dateFrom = `${sorted[0]}-01`;
+  const dateTo   = `${sorted[sorted.length - 1]}-31`;
+
+  const [rawEntries, attendanceGroups] = await Promise.all([
     prisma.clientMetricEntry.findMany({
-      where: { clientId, platform: "meta", period: { in: periods } },
-      select: { period: true, spend: true },
+      where: { clientId, platform: "meta", date: { gte: dateFrom, lte: dateTo } },
+      select: { date: true, spend: true },
     }),
     prisma.attendance.groupBy({
       by: ["period", "status"],
@@ -110,6 +151,21 @@ export async function getPortalTrend(clientId: string, periods: string[]) {
       _sum: { valueClosed: true },
     }).catch(() => []),
   ]);
+
+  // Group by period (YYYY-MM) and sum spend
+  const byPeriod = new Map<string, number>();
+  for (const e of rawEntries) {
+    const p = e.date.substring(0, 7);
+    if (periods.includes(p)) {
+      byPeriod.set(p, (byPeriod.get(p) ?? 0) + Number(e.spend ?? 0));
+    }
+  }
+
+  const metricEntries = Array.from(byPeriod.entries()).map(([period, spend]) => ({
+    period,
+    spend: { toString: () => String(spend) },
+  }));
+
   return { metricEntries, attendanceGroups };
 }
 

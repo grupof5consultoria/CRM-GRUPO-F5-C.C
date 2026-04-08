@@ -7,6 +7,10 @@ export interface GoogleInsights {
   costPerResult: number; // cost per conversion
 }
 
+export interface GoogleDailyInsight extends GoogleInsights {
+  date: string; // "YYYY-MM-DD"
+}
+
 async function getGoogleAccessToken(refreshToken: string): Promise<string> {
   const res = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST",
@@ -30,19 +34,17 @@ async function getGoogleAccessToken(refreshToken: string): Promise<string> {
 export async function fetchGoogleAdsInsights(
   customerId: string,
   refreshToken: string,
-  period: string // "2024-01"
-): Promise<GoogleInsights | null> {
-  const [year, month] = period.split("-").map(Number);
-  const startDate = `${year}-${String(month).padStart(2, "0")}-01`;
-  const lastDay = new Date(year, month, 0).getDate();
-  const endDate = `${year}-${String(month).padStart(2, "0")}-${lastDay}`;
-
+  dateFrom: string, // "2024-01-01"
+  dateTo: string    // "2024-01-31"
+): Promise<GoogleDailyInsight[]> {
   const accessToken = await getGoogleAccessToken(refreshToken);
   const cleanId = customerId.replace(/-/g, "");
   const managerId = process.env.GOOGLE_ADS_MANAGER_ID?.replace(/-/g, "");
 
+  // segments.date causes daily grouping automatically
   const query = `
     SELECT
+      segments.date,
       metrics.cost_micros,
       metrics.impressions,
       metrics.clicks,
@@ -50,7 +52,7 @@ export async function fetchGoogleAdsInsights(
       metrics.average_cpc,
       metrics.cost_per_conversion
     FROM customer
-    WHERE segments.date BETWEEN '${startDate}' AND '${endDate}'
+    WHERE segments.date BETWEEN '${dateFrom}' AND '${dateTo}'
   `;
 
   const headers: Record<string, string> = {
@@ -72,6 +74,7 @@ export async function fetchGoogleAdsInsights(
   }
 
   type Row = {
+    segments?: { date?: string };
     metrics?: {
       costMicros?: number;
       impressions?: number;
@@ -84,38 +87,22 @@ export async function fetchGoogleAdsInsights(
 
   const results: Row[] = data.results ?? [];
 
-  if (results.length === 0) {
+  return results.map((row) => {
+    const costMicros = Number(row.metrics?.costMicros ?? 0);
+    const clicks = Number(row.metrics?.clicks ?? 0);
+    const conversions = Number(row.metrics?.conversions ?? 0);
+    const cpcMicros = Number(row.metrics?.averageCpc ?? 0);
+    const cpc = (cpcMicros > 0 ? cpcMicros : clicks > 0 ? costMicros / clicks : 0) / 1_000_000;
+    const costPerResult = conversions > 0 ? (costMicros / conversions) / 1_000_000 : 0;
+
     return {
-      spend: 0, impressions: 0, clicks: 0, leadsFromAds: 0, cpc: 0, costPerResult: 0,
+      date: row.segments?.date ?? "",
+      spend: costMicros / 1_000_000,
+      impressions: Number(row.metrics?.impressions ?? 0),
+      clicks,
+      leadsFromAds: Math.round(conversions),
+      cpc,
+      costPerResult,
     };
-  }
-
-  const totals = results.reduce(
-    (acc, row) => ({
-      costMicros: acc.costMicros + Number(row.metrics?.costMicros ?? 0),
-      impressions: acc.impressions + Number(row.metrics?.impressions ?? 0),
-      clicks: acc.clicks + Number(row.metrics?.clicks ?? 0),
-      conversions: acc.conversions + Number(row.metrics?.conversions ?? 0),
-    }),
-    { costMicros: 0, impressions: 0, clicks: 0, conversions: 0 }
-  );
-
-  // average_cpc and cost_per_conversion are already per-row averages in micros
-  // Use the last non-zero row value, or calculate from totals as fallback
-  const lastRow = results[results.length - 1];
-  const cpcMicros = Number(lastRow?.metrics?.averageCpc ?? 0);
-  const cpcCalc = totals.clicks > 0 ? totals.costMicros / totals.clicks : 0;
-  const cpc = (cpcMicros > 0 ? cpcMicros : cpcCalc) / 1_000_000;
-
-  const costPerConvCalc =
-    totals.conversions > 0 ? totals.costMicros / totals.conversions / 1_000_000 : 0;
-
-  return {
-    spend: totals.costMicros / 1_000_000,
-    impressions: totals.impressions,
-    clicks: totals.clicks,
-    leadsFromAds: Math.round(totals.conversions),
-    cpc,
-    costPerResult: costPerConvCalc,
-  };
+  }).filter((r) => r.date !== "");
 }

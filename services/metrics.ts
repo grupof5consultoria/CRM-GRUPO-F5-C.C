@@ -15,8 +15,8 @@ export async function getMetricsClients(platform: "meta" | "google") {
       googleAdsCustomerId: true,
       metricEntries: {
         where: { platform },
-        orderBy: { period: "desc" },
-        take: 24,
+        orderBy: { date: "desc" },
+        take: 400, // ~13 months of daily data
       },
     },
     orderBy: { name: "asc" },
@@ -38,30 +38,36 @@ export async function getAllMetricClients() {
       metaAdAccountId: true,
       googleAdsCustomerId: true,
       metricEntries: {
-        orderBy: { period: "desc" },
-        take: 12,
+        orderBy: { date: "desc" },
+        take: 400,
       },
     },
     orderBy: { name: "asc" },
   });
 }
 
-export async function getClientMetricEntry(clientId: string, platform: string, period: string) {
+export async function getClientMetricEntry(clientId: string, platform: string, date: string) {
   return prisma.clientMetricEntry.findUnique({
-    where: { clientId_platform_period: { clientId, platform, period } },
+    where: { clientId_platform_date: { clientId, platform, date } },
   });
 }
 
+/**
+ * Called from the client portal form.
+ * `period` is "YYYY-MM"; we store it as date "YYYY-MM-01" so it lives in the
+ * same table as daily API entries without conflicting with them.
+ */
 export async function upsertManualMetrics(
   clientId: string,
   platform: string,
-  period: string,
+  period: string, // "YYYY-MM"
   leadsScheduled: number | null,
   revenue: number | null
 ) {
+  const date = period.length === 7 ? `${period}-01` : period;
   return prisma.clientMetricEntry.upsert({
-    where: { clientId_platform_period: { clientId, platform, period } },
-    create: { clientId, platform, period, leadsScheduled, revenue },
+    where: { clientId_platform_date: { clientId, platform, date } },
+    create: { clientId, platform, date, leadsScheduled, revenue },
     update: { leadsScheduled, revenue },
   });
 }
