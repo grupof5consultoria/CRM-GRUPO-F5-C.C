@@ -1,7 +1,34 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { SyncButton } from "../SyncButton";
+
+// ─── Column definitions ───────────────────────────────────────────────────────
+
+type ColKey =
+  | "impressions" | "clicks" | "cpc" | "leadsFromAds" | "costPerResult"
+  | "spend" | "leadsScheduled" | "revenue" | "roi";
+
+const ALL_COLUMNS: { key: ColKey; label: string; group: string }[] = [
+  { key: "impressions",    label: "Impressões",          group: "Desempenho" },
+  { key: "clicks",         label: "Cliques",             group: "Desempenho" },
+  { key: "cpc",            label: "Custo por Clique",    group: "Desempenho" },
+  { key: "leadsFromAds",   label: "Conversões",          group: "Conversões" },
+  { key: "costPerResult",  label: "Custo por Conversão", group: "Conversões" },
+  { key: "spend",          label: "Investimento",        group: "Financeiro" },
+  { key: "leadsScheduled", label: "Leads Agendados",     group: "Financeiro" },
+  { key: "revenue",        label: "Faturamento",         group: "Financeiro" },
+  { key: "roi",            label: "ROI",                 group: "Financeiro" },
+];
+
+const DEFAULT_COLS: ColKey[] = [
+  "impressions", "clicks", "cpc", "leadsFromAds", "costPerResult",
+  "spend", "leadsScheduled", "revenue", "roi",
+];
+
+const LS_KEY = "metrics-google-columns";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface MetricEntry {
   platform: string;
@@ -33,6 +60,8 @@ interface Props {
   periods: string[];
 }
 
+// ─── Formatters ───────────────────────────────────────────────────────────────
+
 function fmtR(v: { toString(): string } | null | undefined) {
   if (v == null) return "—";
   return `R$ ${Number(v).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
@@ -41,26 +70,172 @@ function fmtN(v: number | null | undefined) {
   return v == null ? "—" : v.toLocaleString("pt-BR");
 }
 
+function getCellValue(entry: MetricEntry | undefined, col: ColKey): React.ReactNode {
+  if (!entry) return <span className="text-gray-700">—</span>;
+  switch (col) {
+    case "impressions":    return <span className="text-gray-300">{fmtN(entry.impressions)}</span>;
+    case "clicks":         return <span className="text-blue-300">{fmtN(entry.clicks)}</span>;
+    case "cpc":            return <span className="text-gray-300">{fmtR(entry.cpc)}</span>;
+    case "leadsFromAds":   return <span className="text-gray-300">{fmtN(entry.leadsFromAds)}</span>;
+    case "costPerResult":  return <span className="text-gray-300">{fmtR(entry.costPerResult)}</span>;
+    case "spend":          return <span className={entry.spend ? "text-amber-400 font-medium" : "text-gray-600"}>{fmtR(entry.spend)}</span>;
+    case "leadsScheduled": return <span className={entry.leadsScheduled != null ? "text-violet-400 font-medium" : "text-gray-600"}>{entry.leadsScheduled ?? "—"}</span>;
+    case "revenue":        return <span className={entry.revenue ? "text-emerald-400 font-medium" : "text-gray-600"}>{fmtR(entry.revenue)}</span>;
+    case "roi": {
+      const s = Number(entry.spend ?? 0);
+      const r = Number(entry.revenue ?? 0);
+      if (!s) return <span className="text-gray-600">—</span>;
+      const pct = ((r - s) / s) * 100;
+      return <span className={`font-semibold ${pct >= 0 ? "text-emerald-400" : "text-red-400"}`}>{pct >= 0 ? "+" : ""}{pct.toFixed(0)}%</span>;
+    }
+    default: return "—";
+  }
+}
+
+// ─── Column filter dropdown ───────────────────────────────────────────────────
+
+function ColumnFilter({ selected, onChange }: { selected: ColKey[]; onChange: (cols: ColKey[]) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  function toggle(key: ColKey) {
+    const next = selected.includes(key)
+      ? selected.filter((k) => k !== key)
+      : [...selected, key];
+    onChange(next);
+  }
+
+  const groups = [...new Set(ALL_COLUMNS.map((c) => c.group))];
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-2 bg-[#1a1a1a] border border-[#262626] hover:border-violet-500/40 rounded-xl px-3 py-2 text-sm text-gray-400 hover:text-gray-200 transition-all"
+      >
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
+        </svg>
+        Colunas
+        <span className="text-xs text-violet-400 font-semibold">{selected.length}</span>
+      </button>
+
+      {open && (
+        <div className="absolute right-0 top-11 w-72 bg-[#1a1a1a] border border-[#262626] rounded-2xl shadow-2xl shadow-black/60 z-50 overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-[#262626]">
+            <p className="text-sm font-semibold text-white">Selecionar Colunas</p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => onChange(ALL_COLUMNS.map((c) => c.key))}
+                className="text-xs text-violet-400 hover:text-violet-300 transition-colors"
+              >
+                Todas
+              </button>
+              <span className="text-[#333]">|</span>
+              <button
+                onClick={() => onChange(DEFAULT_COLS)}
+                className="text-xs text-gray-500 hover:text-gray-300 transition-colors"
+              >
+                Padrão
+              </button>
+            </div>
+          </div>
+
+          <div className="p-3 space-y-3 max-h-80 overflow-y-auto">
+            {groups.map((group) => (
+              <div key={group}>
+                <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1.5 px-1">{group}</p>
+                <div className="space-y-0.5">
+                  {ALL_COLUMNS.filter((c) => c.group === group).map((col) => {
+                    const active = selected.includes(col.key);
+                    return (
+                      <button
+                        key={col.key}
+                        onClick={() => toggle(col.key)}
+                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-all ${
+                          active ? "bg-violet-500/10 text-violet-300" : "text-gray-500 hover:bg-[#222] hover:text-gray-300"
+                        }`}
+                      >
+                        <span className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 border transition-all ${
+                          active ? "bg-violet-600 border-violet-500" : "border-[#333]"
+                        }`}>
+                          {active && (
+                            <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </span>
+                        {col.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="px-4 py-3 border-t border-[#262626]">
+            <button
+              onClick={() => setOpen(false)}
+              className="relative w-full py-2 rounded-xl text-sm font-semibold text-white overflow-hidden"
+              style={{ background: "linear-gradient(135deg, #6d28d9 0%, #7c3aed 40%, #5b21b6 100%)" }}
+            >
+              <span className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.12) 0%, transparent 50%)" }} />
+              <span className="relative">Salvar e Fechar</span>
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Main component ───────────────────────────────────────────────────────────
+
 export function GoogleMetricsTable({ clients, allClients, currentPeriod, periods }: Props) {
   const [period, setPeriod] = useState(currentPeriod);
   const [selectedClientId, setSelectedClientId] = useState("all");
+  const [visibleCols, setVisibleCols] = useState<ColKey[]>(DEFAULT_COLS);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(LS_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved) as ColKey[];
+        if (Array.isArray(parsed) && parsed.length > 0) setVisibleCols(parsed);
+      }
+    } catch {}
+  }, []);
+
+  function handleColChange(cols: ColKey[]) {
+    setVisibleCols(cols);
+    localStorage.setItem(LS_KEY, JSON.stringify(cols));
+  }
 
   const filteredClients = clients.filter((c) =>
     selectedClientId === "all" || c.id === selectedClientId
   );
 
+  const cols = ALL_COLUMNS.filter((c) => visibleCols.includes(c.key));
+
   return (
     <div className="space-y-5">
       {/* Controls bar */}
       <div className="flex items-center gap-3 flex-wrap">
-        {/* Google badge */}
         <div className="flex items-center gap-2 bg-[#1a1a1a] border border-[#262626] rounded-xl px-3 py-2">
           <span className="w-2 h-2 rounded-full bg-red-400" />
           <span className="text-sm font-semibold text-red-400">Google Ads</span>
           <span className="text-xs text-gray-600 ml-1">{clients.length} cliente{clients.length !== 1 ? "s" : ""}</span>
         </div>
 
-        {/* Client selector */}
         <select
           value={selectedClientId}
           onChange={(e) => setSelectedClientId(e.target.value)}
@@ -77,7 +252,6 @@ export function GoogleMetricsTable({ clients, allClients, currentPeriod, periods
           })}
         </select>
 
-        {/* Period selector */}
         <select
           value={period}
           onChange={(e) => setPeriod(e.target.value)}
@@ -87,6 +261,10 @@ export function GoogleMetricsTable({ clients, allClients, currentPeriod, periods
             <option key={p} value={p}>{p}</option>
           ))}
         </select>
+
+        <div className="ml-auto">
+          <ColumnFilter selected={visibleCols} onChange={handleColChange} />
+        </div>
       </div>
 
       {/* Table */}
@@ -104,15 +282,11 @@ export function GoogleMetricsTable({ clients, allClients, currentPeriod, periods
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider sticky left-0 bg-[#111111] z-10">
                     Cliente
                   </th>
-                  <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Impressões</th>
-                  <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Cliques</th>
-                  <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Custo por Clique</th>
-                  <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Conversões</th>
-                  <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Custo por Conversão</th>
-                  <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Investimento</th>
-                  <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Leads Agendados</th>
-                  <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Faturamento</th>
-                  <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">ROI</th>
+                  {cols.map((col) => (
+                    <th key={col.key} className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                      {col.label}
+                    </th>
+                  ))}
                   <th className="px-3 py-3" />
                 </tr>
               </thead>
@@ -121,10 +295,6 @@ export function GoogleMetricsTable({ clients, allClients, currentPeriod, periods
                   const entry = client.metricEntries.find(
                     (e) => e.platform === "google" && e.period === period
                   );
-                  const s = Number(entry?.spend ?? 0);
-                  const r = Number(entry?.revenue ?? 0);
-                  const roi = s ? ((r - s) / s) * 100 : null;
-
                   return (
                     <tr key={client.id} className="hover:bg-[#222222] transition-colors">
                       <td className="px-4 py-3 sticky left-0 bg-[#1a1a1a] hover:bg-[#222222] z-10">
@@ -135,35 +305,11 @@ export function GoogleMetricsTable({ clients, allClients, currentPeriod, periods
                           <p className="text-xs text-gray-700">Não sincronizado</p>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-right text-gray-300 whitespace-nowrap">{fmtN(entry?.impressions)}</td>
-                      <td className="px-4 py-3 text-right text-blue-300 whitespace-nowrap">{fmtN(entry?.clicks)}</td>
-                      <td className="px-4 py-3 text-right text-gray-300 whitespace-nowrap">{fmtR(entry?.cpc)}</td>
-                      <td className="px-4 py-3 text-right text-gray-300 whitespace-nowrap">{fmtN(entry?.leadsFromAds)}</td>
-                      <td className="px-4 py-3 text-right text-gray-300 whitespace-nowrap">{fmtR(entry?.costPerResult)}</td>
-                      <td className="px-4 py-3 text-right whitespace-nowrap">
-                        <span className={entry?.spend ? "text-amber-400 font-medium" : "text-gray-600"}>
-                          {fmtR(entry?.spend)}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-right whitespace-nowrap">
-                        <span className={entry?.leadsScheduled != null ? "text-violet-400 font-medium" : "text-gray-600"}>
-                          {entry?.leadsScheduled ?? "—"}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-right whitespace-nowrap">
-                        <span className={entry?.revenue ? "text-emerald-400 font-medium" : "text-gray-600"}>
-                          {fmtR(entry?.revenue)}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-right whitespace-nowrap">
-                        {roi == null ? (
-                          <span className="text-gray-600">—</span>
-                        ) : (
-                          <span className={`font-semibold ${roi >= 0 ? "text-emerald-400" : "text-red-400"}`}>
-                            {roi >= 0 ? "+" : ""}{roi.toFixed(0)}%
-                          </span>
-                        )}
-                      </td>
+                      {cols.map((col) => (
+                        <td key={col.key} className="px-4 py-3 text-right whitespace-nowrap">
+                          {getCellValue(entry, col.key)}
+                        </td>
+                      ))}
                       <td className="px-3 py-3">
                         <SyncButton clientId={client.id} platform="google" period={period} />
                       </td>
@@ -192,15 +338,15 @@ export function GoogleMetricsTable({ clients, allClients, currentPeriod, periods
                 const roi = totalSpend ? ((totalRevenue - totalSpend) / totalSpend) * 100 : 0;
                 return (
                   <>
-                    <div><p className="text-xs text-gray-600">Impressões</p><p className="font-bold text-gray-300">{totalImpressions.toLocaleString("pt-BR")}</p></div>
-                    <div><p className="text-xs text-gray-600">Cliques</p><p className="font-bold text-blue-300">{totalClicks.toLocaleString("pt-BR")}</p></div>
-                    <div><p className="text-xs text-gray-600">CPC Médio</p><p className="font-bold text-gray-300">R$ {avgCpc.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p></div>
-                    <div><p className="text-xs text-gray-600">Conversões</p><p className="font-bold text-gray-300">{totalConversions.toLocaleString("pt-BR")}</p></div>
-                    <div><p className="text-xs text-gray-600">Custo/Conversão</p><p className="font-bold text-gray-300">R$ {avgCostPerConv.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p></div>
-                    <div><p className="text-xs text-gray-600">Investimento</p><p className="font-bold text-amber-400">R$ {totalSpend.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p></div>
-                    <div><p className="text-xs text-gray-600">Leads Agendados</p><p className="font-bold text-violet-400">{totalLeadsSched.toLocaleString("pt-BR")}</p></div>
-                    <div><p className="text-xs text-gray-600">Faturamento</p><p className="font-bold text-emerald-400">R$ {totalRevenue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p></div>
-                    <div><p className="text-xs text-gray-600">ROI</p><p className={`font-bold ${roi >= 0 ? "text-emerald-400" : "text-red-400"}`}>{roi >= 0 ? "+" : ""}{roi.toFixed(0)}%</p></div>
+                    {visibleCols.includes("impressions") && <div><p className="text-xs text-gray-600">Impressões</p><p className="font-bold text-gray-300">{totalImpressions.toLocaleString("pt-BR")}</p></div>}
+                    {visibleCols.includes("clicks") && <div><p className="text-xs text-gray-600">Cliques</p><p className="font-bold text-blue-300">{totalClicks.toLocaleString("pt-BR")}</p></div>}
+                    {visibleCols.includes("cpc") && <div><p className="text-xs text-gray-600">CPC Médio</p><p className="font-bold text-gray-300">R$ {avgCpc.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p></div>}
+                    {visibleCols.includes("leadsFromAds") && <div><p className="text-xs text-gray-600">Conversões</p><p className="font-bold text-gray-300">{totalConversions.toLocaleString("pt-BR")}</p></div>}
+                    {visibleCols.includes("costPerResult") && <div><p className="text-xs text-gray-600">Custo/Conversão</p><p className="font-bold text-gray-300">R$ {avgCostPerConv.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p></div>}
+                    {visibleCols.includes("spend") && <div><p className="text-xs text-gray-600">Investimento</p><p className="font-bold text-amber-400">R$ {totalSpend.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p></div>}
+                    {visibleCols.includes("leadsScheduled") && <div><p className="text-xs text-gray-600">Leads Agendados</p><p className="font-bold text-violet-400">{totalLeadsSched.toLocaleString("pt-BR")}</p></div>}
+                    {visibleCols.includes("revenue") && <div><p className="text-xs text-gray-600">Faturamento</p><p className="font-bold text-emerald-400">R$ {totalRevenue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p></div>}
+                    {visibleCols.includes("roi") && <div><p className="text-xs text-gray-600">ROI</p><p className={`font-bold ${roi >= 0 ? "text-emerald-400" : "text-red-400"}`}>{roi >= 0 ? "+" : ""}{roi.toFixed(0)}%</p></div>}
                   </>
                 );
               })()}
