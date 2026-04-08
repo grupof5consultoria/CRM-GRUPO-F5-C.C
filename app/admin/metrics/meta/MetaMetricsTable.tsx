@@ -534,110 +534,145 @@ export function MetaMetricsTable({ clients, allClients }: Props) {
         </div>
       )}
 
-      {/* Daily trend chart — single client, when there are conversation data points */}
-      {hasTrend && (
-        <div className="bg-[#1a1a1a] border border-[#262626] rounded-2xl p-5">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <p className="text-sm font-semibold text-white">Evolução Diária — Conversas</p>
-              <p className="text-xs text-gray-600 mt-0.5">{dateFrom} → {dateTo}</p>
-            </div>
-            <div className="flex items-center gap-4 text-xs text-gray-500">
-              <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-blue-500/80 inline-block" />Conversas</span>
-              <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-amber-500/60 inline-block" />Investimento</span>
-            </div>
-          </div>
+      {/* Daily trend chart */}
+      {hasTrend && (() => {
+        type Bucket = { label: string; date: string; conversations: number; spend: number };
+        let buckets: Bucket[];
 
-          {(() => {
-            type Bucket = { label: string; fullLabel: string; conversations: number; spend: number };
-            let buckets: Bucket[];
+        if (trendEntries.length > 45) {
+          const weekMap = new Map<string, Bucket>();
+          trendEntries.forEach(e => {
+            const d = new Date(e.date);
+            const ws = new Date(d); ws.setDate(d.getDate() - d.getDay());
+            const key = ws.toISOString().split("T")[0];
+            const [, mm, dd] = key.split("-");
+            const ex = weekMap.get(key);
+            if (!ex) weekMap.set(key, { label: `${dd}/${mm}`, date: key, conversations: e.conversations ?? 0, spend: Number(e.spend ?? 0) });
+            else { ex.conversations += e.conversations ?? 0; ex.spend += Number(e.spend ?? 0); }
+          });
+          buckets = Array.from(weekMap.values());
+        } else {
+          buckets = trendEntries.map(e => {
+            const [, mm, dd] = e.date.split("-");
+            return { label: `${dd}/${mm}`, date: e.date, conversations: e.conversations ?? 0, spend: Number(e.spend ?? 0) };
+          });
+        }
 
-            if (trendEntries.length > 45) {
-              // Group by week
-              const weekMap = new Map<string, Bucket>();
-              trendEntries.forEach(e => {
-                const d = new Date(e.date);
-                const ws = new Date(d); ws.setDate(d.getDate() - d.getDay());
-                const key = ws.toISOString().split("T")[0];
-                const [, mm, dd] = key.split("-");
-                const ex = weekMap.get(key);
-                if (!ex) weekMap.set(key, { label: `${dd}/${mm}`, fullLabel: `Semana ${dd}/${mm}`, conversations: e.conversations ?? 0, spend: Number(e.spend ?? 0) });
-                else { ex.conversations += e.conversations ?? 0; ex.spend += Number(e.spend ?? 0); }
-              });
-              buckets = Array.from(weekMap.values());
-            } else {
-              buckets = trendEntries.map(e => {
-                const [, mm, dd] = e.date.split("-");
-                return { label: `${dd}/${mm}`, fullLabel: e.date, conversations: e.conversations ?? 0, spend: Number(e.spend ?? 0) };
-              });
-            }
+        const maxConv  = Math.max(...buckets.map(b => b.conversations), 1);
+        const maxSpend = Math.max(...buckets.map(b => b.spend), 1);
+        const totalConv  = buckets.reduce((s, b) => s + b.conversations, 0);
+        const totalSpend = buckets.reduce((s, b) => s + b.spend, 0);
+        const CHART_H = 260;
 
-            const maxBConv  = Math.max(...buckets.map(b => b.conversations), 1);
-            const maxBSpend = Math.max(...buckets.map(b => b.spend), 1);
-            const CHART_H   = 160;
-            const barW      = buckets.length > 60 ? 6 : buckets.length > 30 ? 10 : 16;
-            const showLabel = buckets.length <= 31;
-
-            // Y-axis reference lines
-            const yTicks = [0, 25, 50, 75, 100];
-
-            return (
-              <div className="relative">
-                {/* Y-axis grid lines */}
-                <div className="absolute inset-0 flex flex-col justify-between pointer-events-none" style={{ bottom: showLabel ? 20 : 0 }}>
-                  {yTicks.slice(0, -1).reverse().map(pct => (
-                    <div key={pct} className="border-t border-[#262626] w-full" style={{ height: 0 }} />
-                  ))}
+        return (
+          <div className="bg-[#141414] border border-[#1e1e1e] rounded-2xl overflow-hidden">
+            {/* Top summary strip */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-[#1e1e1e]">
+              <div>
+                <p className="text-base font-bold text-white">Evolução Diária</p>
+                <p className="text-xs text-gray-600 mt-0.5 capitalize">
+                  {new Date(dateFrom + "T12:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })} →{" "}
+                  {new Date(dateTo + "T12:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}
+                  {trendEntries.length > 45 && <span className="ml-2 text-gray-700">· agrupado por semana</span>}
+                </p>
+              </div>
+              <div className="flex items-center gap-6">
+                <div className="text-right">
+                  <p className="text-[10px] text-gray-600 uppercase tracking-wider">Conversas</p>
+                  <p className="text-lg font-bold text-blue-400">{totalConv.toLocaleString("pt-BR")}</p>
                 </div>
+                <div className="text-right">
+                  <p className="text-[10px] text-gray-600 uppercase tracking-wider">Investimento</p>
+                  <p className="text-lg font-bold text-amber-400">R$ {totalSpend.toLocaleString("pt-BR", { minimumFractionDigits: 0 })}</p>
+                </div>
+              </div>
+            </div>
 
-                {/* Chart bars */}
-                <div
-                  className="flex items-end gap-1 overflow-x-auto"
-                  style={{ height: CHART_H + (showLabel ? 24 : 0) }}
-                >
+            {/* Chart area */}
+            <div className="px-6 pt-5 pb-4">
+              {/* Grid lines + bars */}
+              <div className="relative" style={{ height: CHART_H }}>
+                {/* Horizontal grid lines */}
+                {[0, 1, 2, 3].map(i => (
+                  <div
+                    key={i}
+                    className="absolute left-0 right-0 border-t border-[#1e1e1e]"
+                    style={{ bottom: `${(i / 4) * 100}%` }}
+                  />
+                ))}
+
+                {/* Bars */}
+                <div className="absolute inset-0 flex items-end gap-px">
                   {buckets.map((b, i) => {
-                    const convH  = Math.max((b.conversations / maxBConv) * CHART_H, b.conversations > 0 ? 3 : 0);
-                    const spendH = Math.max((b.spend / maxBSpend) * CHART_H, b.spend > 0 ? 3 : 0);
+                    const convPct  = (b.conversations / maxConv)  * 100;
+                    const spendPct = (b.spend         / maxSpend) * 100;
                     return (
-                      <div key={i} className="flex flex-col items-center gap-0.5 flex-shrink-0 group" style={{ minWidth: barW * 2 + 4 }}>
-                        {/* Tooltip on hover */}
-                        <div className="relative flex items-end gap-0.5" style={{ height: CHART_H }}>
-                          <div className="absolute -top-8 left-1/2 -translate-x-1/2 hidden group-hover:flex flex-col items-center z-10 pointer-events-none">
-                            <div className="bg-[#111] border border-[#333] rounded-lg px-2 py-1 whitespace-nowrap text-[10px] text-gray-300 shadow-lg">
-                              <span className="text-blue-400 font-bold">{b.conversations}</span>
-                              <span className="text-gray-600 mx-1">·</span>
-                              <span className="text-amber-400">R${b.spend.toFixed(0)}</span>
-                            </div>
+                      <div
+                        key={i}
+                        className="flex-1 flex items-end gap-px group relative"
+                        style={{ height: "100%" }}
+                      >
+                        {/* Hover tooltip */}
+                        <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 hidden group-hover:block z-20 pointer-events-none">
+                          <div className="bg-[#0a0a0a] border border-[#2a2a2a] rounded-xl px-3 py-2 shadow-xl whitespace-nowrap">
+                            <p className="text-[10px] text-gray-500 mb-1">{b.label}</p>
+                            <p className="text-xs font-bold text-blue-400">{b.conversations} conversas</p>
+                            <p className="text-xs text-amber-400/80">R$ {b.spend.toLocaleString("pt-BR", { minimumFractionDigits: 0 })}</p>
                           </div>
-                          <div
-                            className="rounded-t-sm bg-blue-500/75 hover:bg-blue-400 transition-colors cursor-default"
-                            style={{ width: barW, height: convH }}
-                          />
-                          <div
-                            className="rounded-t-sm bg-amber-500/55 hover:bg-amber-400/70 transition-colors cursor-default"
-                            style={{ width: barW, height: spendH }}
-                          />
                         </div>
-                        {showLabel && (
-                          <span className="text-[9px] text-gray-600">{b.label.split("/")[0]}</span>
-                        )}
+
+                        {/* Conversation bar */}
+                        <div
+                          className="flex-1 rounded-t bg-blue-500/25 group-hover:bg-blue-500/40 transition-colors relative overflow-hidden"
+                          style={{ height: `${Math.max(convPct, b.conversations > 0 ? 1 : 0)}%` }}
+                        >
+                          <div className="absolute inset-x-0 top-0 h-0.5 bg-blue-400/60" />
+                        </div>
+
+                        {/* Spend bar */}
+                        <div
+                          className="flex-1 rounded-t bg-amber-500/20 group-hover:bg-amber-500/35 transition-colors relative overflow-hidden"
+                          style={{ height: `${Math.max(spendPct, b.spend > 0 ? 1 : 0)}%` }}
+                        >
+                          <div className="absolute inset-x-0 top-0 h-0.5 bg-amber-400/50" />
+                        </div>
                       </div>
                     );
                   })}
                 </div>
-
-                {/* Max value labels */}
-                <div className="flex justify-between mt-2 text-[10px] text-gray-700">
-                  <span>{buckets[0]?.label ?? ""}</span>
-                  <span className="text-blue-500/60">máx {maxBConv} conv</span>
-                  <span>{buckets[buckets.length - 1]?.label ?? ""}</span>
-                </div>
               </div>
-            );
-          })()}
-        </div>
-      )}
+
+              {/* X-axis labels — show at most ~12 evenly spaced */}
+              {(() => {
+                const step = buckets.length <= 12 ? 1 : Math.ceil(buckets.length / 12);
+                return (
+                  <div className="flex items-center mt-3">
+                    {buckets.map((b, i) => (
+                      <div key={i} className="flex-1 text-center">
+                        {i % step === 0 && (
+                          <span className="text-[10px] text-gray-700">{b.label}</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+            </div>
+
+            {/* Legend */}
+            <div className="flex items-center gap-5 px-6 pb-4 text-xs text-gray-600">
+              <span className="flex items-center gap-1.5">
+                <span className="w-3 h-3 rounded-sm bg-blue-500/40 border-t border-blue-400/60 inline-block" />
+                Conversas WhatsApp
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-3 h-3 rounded-sm bg-amber-500/30 border-t border-amber-400/50 inline-block" />
+                Investimento
+              </span>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Campaign insights — only when a single client is selected */}
       {selectedClientId !== "all" && (() => {
