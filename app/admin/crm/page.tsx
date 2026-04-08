@@ -49,22 +49,50 @@ export default async function CRMPage({ searchParams }: PageProps) {
       <main className="flex-1 p-6">
 
         {/* Métricas rápidas */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 px-4 py-3 shadow-sm">
-            <p className="text-xs text-gray-500 dark:text-gray-400">Total no pipeline</p>
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">{leads.length}</p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-5">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700/50 shadow-sm p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
+                <svg className="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0" /></svg>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Total Pipeline</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">{leads.length}</p>
+              </div>
+            </div>
           </div>
-          <div className="bg-emerald-50 dark:bg-emerald-950 rounded-2xl border border-emerald-200 dark:border-emerald-800 px-4 py-3 shadow-sm">
-            <p className="text-xs text-emerald-600 dark:text-emerald-400">Clientes Ativos</p>
-            <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">{activeClients}</p>
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700/50 shadow-sm p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                <svg className="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              </div>
+              <div>
+                <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">Clientes Ativos</p>
+                <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{activeClients}</p>
+              </div>
+            </div>
           </div>
-          <div className="bg-violet-50 dark:bg-violet-950 rounded-2xl border border-violet-200 dark:border-violet-800 px-4 py-3 shadow-sm">
-            <p className="text-xs text-violet-600 dark:text-violet-400">Em Onboarding</p>
-            <p className="text-2xl font-bold text-violet-700 dark:text-violet-300">{onboarding}</p>
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700/50 shadow-sm p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center">
+                <svg className="w-5 h-5 text-violet-600 dark:text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+              </div>
+              <div>
+                <p className="text-xs text-violet-600 dark:text-violet-400 font-medium">Em Onboarding</p>
+                <p className="text-2xl font-bold text-violet-600 dark:text-violet-400">{onboarding}</p>
+              </div>
+            </div>
           </div>
-          <div className="bg-red-50 dark:bg-red-950 rounded-2xl border border-red-200 dark:border-red-800 px-4 py-3 shadow-sm">
-            <p className="text-xs text-red-600 dark:text-red-400">Risco de Churn</p>
-            <p className="text-2xl font-bold text-red-700 dark:text-red-300">{atRisk}</p>
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700/50 shadow-sm p-4">
+            <div className="flex items-center gap-3">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${atRisk > 0 ? "bg-red-100 dark:bg-red-900/30" : "bg-gray-100 dark:bg-gray-800"}`}>
+                <svg className={`w-5 h-5 ${atRisk > 0 ? "text-red-600 dark:text-red-400" : "text-gray-400"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" /></svg>
+              </div>
+              <div>
+                <p className="text-xs text-red-600 dark:text-red-400 font-medium">Risco de Churn</p>
+                <p className={`text-2xl font-bold ${atRisk > 0 ? "text-red-600 dark:text-red-400" : "text-gray-300 dark:text-gray-600"}`}>{atRisk}</p>
+              </div>
+            </div>
           </div>
         </div>
 

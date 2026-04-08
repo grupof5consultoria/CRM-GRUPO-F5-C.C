@@ -39,33 +39,31 @@ export default async function ClientsPage({ searchParams }: PageProps) {
       <Topbar title="Clientes" />
       <main className="flex-1 p-6">
 
-        {/* MRR total */}
-        <div className="flex items-center gap-3 mb-5">
-          <div className="bg-gradient-to-r from-indigo-500 to-violet-600 rounded-2xl px-5 py-3 shadow-md">
-            <p className="text-indigo-100 text-xs font-medium">MRR Total (clientes ativos)</p>
-            <p className="text-white text-2xl font-bold">
+        {/* Métricas */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+          <div className="bg-gradient-to-r from-indigo-500 to-violet-600 rounded-2xl shadow-md p-4">
+            <p className="text-indigo-100 text-xs font-medium">MRR Total</p>
+            <p className="text-white text-2xl font-bold mt-1">
               R$ {totalMRR.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
             </p>
           </div>
-        </div>
-
-        {/* Cards de alerta rápido */}
-        {(atRisk > 0 || attention > 0) && (
-          <div className="flex gap-3 mb-5">
-            {atRisk > 0 && (
-              <div className="flex items-center gap-2 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-xl px-4 py-2.5 text-sm">
-                <span>🔴</span>
-                <span className="font-semibold text-red-700 dark:text-red-400">{atRisk} cliente{atRisk > 1 ? "s" : ""} em risco</span>
-              </div>
-            )}
-            {attention > 0 && (
-              <div className="flex items-center gap-2 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-xl px-4 py-2.5 text-sm">
-                <span>🟡</span>
-                <span className="font-semibold text-amber-700 dark:text-amber-400">{attention} requere{attention > 1 ? "m" : ""} atenção</span>
-              </div>
-            )}
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700/50 shadow-sm p-4">
+            <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">Clientes Ativos</p>
+            <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">{clients.filter(c => c.status === "active").length}</p>
           </div>
-        )}
+          {atRisk > 0 && (
+            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-red-200 dark:border-red-800/50 shadow-sm p-4">
+              <p className="text-xs text-red-600 dark:text-red-400 font-medium">Em Risco</p>
+              <p className="text-2xl font-bold text-red-600 dark:text-red-400 mt-1">{atRisk}</p>
+            </div>
+          )}
+          {attention > 0 && (
+            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-amber-200 dark:border-amber-800/50 shadow-sm p-4">
+              <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">Requer Atenção</p>
+              <p className="text-2xl font-bold text-amber-600 dark:text-amber-400 mt-1">{attention}</p>
+            </div>
+          )}
+        </div>
 
         <div className="flex flex-col sm:flex-row gap-3 mb-6">
           <form className="flex gap-2 flex-1 flex-wrap">

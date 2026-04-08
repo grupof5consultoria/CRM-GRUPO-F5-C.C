@@ -10,11 +10,34 @@ export const metadata = { title: "Contratos | Gestão Interna" };
 export default async function ContractsPage() {
   const contracts = await getContracts();
 
+  const activeCount = contracts.filter(c => c.status === "active").length;
+  const pendingCount = contracts.filter(c => c.status === "pending_signature").length;
+  const totalValue = contracts.filter(c => c.status === "active").reduce((s, c) => s + Number(c.value ?? 0), 0);
+
   return (
     <>
       <Topbar title="Contratos" />
-      <main className="flex-1 p-6">
-        <div className="flex justify-end mb-6">
+      <main className="flex-1 p-6 space-y-6">
+
+        {/* Métricas */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700/50 shadow-sm p-4">
+            <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">Ativos</p>
+            <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">{activeCount}</p>
+          </div>
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700/50 shadow-sm p-4">
+            <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">Aguardando Assinatura</p>
+            <p className={`text-2xl font-bold mt-1 ${pendingCount > 0 ? "text-amber-600 dark:text-amber-400" : "text-gray-300 dark:text-gray-600"}`}>{pendingCount}</p>
+          </div>
+          <div className="bg-gradient-to-r from-indigo-500 to-violet-600 rounded-2xl shadow-md p-4">
+            <p className="text-xs text-indigo-100 font-medium">Valor Contratado (Ativos)</p>
+            <p className="text-2xl font-bold text-white mt-1">
+              R$ {totalValue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex justify-end">
           <Link href="/admin/contracts/new">
             <Button>+ Novo Contrato</Button>
           </Link>
@@ -40,13 +63,15 @@ export default async function ContractsPage() {
               contracts.map((c) => (
                 <TableRow key={c.id}>
                   <TableTd>
-                    <span className="font-medium text-gray-900">{c.title}</span>
+                    <span className="font-medium text-gray-900 dark:text-white">{c.title}</span>
                   </TableTd>
-                  <TableTd>{c.client.name}</TableTd>
+                  <TableTd><span className="text-gray-700 dark:text-gray-300">{c.client.name}</span></TableTd>
                   <TableTd>
-                    {c.value
-                      ? `R$ ${Number(c.value).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`
-                      : "—"}
+                    {c.value ? (
+                      <span className="font-semibold text-gray-900 dark:text-white">
+                        R$ {Number(c.value).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                      </span>
+                    ) : <span className="text-gray-400">—</span>}
                   </TableTd>
                   <TableTd>
                     <Badge variant={CONTRACT_STATUS_VARIANTS[c.status]}>
@@ -54,20 +79,24 @@ export default async function ContractsPage() {
                     </Badge>
                   </TableTd>
                   <TableTd>
-                    {c.startDate ? new Date(c.startDate).toLocaleDateString("pt-BR") : "—"}
+                    <span className="text-gray-700 dark:text-gray-300">
+                      {c.startDate ? new Date(c.startDate).toLocaleDateString("pt-BR") : "—"}
+                    </span>
                   </TableTd>
                   <TableTd>
-                    {c.endDate ? new Date(c.endDate).toLocaleDateString("pt-BR") : "—"}
+                    <span className="text-gray-700 dark:text-gray-300">
+                      {c.endDate ? new Date(c.endDate).toLocaleDateString("pt-BR") : "—"}
+                    </span>
                   </TableTd>
                   <TableTd>
                     {c.proposal ? (
-                      <Link href={`/admin/proposals/${c.proposal.id}`} className="text-blue-600 hover:underline text-xs">
+                      <Link href={`/admin/proposals/${c.proposal.id}`} className="text-indigo-600 dark:text-indigo-400 hover:underline text-xs">
                         Ver proposta
                       </Link>
-                    ) : "—"}
+                    ) : <span className="text-gray-400">—</span>}
                   </TableTd>
                   <TableTd>
-                    <Link href={`/admin/contracts/${c.id}`} className="text-blue-600 hover:underline text-xs font-medium">
+                    <Link href={`/admin/contracts/${c.id}`} className="text-indigo-600 dark:text-indigo-400 hover:underline text-xs font-medium">
                       Ver
                     </Link>
                   </TableTd>

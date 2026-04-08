@@ -10,11 +10,33 @@ export const metadata = { title: "Propostas | Gestão Interna" };
 export default async function ProposalsPage() {
   const proposals = await getProposals();
 
+  const totalValue = proposals.reduce((s, p) => s + Number(p.totalValue), 0);
+  const openCount = proposals.filter(p => p.status === "draft" || p.status === "sent").length;
+
   return (
     <>
       <Topbar title="Propostas" />
-      <main className="flex-1 p-6">
-        <div className="flex justify-end mb-6">
+      <main className="flex-1 p-6 space-y-6">
+
+        {/* Métricas */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700/50 shadow-sm p-4">
+            <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Total de Propostas</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{proposals.length}</p>
+          </div>
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700/50 shadow-sm p-4">
+            <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">Abertas</p>
+            <p className="text-2xl font-bold text-amber-600 dark:text-amber-400 mt-1">{openCount}</p>
+          </div>
+          <div className="bg-gradient-to-r from-indigo-500 to-violet-600 rounded-2xl shadow-md p-4">
+            <p className="text-xs text-indigo-100 font-medium">Valor Total</p>
+            <p className="text-2xl font-bold text-white mt-1">
+              R$ {totalValue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex justify-end">
           <Link href="/admin/proposals/new">
             <Button>+ Nova Proposta</Button>
           </Link>
@@ -39,20 +61,22 @@ export default async function ProposalsPage() {
               proposals.map((p) => (
                 <TableRow key={p.id}>
                   <TableTd>
-                    <span className="font-medium text-gray-900">{p.title}</span>
+                    <span className="font-medium text-gray-900 dark:text-white">{p.title}</span>
                   </TableTd>
                   <TableTd>
                     {p.lead ? (
                       <div className="text-sm">
-                        <p>{p.lead.name}</p>
-                        {p.lead.company && <p className="text-gray-400 text-xs">{p.lead.company}</p>}
+                        <p className="text-gray-900 dark:text-gray-100">{p.lead.name}</p>
+                        {p.lead.company && <p className="text-gray-400 dark:text-gray-500 text-xs">{p.lead.company}</p>}
                       </div>
                     ) : p.client ? (
-                      <span>{p.client.name}</span>
-                    ) : "—"}
+                      <span className="text-gray-900 dark:text-gray-100">{p.client.name}</span>
+                    ) : <span className="text-gray-400">—</span>}
                   </TableTd>
                   <TableTd>
-                    R$ {Number(p.totalValue).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                    <span className="font-semibold text-gray-900 dark:text-white">
+                      R$ {Number(p.totalValue).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                    </span>
                   </TableTd>
                   <TableTd>
                     <Badge variant={PROPOSAL_STATUS_VARIANTS[p.status]}>
@@ -60,11 +84,13 @@ export default async function ProposalsPage() {
                     </Badge>
                   </TableTd>
                   <TableTd>
-                    {p.validUntil ? new Date(p.validUntil).toLocaleDateString("pt-BR") : "—"}
+                    <span className="text-gray-700 dark:text-gray-300">
+                      {p.validUntil ? new Date(p.validUntil).toLocaleDateString("pt-BR") : "—"}
+                    </span>
                   </TableTd>
-                  <TableTd>{p.creator.name}</TableTd>
+                  <TableTd><span className="text-gray-700 dark:text-gray-300">{p.creator.name}</span></TableTd>
                   <TableTd>
-                    <Link href={`/admin/proposals/${p.id}`} className="text-blue-600 hover:underline text-xs font-medium">
+                    <Link href={`/admin/proposals/${p.id}`} className="text-indigo-600 dark:text-indigo-400 hover:underline text-xs font-medium">
                       Ver
                     </Link>
                   </TableTd>

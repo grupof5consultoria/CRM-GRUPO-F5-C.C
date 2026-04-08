@@ -45,27 +45,54 @@ export default async function BillingPage({ searchParams }: PageProps) {
   return (
     <>
       <Topbar title="Financeiro" />
-      <main className="flex-1 p-6">
+      <main className="flex-1 p-6 space-y-6">
 
-        {/* Resumo */}
-        <div className="grid grid-cols-3 gap-4 mb-6">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-4">
-            <p className="text-sm text-gray-500 dark:text-gray-400">Pendente a Receber</p>
-            <p className="text-xl font-bold text-amber-600 mt-1">
-              R$ {totalPending.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-            </p>
+        {/* Resumo financeiro */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700/50 shadow-sm p-5">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                <svg className="w-5 h-5 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Pendente a Receber</p>
+                <p className="text-xl font-bold text-amber-600 dark:text-amber-400">
+                  R$ {totalPending.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                </p>
+              </div>
+            </div>
           </div>
-          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-4">
-            <p className="text-sm text-gray-500 dark:text-gray-400">Total Recebido</p>
-            <p className="text-xl font-bold text-emerald-600 mt-1">
-              R$ {totalPaid.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-            </p>
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700/50 shadow-sm p-5">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                <svg className="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Total Recebido</p>
+                <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
+                  R$ {totalPaid.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                </p>
+              </div>
+            </div>
           </div>
-          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-4">
-            <p className="text-sm text-gray-500 dark:text-gray-400">Vencidas</p>
-            <p className={`text-xl font-bold mt-1 ${overdueCount > 0 ? "text-red-600" : "text-gray-400"}`}>
-              {overdueCount}
-            </p>
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700/50 shadow-sm p-5">
+            <div className="flex items-center gap-3">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${overdueCount > 0 ? "bg-red-100 dark:bg-red-900/30" : "bg-gray-100 dark:bg-gray-800"}`}>
+                <svg className={`w-5 h-5 ${overdueCount > 0 ? "text-red-600 dark:text-red-400" : "text-gray-400"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Vencidas</p>
+                <p className={`text-xl font-bold ${overdueCount > 0 ? "text-red-600 dark:text-red-400" : "text-gray-300 dark:text-gray-600"}`}>
+                  {overdueCount}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -73,8 +100,8 @@ export default async function BillingPage({ searchParams }: PageProps) {
 
           {/* Formulário */}
           <div className="lg:col-span-1">
-            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
-              <h2 className="text-base font-bold text-gray-900 dark:text-white mb-4">Nova Cobrança</h2>
+            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700/50 shadow-sm p-6">
+              <h2 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider mb-4">Nova Cobrança</h2>
               <NewChargeForm clients={clients.map((c) => ({ id: c.id, name: c.name }))} />
             </div>
           </div>
@@ -85,7 +112,7 @@ export default async function BillingPage({ searchParams }: PageProps) {
               <select name="status" defaultValue={params.status ?? ""} className="rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 {STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
-              <button type="submit" className="px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-600 text-sm bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
+              <button type="submit" className="px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-600 text-sm bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                 Filtrar
               </button>
             </form>
@@ -112,7 +139,7 @@ export default async function BillingPage({ searchParams }: PageProps) {
                     return (
                       <TableRow key={charge.id}>
                         <TableTd>
-                          <Link href={`/admin/clients/${charge.client.id}`} className="font-medium hover:text-indigo-600 dark:hover:text-indigo-400">
+                          <Link href={`/admin/clients/${charge.client.id}`} className="font-medium text-gray-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
                             {charge.client.name}
                           </Link>
                         </TableTd>
@@ -131,7 +158,7 @@ export default async function BillingPage({ searchParams }: PageProps) {
                         </TableTd>
                         <TableTd>
                           <div>
-                            <span className={`font-medium ${isOverdue ? "text-red-600" : "text-gray-800 dark:text-gray-200"}`}>
+                            <span className={`font-medium ${isOverdue ? "text-red-500" : "text-gray-800 dark:text-gray-200"}`}>
                               {new Date(charge.dueDate).toLocaleDateString("pt-BR")}
                               {isOverdue && " ⚠️"}
                             </span>
