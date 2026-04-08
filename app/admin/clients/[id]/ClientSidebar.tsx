@@ -44,6 +44,8 @@ interface Props {
   // Plataformas
   metaAdAccountId: string | null;
   googleAdsCustomerId: string | null;
+  metaSuccess?: boolean;
+  metaError?: string;
   // Informações
   ownerName: string;
   monthlyValue: { toString(): string } | null;
@@ -72,7 +74,7 @@ type TabKey = typeof TABS[number]["key"];
 
 export function ClientSidebar({
   clientId, portalUrl,
-  metaAdAccountId, googleAdsCustomerId,
+  metaAdAccountId, googleAdsCustomerId, metaSuccess, metaError,
   ownerName, monthlyValue, document, email, phone, startDate, createdAt, notes,
   health, healthNote, healthLogs,
   portalUsers,
@@ -137,6 +139,8 @@ export function ClientSidebar({
               googleAdsCustomerId={googleAdsCustomerId}
               hasMeta={!!metaAdAccountId}
               hasGoogle={!!googleAdsCustomerId}
+              metaSuccess={metaSuccess}
+              metaError={metaError}
             />
           </div>
         )}
