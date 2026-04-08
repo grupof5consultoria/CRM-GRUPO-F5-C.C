@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/renew-meta-tokens",
+      "schedule": "0 9 1 * *"
+    }
+  ]
+}
