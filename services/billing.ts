@@ -58,13 +58,43 @@ export async function createCharge(data: {
 }
 
 export async function updateChargeStatus(chargeId: string, status: ChargeStatus) {
-  const data: { status: ChargeStatus; paidAt?: Date } = { status };
+  const charge = await prisma.charge.findUnique({ where: { id: chargeId } });
+  if (!charge) return;
+
+  // Se pago e recorrente: registra o pagamento no histórico e renova a cobrança para o próximo mês
+  if (status === "paid" && charge.isRecurring) {
+    const paidDate = new Date();
+    const currentDue = new Date(charge.dueDate);
+    const nextDue = new Date(currentDue);
+    nextDue.setMonth(nextDue.getMonth() + 1);
+    if (charge.recurrenceDay) nextDue.setDate(charge.recurrenceDay);
+
+    // Registra pagamento no histórico e renova no lugar
+    await prisma.charge.update({
+      where: { id: chargeId },
+      data: {
+        status: "pending",
+        paidAt: null,
+        dueDate: nextDue,
+      },
+    });
+
+    await prisma.chargeEvent.create({
+      data: {
+        chargeId,
+        type: "paid",
+        description: `Pagamento confirmado em ${paidDate.toLocaleDateString("pt-BR")}. Próximo vencimento: ${nextDue.toLocaleDateString("pt-BR")}.`,
+      },
+    });
+
+    return;
+  }
+
+  // Para não-recorrentes ou outros status: comportamento normal
+  const data: { status: ChargeStatus; paidAt?: Date | null } = { status };
   if (status === "paid") data.paidAt = new Date();
 
-  const charge = await prisma.charge.update({
-    where: { id: chargeId },
-    data,
-  });
+  await prisma.charge.update({ where: { id: chargeId }, data });
 
   await prisma.chargeEvent.create({
     data: {
@@ -73,56 +103,17 @@ export async function updateChargeStatus(chargeId: string, status: ChargeStatus)
       description: `Status alterado para: ${CHARGE_STATUS_LABELS[status]}`,
     },
   });
+}
 
-  // Se pago e recorrente, gera a próxima cobrança automaticamente
-  if (status === "paid" && charge.isRecurring) {
-    const currentDue = new Date(charge.dueDate);
-    const nextDue = new Date(currentDue);
-    nextDue.setMonth(nextDue.getMonth() + 1);
-
-    // Usa o dia de recorrência definido ou mantém o mesmo dia
-    if (charge.recurrenceDay) {
-      nextDue.setDate(charge.recurrenceDay);
-    }
-
-    // Verifica se já existe cobrança pendente para o mesmo cliente no mesmo mês
-    const alreadyExists = await prisma.charge.findFirst({
-      where: {
-        clientId: charge.clientId,
-        description: charge.description,
-        status: "pending",
-        dueDate: {
-          gte: new Date(nextDue.getFullYear(), nextDue.getMonth(), 1),
-          lte: new Date(nextDue.getFullYear(), nextDue.getMonth() + 1, 0),
-        },
-      },
-    });
-
-    if (!alreadyExists) {
-      const nextCharge = await prisma.charge.create({
-        data: {
-          clientId: charge.clientId,
-          contractId: charge.contractId,
-          description: charge.description,
-          value: charge.value,
-          dueDate: nextDue,
-          paymentMethod: charge.paymentMethod,
-          isRecurring: true,
-          recurrenceDay: charge.recurrenceDay,
-        },
-      });
-
-      await prisma.chargeEvent.create({
-        data: {
-          chargeId: nextCharge.id,
-          type: "created",
-          description: `Gerada automaticamente pela recorrência do mês anterior.`,
-        },
-      });
-    }
-  }
-
-  return charge;
+export async function updateCharge(chargeId: string, data: {
+  description?: string;
+  value?: number;
+  dueDate?: Date;
+  paymentMethod?: import("@prisma/client").PaymentMethod;
+  isRecurring?: boolean;
+  recurrenceDay?: number | null;
+}) {
+  return prisma.charge.update({ where: { id: chargeId }, data });
 }
 
 export const CHARGE_STATUS_LABELS: Record<ChargeStatus, string> = {
