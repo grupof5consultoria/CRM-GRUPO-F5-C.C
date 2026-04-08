@@ -295,15 +295,42 @@ model Client {
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 
-  contacts     ClientContact[]
-  clientUsers  ClientUser[]
-  proposals    Proposal[]
-  contracts    Contract[]
-  tasks        Task[]
-  charges      Charge[]
-  healthLogs   ClientHealthLog[]
+  // Métricas — credenciais de plataformas de anúncio
+  metaAdAccountId     String?
+  metaAccessToken     String?
+  googleAdsCustomerId String?
+  googleRefreshToken  String?
+
+  contacts      ClientContact[]
+  clientUsers   ClientUser[]
+  proposals     Proposal[]
+  contracts     Contract[]
+  tasks         Task[]
+  charges       Charge[]
+  healthLogs    ClientHealthLog[]
+  metricEntries ClientMetricEntry[]
 
   @@map("clients")
+}
+
+model ClientMetricEntry {
+  id             String   @id @default(cuid())
+  clientId       String
+  client         Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  platform       String   // "meta" | "google"
+  period         String   // "2024-01" (YYYY-MM)
+  spend          Decimal? @db.Decimal(10, 2)
+  impressions    Int?
+  clicks         Int?
+  leadsFromAds   Int?
+  leadsScheduled Int?
+  revenue        Decimal? @db.Decimal(10, 2)
+  syncedAt       DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([clientId, platform, period])
+  @@map("client_metric_entries")
 }
 
 model ClientHealthLog {

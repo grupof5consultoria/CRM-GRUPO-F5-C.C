@@ -12,6 +12,7 @@ import { EditClientForm } from "./EditClientForm";
 import { AddContactForm } from "./AddContactForm";
 import { DeleteContactButton } from "./DeleteContactButton";
 import { UpdateHealthForm } from "./UpdateHealthForm";
+import { ClientCredentialsForm } from "./ClientCredentialsForm";
 
 interface PageProps { params: Promise<{ id: string }> }
 
@@ -203,6 +204,28 @@ export default async function ClientDetailPage({ params }: PageProps) {
                 })()}
                 <div><p className="text-xs text-gray-500 mb-0.5">Cadastrado em</p><p className="font-medium">{new Date(client.createdAt).toLocaleDateString("pt-BR")}</p></div>
                 {client.notes && <div><p className="text-xs text-gray-500 mb-0.5">Observações</p><p className="text-gray-300">{client.notes}</p></div>}
+              </CardContent>
+            </Card>
+
+            {/* Métricas — credenciais de plataformas */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle>Métricas — Plataformas</CardTitle>
+                  <div className="flex items-center gap-1">
+                    {client.metaAdAccountId && <span className="w-2 h-2 rounded-full bg-blue-400" title="Meta configurado" />}
+                    {client.googleAdsCustomerId && <span className="w-2 h-2 rounded-full bg-red-400" title="Google configurado" />}
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <ClientCredentialsForm
+                  clientId={client.id}
+                  metaAdAccountId={client.metaAdAccountId ?? null}
+                  googleAdsCustomerId={client.googleAdsCustomerId ?? null}
+                  hasMeta={!!client.metaAdAccountId}
+                  hasGoogle={!!client.googleAdsCustomerId}
+                />
               </CardContent>
             </Card>
           </div>
