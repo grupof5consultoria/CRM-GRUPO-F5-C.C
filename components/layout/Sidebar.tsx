@@ -103,25 +103,37 @@ export function Sidebar() {
       <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
         {navItems.map((item) => {
           const active = pathname === item.href || pathname.startsWith(item.href + "/");
-          return (
+          return active ? (
             <Link
               key={item.href}
               href={item.href}
-              className={clsx(
-                "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150",
-                active
-                  ? "bg-violet-500/10 text-violet-400 border border-violet-500/20"
-                  : "text-gray-500 hover:bg-[#222222] hover:text-gray-300"
-              )}
+              className="relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium overflow-hidden transition-all duration-150"
+              style={{ background: "linear-gradient(135deg, #6d28d9 0%, #7c3aed 40%, #5b21b6 100%)" }}
             >
-              <span className={clsx("flex-shrink-0 transition-colors", active ? "text-violet-400" : "text-gray-600")}>
-                {item.icon}
-              </span>
-              {item.label}
-              {active && (
-                <span className="ml-auto w-1.5 h-1.5 rounded-full bg-violet-500" />
-              )}
+              {/* Shine diagonal opaco */}
+              <div
+                className="absolute inset-0 pointer-events-none"
+                style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.03) 40%, transparent 60%)" }}
+              />
+              {/* Linha brilhante no topo */}
+              <div
+                className="absolute top-0 left-0 right-0 h-px pointer-events-none"
+                style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)" }}
+              />
+              <span className="relative z-10 flex-shrink-0 text-white">{item.icon}</span>
+              <span className="relative z-10 text-white">{item.label}</span>
+              <span className="relative z-10 ml-auto w-1.5 h-1.5 rounded-full bg-white/60" />
             </Link>
+          ) : (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-500 hover:bg-[#222222] hover:text-gray-300 transition-all duration-150"
+            >
+              <span className="flex-shrink-0 text-gray-600">{item.icon}</span>
+              {item.label}
+            </Link>
+          )
           );
         })}
       </nav>
