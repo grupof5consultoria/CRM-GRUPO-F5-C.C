@@ -6,7 +6,26 @@ import { clsx } from "clsx";
 import { logoutAction } from "@/lib/actions";
 import { useState, useEffect, useRef } from "react";
 
-const DEFAULT_NAV_ITEMS = [
+// ─── Logos ───────────────────────────────────────────────────────────────────
+
+const MetaLogo = () => (
+  <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12 2.04c-5.5 0-10 4.49-10 10.02 0 5 3.66 9.15 8.44 9.9v-7H7.9v-2.9h2.54V9.85c0-2.51 1.49-3.89 3.78-3.89 1.09 0 2.23.19 2.23.19v2.47h-1.26c-1.24 0-1.63.77-1.63 1.56v1.88h2.78l-.45 2.9h-2.33v7a10 10 0 008.44-9.9c0-5.53-4.5-10.02-10-10.02z"/>
+  </svg>
+);
+
+const GoogleAdsLogo = () => (
+  <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12.545 10.239v3.821h5.445c-.712 2.315-2.647 3.972-5.445 3.972a6.033 6.033 0 110-12.064c1.498 0 2.866.549 3.921 1.453l2.814-2.814A9.969 9.969 0 0012.545 2C7.021 2 2.543 6.477 2.543 12s4.478 10 10.002 10c8.396 0 10.249-7.85 9.426-11.748l-9.426-.013z"/>
+  </svg>
+);
+
+// ─── Nav items ────────────────────────────────────────────────────────────────
+
+type SubItem = { label: string; href: string; icon: React.ReactNode; color: string };
+type NavItem = { label: string; href: string; icon: React.ReactNode; subItems?: SubItem[] };
+
+const DEFAULT_NAV_ITEMS: NavItem[] = [
   {
     label: "Dashboard",
     href: "/admin/dashboard",
@@ -87,16 +106,35 @@ const DEFAULT_NAV_ITEMS = [
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
       </svg>
     ),
+    subItems: [
+      {
+        label: "Meta Ads",
+        href: "/admin/metrics/meta",
+        color: "text-blue-400",
+        icon: <MetaLogo />,
+      },
+      {
+        label: "Google Ads",
+        href: "/admin/metrics/google",
+        color: "text-red-400",
+        icon: <GoogleAdsLogo />,
+      },
+    ],
   },
 ];
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 export function Sidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [items, setItems] = useState(DEFAULT_NAV_ITEMS);
+  const [metricsOpen, setMetricsOpen] = useState(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
   const dragNode = useRef<EventTarget | null>(null);
+
+  const isMetricsActive = pathname.startsWith("/admin/metrics");
 
   useEffect(() => {
     const saved = localStorage.getItem("sidebar-collapsed");
@@ -109,12 +147,14 @@ export function Sidebar() {
         const reordered = order
           .map((href) => DEFAULT_NAV_ITEMS.find((i) => i.href === href))
           .filter(Boolean) as typeof DEFAULT_NAV_ITEMS;
-        // include any new items not in saved order
         const missing = DEFAULT_NAV_ITEMS.filter((i) => !order.includes(i.href));
         setItems([...reordered, ...missing]);
       } catch {}
     }
-  }, []);
+
+    // Auto-open metrics submenu if on a metrics page
+    if (pathname.startsWith("/admin/metrics")) setMetricsOpen(true);
+  }, [pathname]);
 
   function toggle() {
     const next = !collapsed;
@@ -126,7 +166,6 @@ export function Sidebar() {
     dragNode.current = e.target;
     setDragIndex(index);
     e.dataTransfer.effectAllowed = "move";
-    // transparent drag image
     const ghost = document.createElement("div");
     ghost.style.opacity = "0";
     document.body.appendChild(ghost);
@@ -178,14 +217,12 @@ export function Sidebar() {
             </svg>
           </div>
         )}
-
         {!collapsed && (
           <div className="flex-1 min-w-0">
             <p className="text-white font-bold text-sm truncate">Grupo F5</p>
             <p className="text-gray-600 text-xs truncate">Gestão Interna</p>
           </div>
         )}
-
         <button
           onClick={toggle}
           className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-600 hover:text-gray-300 hover:bg-[#222222] transition-all flex-shrink-0"
@@ -200,7 +237,8 @@ export function Sidebar() {
       {/* Nav */}
       <nav className={clsx("flex-1 py-4 space-y-0.5 overflow-y-auto overflow-x-hidden", collapsed ? "px-2" : "px-3")}>
         {items.map((item, index) => {
-          const active = pathname === item.href || pathname.startsWith(item.href + "/");
+          const isMetrics = item.href === "/admin/metrics";
+          const active = !isMetrics && (pathname === item.href || pathname.startsWith(item.href + "/"));
           const isDragging = dragIndex === index;
           const isOver = overIndex === index && dragIndex !== index;
 
@@ -214,7 +252,7 @@ export function Sidebar() {
             )
           );
 
-          const dragHandle = !collapsed && (
+          const dragHandle = !collapsed && !isMetrics && (
             <span
               className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover/item:opacity-100 cursor-grab active:cursor-grabbing transition-opacity z-20 text-gray-600 hover:text-gray-400"
               onMouseDown={(e) => e.stopPropagation()}
@@ -225,6 +263,101 @@ export function Sidebar() {
             </span>
           );
 
+          // ── Métricas: parent with submenu ───────────────────────────────
+          if (isMetrics && item.subItems) {
+            return (
+              <div key={item.href} className={wrapperClass}
+                draggable
+                onDragStart={(e) => handleDragStart(e, index)}
+                onDragOver={(e) => handleDragOver(e, index)}
+                onDrop={(e) => handleDrop(e, index)}
+                onDragEnd={handleDragEnd}
+              >
+                {/* Parent button */}
+                <button
+                  onClick={() => setMetricsOpen(!metricsOpen)}
+                  title={collapsed ? item.label : undefined}
+                  className={clsx(
+                    "relative w-full flex items-center rounded-xl text-sm font-medium overflow-hidden transition-all duration-150",
+                    collapsed ? "justify-center w-10 h-10 mx-auto" : "gap-3 px-3 py-2.5",
+                    isMetricsActive
+                      ? "text-white"
+                      : "text-gray-500 hover:bg-[#222222] hover:text-gray-300"
+                  )}
+                  style={isMetricsActive ? { background: "linear-gradient(135deg, #6d28d9 0%, #7c3aed 40%, #5b21b6 100%)" } : undefined}
+                >
+                  {isMetricsActive && (
+                    <>
+                      <span className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.03) 40%, transparent 60%)" }} />
+                      <span className="absolute top-0 left-0 right-0 h-px pointer-events-none" style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)" }} />
+                    </>
+                  )}
+                  <span className="relative z-10">{item.icon}</span>
+                  {!collapsed && (
+                    <>
+                      <span className="relative z-10 truncate flex-1 text-left">{item.label}</span>
+                      <svg
+                        className={clsx("relative z-10 w-3.5 h-3.5 flex-shrink-0 transition-transform duration-200", metricsOpen ? "rotate-90" : "")}
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </>
+                  )}
+                </button>
+
+                {/* Sub-items */}
+                {!collapsed && metricsOpen && (
+                  <div className="mt-0.5 ml-3 pl-3 border-l border-[#2e2e2e] space-y-0.5">
+                    {item.subItems.map((sub) => {
+                      const subActive = pathname === sub.href || pathname.startsWith(sub.href + "/");
+                      return (
+                        <Link
+                          key={sub.href}
+                          href={sub.href}
+                          className={clsx(
+                            "flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-150",
+                            subActive
+                              ? "bg-[#222222] text-white"
+                              : "text-gray-500 hover:bg-[#1e1e1e] hover:text-gray-300"
+                          )}
+                        >
+                          <span className={subActive ? sub.color : "text-gray-600"}>{sub.icon}</span>
+                          <span className="truncate">{sub.label}</span>
+                          {subActive && <span className={clsx("ml-auto w-1.5 h-1.5 rounded-full flex-shrink-0", sub.color.replace("text-", "bg-"))} />}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Collapsed: show both sub-icons stacked as tooltip */}
+                {collapsed && metricsOpen && (
+                  <div className="mt-0.5 space-y-0.5">
+                    {item.subItems.map((sub) => {
+                      const subActive = pathname === sub.href;
+                      return (
+                        <Link
+                          key={sub.href}
+                          href={sub.href}
+                          title={sub.label}
+                          className={clsx(
+                            "flex items-center justify-center w-10 h-8 mx-auto rounded-xl transition-all duration-150",
+                            subActive ? "bg-[#262626]" : "hover:bg-[#1e1e1e]",
+                            sub.color
+                          )}
+                        >
+                          {sub.icon}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          }
+
+          // ── Regular item ────────────────────────────────────────────────
           return (
             <div
               key={item.href}
@@ -249,7 +382,6 @@ export function Sidebar() {
                   <span className="absolute top-0 left-0 right-0 h-px pointer-events-none" style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)" }} />
                   <span className="relative z-10 text-white">{item.icon}</span>
                   {!collapsed && <span className="relative z-10 text-white truncate">{item.label}</span>}
-                  {!collapsed && <span className="relative z-10 ml-auto w-1.5 h-1.5 rounded-full bg-white/60 flex-shrink-0" />}
                 </Link>
               ) : (
                 <Link
