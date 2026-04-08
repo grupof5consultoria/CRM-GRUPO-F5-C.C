@@ -13,7 +13,7 @@ export default async function PortalContractsPage() {
   const contracts = await getPortalContracts(session.clientId);
 
   return (
-    <main className="flex-1 p-6 bg-[#111111] min-h-screen">
+    <main className="flex-1 p-4 md:p-6 bg-[#111111] min-h-screen">
       <h1 className="text-xl font-bold text-white mb-6">Meus Contratos</h1>
 
       {contracts.length === 0 ? (

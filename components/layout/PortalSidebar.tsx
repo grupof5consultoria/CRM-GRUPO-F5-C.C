@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { clsx } from "clsx";
 
 const navItems = [
   {
@@ -15,11 +14,11 @@ const navItems = [
     ),
   },
   {
-    label: "Contratos",
-    href: "/portal/contracts",
+    label: "Atendimentos",
+    href: "/portal/atendimentos",
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
       </svg>
     ),
   },
@@ -42,16 +41,16 @@ const navItems = [
     ),
   },
   {
-    label: "Atendimentos",
-    href: "/portal/atendimentos",
+    label: "Contratos",
+    href: "/portal/contracts",
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
       </svg>
     ),
   },
   {
-    label: "Minha Conta",
+    label: "Conta",
     href: "/portal/account",
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -70,64 +69,102 @@ export function PortalSidebar({ userName, logoutAction }: PortalSidebarProps) {
   const pathname = usePathname();
 
   return (
-    <aside className="flex flex-col w-60 bg-[#171717] border-r border-[#262626] min-h-screen">
-      <div className="flex items-center gap-3 px-5 py-4 border-b border-[#262626]">
-        <div className="w-8 h-8 rounded-xl bg-violet-600 flex items-center justify-center flex-shrink-0">
-          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
-            <path d="M14 2L5 13.5H11.5L10 22L19 10.5H12.5L14 2Z" fill="white" fillOpacity="0.95" />
-          </svg>
+    <>
+      {/* ── Desktop sidebar ───────────────────────────────── */}
+      <aside className="hidden md:flex flex-col w-60 bg-[#171717] border-r border-[#262626] min-h-screen">
+        <div className="flex items-center gap-3 px-5 py-4 border-b border-[#262626]">
+          <div className="w-8 h-8 rounded-xl bg-violet-600 flex items-center justify-center flex-shrink-0">
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
+              <path d="M14 2L5 13.5H11.5L10 22L19 10.5H12.5L14 2Z" fill="white" fillOpacity="0.95" />
+            </svg>
+          </div>
+          <div>
+            <span className="text-white font-bold text-sm block">Grupo F5</span>
+            <span className="text-gray-600 text-xs">Área do Cliente</span>
+          </div>
         </div>
-        <div>
-          <span className="text-white font-bold text-sm block">Grupo F5</span>
-          <span className="text-gray-600 text-xs">Área do Cliente</span>
-        </div>
-      </div>
 
-      <nav className="flex-1 px-3 py-4 space-y-0.5">
+        <nav className="flex-1 px-3 py-4 space-y-0.5">
+          {navItems.map((item) => {
+            const active = pathname === item.href || pathname.startsWith(item.href + "/");
+            return active ? (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium overflow-hidden transition-all"
+                style={{ background: "linear-gradient(135deg, #6d28d9 0%, #7c3aed 40%, #5b21b6 100%)" }}
+              >
+                <span className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.03) 40%, transparent 60%)" }} />
+                <span className="absolute top-0 left-0 right-0 h-px pointer-events-none" style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)" }} />
+                <span className="relative z-10 text-white">{item.icon}</span>
+                <span className="relative z-10 text-white truncate">{item.label}</span>
+                <span className="relative z-10 ml-auto w-1.5 h-1.5 rounded-full bg-white/60 flex-shrink-0" />
+              </Link>
+            ) : (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-500 hover:bg-[#222222] hover:text-gray-300 transition-all"
+              >
+                {item.icon}
+                <span className="truncate">{item.label}</span>
+              </Link>
+            );
+          })}
+        </nav>
+
+        <div className="px-3 py-4 border-t border-[#262626]">
+          <div className="px-3 mb-2">
+            <p className="text-xs text-gray-600 truncate">{userName}</p>
+          </div>
+          <form action={logoutAction}>
+            <button
+              type="submit"
+              className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-gray-600 hover:bg-[#222222] hover:text-gray-300 transition-all"
+            >
+              <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              Sair
+            </button>
+          </form>
+        </div>
+      </aside>
+
+      {/* ── Mobile top header ─────────────────────────────── */}
+      <header className="md:hidden fixed top-0 left-0 right-0 z-40 bg-[#171717] border-b border-[#262626] flex items-center justify-between px-4 h-14">
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-lg bg-violet-600 flex items-center justify-center flex-shrink-0">
+            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none">
+              <path d="M14 2L5 13.5H11.5L10 22L19 10.5H12.5L14 2Z" fill="white" fillOpacity="0.95" />
+            </svg>
+          </div>
+          <span className="text-white font-bold text-sm">Grupo F5</span>
+        </div>
+        <span className="text-xs text-gray-500 truncate max-w-[140px]">{userName}</span>
+      </header>
+
+      {/* ── Mobile bottom nav ─────────────────────────────── */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#171717] border-t border-[#262626] flex items-stretch">
         {navItems.map((item) => {
           const active = pathname === item.href || pathname.startsWith(item.href + "/");
-          return active ? (
+          return (
             <Link
               key={item.href}
               href={item.href}
-              className="relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium overflow-hidden transition-all"
-              style={{ background: "linear-gradient(135deg, #6d28d9 0%, #7c3aed 40%, #5b21b6 100%)" }}
+              className={`flex-1 flex flex-col items-center justify-center gap-1 py-2 transition-colors ${
+                active ? "text-violet-400" : "text-gray-600 hover:text-gray-400"
+              }`}
             >
-              <span className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.03) 40%, transparent 60%)" }} />
-              <span className="absolute top-0 left-0 right-0 h-px pointer-events-none" style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)" }} />
-              <span className="relative z-10 text-white">{item.icon}</span>
-              <span className="relative z-10 text-white truncate">{item.label}</span>
-              <span className="relative z-10 ml-auto w-1.5 h-1.5 rounded-full bg-white/60 flex-shrink-0" />
-            </Link>
-          ) : (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-500 hover:bg-[#222222] hover:text-gray-300 transition-all"
-            >
-              {item.icon}
-              <span className="truncate">{item.label}</span>
+              <span className={`${active ? "text-violet-400" : ""}`}>
+                {item.icon}
+              </span>
+              <span className="text-[9px] font-medium leading-none">{item.label}</span>
+              {active && <span className="absolute bottom-0 w-8 h-0.5 bg-violet-500 rounded-t-full" />}
             </Link>
           );
         })}
       </nav>
-
-      <div className="px-3 py-4 border-t border-[#262626]">
-        <div className="px-3 mb-2">
-          <p className="text-xs text-gray-600 truncate">{userName}</p>
-        </div>
-        <form action={logoutAction}>
-          <button
-            type="submit"
-            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-gray-600 hover:bg-[#222222] hover:text-gray-300 transition-all"
-          >
-            <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
-            Sair
-          </button>
-        </form>
-      </div>
-    </aside>
+    </>
   );
 }

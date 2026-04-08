@@ -12,7 +12,7 @@ export default async function PortalAccountPage() {
   if (!account) redirect("/portal/login");
 
   return (
-    <main className="flex-1 p-6 bg-[#111111] min-h-screen max-w-2xl space-y-6">
+    <main className="flex-1 p-4 md:p-6 bg-[#111111] min-h-screen max-w-2xl mx-auto space-y-6">
       <h1 className="text-xl font-bold text-white">Minha Conta</h1>
 
       {/* Dados da empresa */}
