@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { Poppins } from "next/font/google";
+import { DM_Sans } from "next/font/google";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import "./globals.css";
 
-const poppins = Poppins({
+const dmSans = DM_Sans({
   weight: ["300", "400", "500", "600", "700"],
-  variable: "--font-poppins",
+  variable: "--font-dm-sans",
   subsets: ["latin"],
 });
 
@@ -20,8 +20,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR" className={`${poppins.variable} h-full antialiased`}>
-      <body className="min-h-full bg-[#111111] text-gray-100 font-[family-name:var(--font-poppins)]">
+    <html lang="pt-BR" className={`${dmSans.variable} h-full antialiased`}>
+      <body className="min-h-full bg-[#111111] text-gray-100 font-[family-name:var(--font-dm-sans)]">
         <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
