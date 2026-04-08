@@ -138,16 +138,10 @@ export function CampaignInsights({ clientId, clientName, dateFrom, dateTo }: Pro
                     <div className="bg-[#111111] rounded-xl px-3 py-2">
                       <p className="text-xs text-gray-600 mb-0.5">Conversas</p>
                       <p className="text-sm font-bold text-blue-400">{fmtN(c.conversations)}</p>
-                      {c.costPerConversation > 0 && (
-                        <p className="text-xs text-gray-600 mt-0.5">{fmtR(c.costPerConversation)}/conv</p>
-                      )}
                     </div>
                     <div className="bg-[#111111] rounded-xl px-3 py-2">
-                      <p className="text-xs text-gray-600 mb-0.5">Leads</p>
-                      <p className="text-sm font-bold text-gray-300">{fmtN(c.leadsFromAds)}</p>
-                      {c.costPerResult > 0 && (
-                        <p className="text-xs text-gray-600 mt-0.5">{fmtR(c.costPerResult)}/lead</p>
-                      )}
+                      <p className="text-xs text-gray-600 mb-0.5">Custo por Conversa</p>
+                      <p className="text-sm font-bold text-blue-300">{c.costPerConversation > 0 ? fmtR(c.costPerConversation) : "—"}</p>
                     </div>
                     <div className="bg-[#111111] rounded-xl px-3 py-2">
                       <p className="text-xs text-gray-600 mb-0.5">Investimento</p>
