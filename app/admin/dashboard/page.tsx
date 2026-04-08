@@ -134,8 +134,8 @@ export default async function DashboardPage() {
             </div>
             {data.overdueTasks.length === 0 ? (
               <div className="text-center py-8">
-                <p className="text-3xl mb-2">🎉</p>
-                <p className="text-sm text-gray-600">Nenhuma tarefa atrasada!</p>
+                <svg className="w-8 h-8 text-gray-700 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <p className="text-sm text-gray-600">Nenhuma tarefa atrasada</p>
               </div>
             ) : (
               <div className="space-y-2">
@@ -169,8 +169,8 @@ export default async function DashboardPage() {
             </div>
             {data.overdueCharges.length === 0 ? (
               <div className="text-center py-8">
-                <p className="text-3xl mb-2">💰</p>
-                <p className="text-sm text-gray-600">Nenhuma cobrança vencida!</p>
+                <svg className="w-8 h-8 text-gray-700 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <p className="text-sm text-gray-600">Nenhuma cobrança vencida</p>
               </div>
             ) : (
               <div className="space-y-2">
@@ -205,8 +205,8 @@ export default async function DashboardPage() {
             </div>
             {data.pendingContracts === 0 ? (
               <div className="text-center py-8">
-                <p className="text-3xl mb-2">📋</p>
-                <p className="text-sm text-gray-600">Nenhum contrato pendente!</p>
+                <svg className="w-8 h-8 text-gray-700 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
+                <p className="text-sm text-gray-600">Nenhum contrato pendente</p>
               </div>
             ) : (
               <div className="flex items-center gap-4 p-3 rounded-xl bg-[#171717] border border-violet-500/20">
@@ -234,8 +234,8 @@ export default async function DashboardPage() {
             </div>
             {data.waitingClientTasks.length === 0 ? (
               <div className="text-center py-8">
-                <p className="text-3xl mb-2">⏳</p>
-                <p className="text-sm text-gray-600">Nada aguardando cliente!</p>
+                <svg className="w-8 h-8 text-gray-700 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <p className="text-sm text-gray-600">Nada aguardando cliente</p>
               </div>
             ) : (
               <div className="space-y-2">

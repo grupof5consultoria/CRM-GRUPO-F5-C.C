@@ -160,7 +160,7 @@ export default async function BillingPage({ searchParams }: PageProps) {
                           <div>
                             <span className={`font-medium ${isOverdue ? "text-red-500" : "text-gray-800 dark:text-gray-200"}`}>
                               {new Date(charge.dueDate).toLocaleDateString("pt-BR")}
-                              {isOverdue && " ⚠️"}
+                              
                             </span>
                             {charge.isRecurring && (
                               <p className="text-xs text-indigo-500 mt-0.5 font-medium">

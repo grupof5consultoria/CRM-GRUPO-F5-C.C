@@ -14,15 +14,15 @@ const STATUS_OPTIONS = [
   { value: "", label: "Todos" },
   { value: "new", label: "🆕 Novo Lead" },
   { value: "contacted", label: "📞 Em Contato" },
-  { value: "qualified", label: "✅ Qualificado" },
+  { value: "qualified", label: "Qualificado" },
   { value: "proposal_sent", label: "📄 Proposta Enviada" },
   { value: "negotiation", label: "🤝 Em Negociação" },
   { value: "onboarding", label: "🚀 Onboarding" },
   { value: "active_client", label: "💚 Cliente Ativo" },
   { value: "upsell_opportunity", label: "📈 Upsell" },
-  { value: "at_risk_churn", label: "⚠️ Risco de Churn" },
+  { value: "at_risk_churn", label: "Risco de Churn" },
   { value: "closed_won", label: "🏆 Fechado (Ganho)" },
-  { value: "closed_lost", label: "❌ Fechado (Perdido)" },
+  { value: "closed_lost", label: "Fechado (Perdido)" },
   { value: "churned", label: "💔 Churn" },
 ];
 

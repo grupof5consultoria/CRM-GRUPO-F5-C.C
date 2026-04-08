@@ -18,24 +18,24 @@ type Lead = {
   owner: { name: string };
 };
 
-const COLUMNS: { status: LeadStatus; label: string; emoji: string; color: string; group: string }[] = [
+const COLUMNS: { status: LeadStatus; label: string; dot: string; color: string; group: string }[] = [
   // Prospecção
-  { status: "new",               label: "Novo Lead",        emoji: "🆕", color: "border-t-indigo-400",  group: "Prospecção" },
-  { status: "contacted",         label: "Em Contato",       emoji: "📞", color: "border-t-blue-400",    group: "Prospecção" },
-  { status: "qualified",         label: "Qualificado",      emoji: "✅", color: "border-t-cyan-400",    group: "Prospecção" },
+  { status: "new",               label: "Novo Lead",        dot: "bg-indigo-400",  color: "border-t-indigo-400",  group: "Prospecção" },
+  { status: "contacted",         label: "Em Contato",       dot: "bg-blue-400",    color: "border-t-blue-400",    group: "Prospecção" },
+  { status: "qualified",         label: "Qualificado",      dot: "bg-cyan-400",    color: "border-t-cyan-400",    group: "Prospecção" },
   // Negociação
-  { status: "proposal_sent",     label: "Proposta",         emoji: "📄", color: "border-t-amber-400",   group: "Negociação" },
-  { status: "negotiation",       label: "Negociação",       emoji: "🤝", color: "border-t-orange-400",  group: "Negociação" },
+  { status: "proposal_sent",     label: "Proposta",         dot: "bg-amber-400",   color: "border-t-amber-400",   group: "Negociação" },
+  { status: "negotiation",       label: "Negociação",       dot: "bg-orange-400",  color: "border-t-orange-400",  group: "Negociação" },
   // Clientes
-  { status: "onboarding",        label: "Onboarding",       emoji: "🚀", color: "border-t-violet-400",  group: "Clientes" },
-  { status: "active_client",     label: "Cliente Ativo",    emoji: "💚", color: "border-t-emerald-400", group: "Clientes" },
-  { status: "upsell_opportunity",label: "Upsell",           emoji: "📈", color: "border-t-teal-400",    group: "Clientes" },
+  { status: "onboarding",        label: "Onboarding",       dot: "bg-violet-400",  color: "border-t-violet-400",  group: "Clientes" },
+  { status: "active_client",     label: "Cliente Ativo",    dot: "bg-emerald-400", color: "border-t-emerald-400", group: "Clientes" },
+  { status: "upsell_opportunity",label: "Upsell",           dot: "bg-teal-400",    color: "border-t-teal-400",    group: "Clientes" },
   // Atenção
-  { status: "at_risk_churn",     label: "Risco de Churn",   emoji: "⚠️", color: "border-t-red-400",     group: "Atenção" },
+  { status: "at_risk_churn",     label: "Risco de Churn",   dot: "bg-red-400",     color: "border-t-red-400",     group: "Atenção" },
   // Encerrados
-  { status: "closed_won",        label: "Ganho",            emoji: "🏆", color: "border-t-green-500",   group: "Encerrados" },
-  { status: "closed_lost",       label: "Perdido",          emoji: "❌", color: "border-t-gray-400",    group: "Encerrados" },
-  { status: "churned",           label: "Churn",            emoji: "💔", color: "border-t-rose-400",    group: "Encerrados" },
+  { status: "closed_won",        label: "Ganho",            dot: "bg-green-500",   color: "border-t-green-500",   group: "Encerrados" },
+  { status: "closed_lost",       label: "Perdido",          dot: "bg-gray-400",    color: "border-t-gray-400",    group: "Encerrados" },
+  { status: "churned",           label: "Churn",            dot: "bg-rose-400",    color: "border-t-rose-400",    group: "Encerrados" },
 ];
 
 const PIPELINE_ORDER = COLUMNS.map(c => c.status);
@@ -72,8 +72,7 @@ function KanbanCard({ lead }: { lead: Lead }) {
       <div className="flex items-center justify-between mt-2">
         <span className="text-xs text-gray-400 dark:text-gray-500">{lead.owner.name}</span>
         {lead.nextFollowUp && (
-          <span className={`text-xs font-medium ${isOverdue ? "text-red-500" : "text-gray-400"}`}>
-            {isOverdue ? "⚠️ " : "📅 "}
+          <span className={`text-xs font-medium ${isOverdue ? "text-red-400" : "text-gray-500"}`}>
             {new Date(lead.nextFollowUp).toLocaleDateString("pt-BR")}
           </span>
         )}
@@ -85,7 +84,7 @@ function KanbanCard({ lead }: { lead: Lead }) {
           disabled={loading}
           className="mt-2 w-full text-xs text-indigo-500 hover:text-indigo-700 dark:hover:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950 rounded-lg py-1 transition-colors opacity-0 group-hover:opacity-100"
         >
-          Mover → {COLUMNS.find(c => c.status === nextStatus)?.emoji} {COLUMNS.find(c => c.status === nextStatus)?.label}
+          Mover → {COLUMNS.find(c => c.status === nextStatus)?.label}
         </button>
       )}
     </div>
@@ -116,9 +115,9 @@ export function KanbanBoard({ leads }: { leads: Lead[] }) {
               {/* Header da coluna */}
               <div className={`bg-white dark:bg-gray-900 rounded-xl border-t-4 ${col.color} border border-gray-200 dark:border-gray-700 shadow-sm mb-2`}>
                 <div className="px-3 py-2.5 flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-sm">{col.emoji}</span>
-                    <span className="text-xs font-bold text-gray-700 dark:text-gray-300">{col.label}</span>
+                  <div className="flex items-center gap-2">
+                    <span className={`w-2 h-2 rounded-full flex-shrink-0 ${col.dot}`} />
+                    <span className="text-xs font-semibold text-gray-300">{col.label}</span>
                   </div>
                   <span className="text-xs font-bold bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 rounded-full w-5 h-5 flex items-center justify-center">
                     {colLeads.length}

@@ -95,7 +95,7 @@ export default async function TasksPage({ searchParams }: PageProps) {
                       {t.dueDate ? (
                         <span className={isOverdue ? "text-red-500 font-semibold" : "text-gray-400"}>
                           {new Date(t.dueDate).toLocaleDateString("pt-BR")}
-                          {isOverdue && " ⚠️"}
+                          
                         </span>
                       ) : <span className="text-gray-400">—</span>}
                     </TableTd>

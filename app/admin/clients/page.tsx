@@ -9,11 +9,11 @@ import { ClientHealth } from "@prisma/client";
 
 export const metadata = { title: "Clientes | Gestão Interna" };
 
-const HEALTH_EMOJI: Record<ClientHealth, string> = {
-  thriving: "🟢",
-  stable: "🔵",
-  attention: "🟡",
-  at_risk: "🔴",
+const HEALTH_DOT: Record<ClientHealth, string> = {
+  thriving: "bg-emerald-500",
+  stable: "bg-blue-500",
+  attention: "bg-amber-500",
+  at_risk: "bg-red-500",
 };
 
 interface PageProps {
@@ -113,8 +113,8 @@ export default async function ClientsPage({ searchParams }: PageProps) {
                 <TableRow key={c.id}>
                   <TableTd>
                     <div className="flex items-center gap-2">
-                      <span className="text-lg">{HEALTH_EMOJI[c.health]}</span>
-                      <span className={`text-xs font-semibold ${CLIENT_HEALTH_COLORS[c.health]}`}>
+                      <span className={`w-2 h-2 rounded-full flex-shrink-0 ${HEALTH_DOT[c.health]}`} />
+                      <span className={`text-xs font-medium ${CLIENT_HEALTH_COLORS[c.health]}`}>
                         {CLIENT_HEALTH_LABELS[c.health]}
                       </span>
                     </div>
