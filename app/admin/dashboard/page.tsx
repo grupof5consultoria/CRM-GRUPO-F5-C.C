@@ -1,10 +1,6 @@
 import { Topbar } from "@/components/layout/Topbar";
-import { StatCard } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { TASK_STATUS_VARIANTS } from "@/services/tasks";
-import { CHARGE_STATUS_VARIANTS } from "@/services/billing";
 import { getSession } from "@/lib/auth";
 
 export const metadata = { title: "Dashboard | Gestão Interna" };
@@ -67,80 +63,73 @@ export default async function DashboardPage() {
   return (
     <>
       <Topbar title="Dashboard" />
-      <main className="flex-1 p-6 space-y-6">
+      <main className="flex-1 p-6 space-y-6 bg-[#0a0a0f] min-h-screen">
 
-        {/* Welcome */}
-        <div className="rounded-2xl p-6 relative overflow-hidden" style={{ background: "linear-gradient(135deg, #312e81 0%, #4338ca 50%, #6366f1 100%)" }}>
-          <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <div className="absolute -top-20 -right-20 w-60 h-60 rounded-full bg-white/5 blur-2xl" />
-            <div className="absolute bottom-0 left-0 w-40 h-40 rounded-full bg-violet-400/10 blur-2xl" />
+        {/* Cabeçalho de boas-vindas */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-white">{greeting}, {firstName}</h2>
+            <p className="text-gray-500 text-sm mt-0.5">Aqui está o resumo da sua operação hoje.</p>
           </div>
-          <div className="relative z-10">
-            <h2 className="text-2xl font-bold text-white">{greeting}, {firstName}!</h2>
-            <p className="text-indigo-200/80 text-sm mt-1">Aqui está o resumo da sua operação.</p>
-            <div className="flex items-center gap-6 mt-4">
-              <div>
-                <p className="text-indigo-200/60 text-xs">MRR Ativo</p>
-                <p className="text-white text-xl font-bold">R$ {data.mrr.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
-              </div>
-              <div className="w-px h-10 bg-white/10" />
-              <div>
-                <p className="text-indigo-200/60 text-xs">Pipeline</p>
-                <p className="text-white text-xl font-bold">{data.openLeads} leads</p>
-              </div>
-              <div className="w-px h-10 bg-white/10" />
-              <div>
-                <p className="text-indigo-200/60 text-xs">Pendências</p>
-                <p className="text-white text-xl font-bold">{data.pendingCharges + data.overdueTasks.length}</p>
-              </div>
-            </div>
+          <div className="text-right hidden sm:block">
+            <p className="text-xs text-gray-600 uppercase tracking-widest font-medium">MRR Ativo</p>
+            <p className="text-2xl font-bold text-violet-400">
+              R$ {data.mrr.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+            </p>
           </div>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <Link href="/admin/clients?status=active">
-            <StatCard title="Clientes Ativos" value={data.activeClients} variant="success"
-              icon={<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16" /></svg>} />
-          </Link>
-          <Link href="/admin/crm">
-            <StatCard title="Leads no Pipeline" value={data.openLeads} variant="default"
-              icon={<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0" /></svg>} />
-          </Link>
-          <Link href="/admin/proposals">
-            <StatCard title="Propostas Abertas" value={data.openProposals} variant="warning"
-              icon={<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586l5.414 5.414V19a2 2 0 01-2 2z" /></svg>} />
-          </Link>
-          <Link href="/admin/billing">
-            <StatCard title="Cobranças Pendentes" value={data.pendingCharges} variant="danger"
-              icon={<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V7m0 1v8m0 0v1" /></svg>} />
-          </Link>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          {[
+            { label: "Clientes Ativos", value: data.activeClients, href: "/admin/clients?status=active" },
+            { label: "Leads no Pipeline", value: data.openLeads, href: "/admin/crm" },
+            { label: "Propostas Abertas", value: data.openProposals, href: "/admin/proposals" },
+            { label: "Cobranças Pendentes", value: data.pendingCharges, href: "/admin/billing" },
+          ].map((stat) => (
+            <Link key={stat.label} href={stat.href}>
+              <div className="bg-[#111118] border border-[#1e1e2e] rounded-2xl p-5 hover:border-violet-500/40 hover:bg-[#13131e] transition-all group cursor-pointer">
+                <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">{stat.label}</p>
+                <p className="text-4xl font-bold text-white mt-2 group-hover:text-violet-400 transition-colors">{stat.value}</p>
+              </div>
+            </Link>
+          ))}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Linha divisória sutil */}
+        <div className="border-t border-[#1e1e2e]" />
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+
           {/* Tarefas atrasadas */}
-          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700/50 shadow-sm p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider">Tarefas Atrasadas</h3>
-              <Link href="/admin/tasks" className="text-xs text-indigo-500 hover:text-indigo-400 font-medium">Ver todas →</Link>
+          <div className="bg-[#111118] border border-[#1e1e2e] rounded-2xl p-6">
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-5 bg-violet-500 rounded-full" />
+                <h3 className="text-sm font-semibold text-white uppercase tracking-wider">Tarefas Atrasadas</h3>
+              </div>
+              <Link href="/admin/tasks" className="text-xs text-violet-400 hover:text-violet-300 font-medium transition-colors">
+                Ver todas →
+              </Link>
             </div>
             {data.overdueTasks.length === 0 ? (
-              <div className="text-center py-6">
-                <span className="text-3xl">🎉</span>
-                <p className="text-sm text-gray-400 mt-2">Nenhuma tarefa atrasada!</p>
+              <div className="text-center py-8">
+                <p className="text-3xl mb-2">🎉</p>
+                <p className="text-sm text-gray-600">Nenhuma tarefa atrasada!</p>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {data.overdueTasks.map((t) => (
-                  <div key={t.id} className="flex items-center justify-between text-sm p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                    <div>
-                      <Link href={`/admin/tasks/${t.id}`} className="font-medium text-gray-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400">{t.title}</Link>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{t.assignee.name}{t.client ? ` · ${t.client.name}` : ""}</p>
+                  <div key={t.id} className="flex items-center justify-between p-3 rounded-xl bg-[#0d0d14] border border-[#1e1e2e] hover:border-violet-500/20 transition-all">
+                    <div className="min-w-0">
+                      <Link href={`/admin/tasks/${t.id}`} className="text-sm font-medium text-gray-200 hover:text-violet-400 transition-colors truncate block">
+                        {t.title}
+                      </Link>
+                      <p className="text-xs text-gray-600 mt-0.5">{t.assignee.name}{t.client ? ` · ${t.client.name}` : ""}</p>
                     </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <span className="text-xs text-red-500 font-medium">{new Date(t.dueDate!).toLocaleDateString("pt-BR")}</span>
-                      <Badge variant={TASK_STATUS_VARIANTS[t.status]}>{t.status === "in_progress" ? "Em andamento" : "Pendente"}</Badge>
-                    </div>
+                    <span className="text-xs text-red-400 font-medium flex-shrink-0 ml-3">
+                      {new Date(t.dueDate!).toLocaleDateString("pt-BR")}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -148,27 +137,34 @@ export default async function DashboardPage() {
           </div>
 
           {/* Cobranças vencidas */}
-          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700/50 shadow-sm p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider">Cobranças Vencidas</h3>
-              <Link href="/admin/billing" className="text-xs text-indigo-500 hover:text-indigo-400 font-medium">Ver todas →</Link>
+          <div className="bg-[#111118] border border-[#1e1e2e] rounded-2xl p-6">
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-5 bg-violet-500 rounded-full" />
+                <h3 className="text-sm font-semibold text-white uppercase tracking-wider">Cobranças Vencidas</h3>
+              </div>
+              <Link href="/admin/billing" className="text-xs text-violet-400 hover:text-violet-300 font-medium transition-colors">
+                Ver todas →
+              </Link>
             </div>
             {data.overdueCharges.length === 0 ? (
-              <div className="text-center py-6">
-                <span className="text-3xl">💰</span>
-                <p className="text-sm text-gray-400 mt-2">Nenhuma cobrança vencida!</p>
+              <div className="text-center py-8">
+                <p className="text-3xl mb-2">💰</p>
+                <p className="text-sm text-gray-600">Nenhuma cobrança vencida!</p>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {data.overdueCharges.map((c) => (
-                  <div key={c.id} className="flex items-center justify-between text-sm p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                    <div>
-                      <p className="font-medium text-gray-900 dark:text-white">{c.description}</p>
-                      <Link href={`/admin/clients/${c.client.id}`} className="text-xs text-gray-500 hover:text-indigo-500">{c.client.name}</Link>
+                  <div key={c.id} className="flex items-center justify-between p-3 rounded-xl bg-[#0d0d14] border border-[#1e1e2e] hover:border-violet-500/20 transition-all">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-gray-200 truncate">{c.description}</p>
+                      <Link href={`/admin/clients/${c.client.id}`} className="text-xs text-gray-600 hover:text-violet-400 transition-colors">
+                        {c.client.name}
+                      </Link>
                     </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <span className="text-xs text-red-500 font-medium">{new Date(c.dueDate).toLocaleDateString("pt-BR")}</span>
-                      <span className="font-bold text-gray-900 dark:text-white">R$ {Number(c.value).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+                    <div className="flex-shrink-0 ml-3 text-right">
+                      <p className="text-xs text-red-400 font-medium">{new Date(c.dueDate).toLocaleDateString("pt-BR")}</p>
+                      <p className="text-sm font-bold text-white">R$ {Number(c.value).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
                     </div>
                   </div>
                 ))}
@@ -177,51 +173,64 @@ export default async function DashboardPage() {
           </div>
 
           {/* Contratos pendentes */}
-          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700/50 shadow-sm p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider">Contratos Aguardando</h3>
-              <Link href="/admin/contracts" className="text-xs text-indigo-500 hover:text-indigo-400 font-medium">Ver todos →</Link>
+          <div className="bg-[#111118] border border-[#1e1e2e] rounded-2xl p-6">
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-5 bg-violet-500 rounded-full" />
+                <h3 className="text-sm font-semibold text-white uppercase tracking-wider">Contratos Aguardando</h3>
+              </div>
+              <Link href="/admin/contracts" className="text-xs text-violet-400 hover:text-violet-300 font-medium transition-colors">
+                Ver todos →
+              </Link>
             </div>
             {data.pendingContracts === 0 ? (
-              <div className="text-center py-6">
-                <span className="text-3xl">📋</span>
-                <p className="text-sm text-gray-400 mt-2">Nenhum contrato pendente!</p>
+              <div className="text-center py-8">
+                <p className="text-3xl mb-2">📋</p>
+                <p className="text-sm text-gray-600">Nenhum contrato pendente!</p>
               </div>
             ) : (
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
-                  <span className="text-2xl font-bold text-white">{data.pendingContracts}</span>
+              <div className="flex items-center gap-4 p-3 rounded-xl bg-[#0d0d14] border border-violet-500/20">
+                <div className="w-14 h-14 rounded-2xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center flex-shrink-0">
+                  <span className="text-2xl font-bold text-violet-400">{data.pendingContracts}</span>
                 </div>
                 <div>
-                  <p className="font-bold text-gray-900 dark:text-white">contrato{data.pendingContracts > 1 ? "s" : ""} aguardando assinatura</p>
-                  <p className="text-xs text-gray-500">Necessitam ação imediata</p>
+                  <p className="font-semibold text-white text-sm">contrato{data.pendingContracts > 1 ? "s" : ""} aguardando assinatura</p>
+                  <p className="text-xs text-gray-600 mt-0.5">Necessitam ação imediata</p>
                 </div>
               </div>
             )}
           </div>
 
           {/* Aguardando cliente */}
-          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700/50 shadow-sm p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider">Aguardando Cliente</h3>
-              <Link href="/admin/tasks?status=waiting_client" className="text-xs text-indigo-500 hover:text-indigo-400 font-medium">Ver todas →</Link>
+          <div className="bg-[#111118] border border-[#1e1e2e] rounded-2xl p-6">
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-5 bg-violet-500 rounded-full" />
+                <h3 className="text-sm font-semibold text-white uppercase tracking-wider">Aguardando Cliente</h3>
+              </div>
+              <Link href="/admin/tasks?status=waiting_client" className="text-xs text-violet-400 hover:text-violet-300 font-medium transition-colors">
+                Ver todas →
+              </Link>
             </div>
             {data.waitingClientTasks.length === 0 ? (
-              <div className="text-center py-6">
-                <span className="text-3xl">⏳</span>
-                <p className="text-sm text-gray-400 mt-2">Nada aguardando cliente!</p>
+              <div className="text-center py-8">
+                <p className="text-3xl mb-2">⏳</p>
+                <p className="text-sm text-gray-600">Nada aguardando cliente!</p>
               </div>
             ) : (
               <div className="space-y-2">
                 {data.waitingClientTasks.map((t) => (
-                  <div key={t.id} className="flex items-center justify-between text-sm p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                    <Link href={`/admin/tasks/${t.id}`} className="font-medium text-gray-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400">{t.title}</Link>
-                    {t.client && <span className="text-xs text-gray-500">{t.client.name}</span>}
+                  <div key={t.id} className="flex items-center justify-between p-3 rounded-xl bg-[#0d0d14] border border-[#1e1e2e] hover:border-violet-500/20 transition-all">
+                    <Link href={`/admin/tasks/${t.id}`} className="text-sm font-medium text-gray-200 hover:text-violet-400 transition-colors truncate">
+                      {t.title}
+                    </Link>
+                    {t.client && <span className="text-xs text-gray-600 flex-shrink-0 ml-3">{t.client.name}</span>}
                   </div>
                 ))}
               </div>
             )}
           </div>
+
         </div>
       </main>
     </>

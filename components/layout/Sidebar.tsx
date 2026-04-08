@@ -84,35 +84,18 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="flex flex-col w-64 min-h-screen" style={{ background: "linear-gradient(180deg, #1e1b4b 0%, #312e81 40%, #1e293b 100%)" }}>
+    <aside className="flex flex-col w-64 min-h-screen bg-[#0d0d14] border-r border-[#1e1e2e]">
       {/* Logo */}
-      <div className="flex items-center gap-3 px-6 py-5 border-b border-indigo-700/50">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-400 via-violet-500 to-purple-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-violet-900/40">
-          <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            {/* Raio duplo estilizado */}
-            <path
-              d="M14 2L5 13.5H11.5L10 22L19 10.5H12.5L14 2Z"
-              fill="white"
-              fillOpacity="0.95"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M14 2L5 13.5H11.5L10 22L19 10.5H12.5L14 2Z"
-              stroke="rgba(255,255,255,0.3)"
-              strokeWidth="0.5"
-              strokeLinejoin="round"
-            />
-            {/* Brilho interno */}
-            <path
-              d="M13 5L7.5 13H12L11 19L17 11H13L13 5Z"
-              fill="rgba(255,255,255,0.25)"
-              strokeLinejoin="round"
-            />
+      <div className="flex items-center gap-3 px-6 py-5 border-b border-[#1e1e2e]">
+        <div className="w-9 h-9 rounded-xl bg-violet-600 flex items-center justify-center flex-shrink-0">
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
+            <path d="M14 2L5 13.5H11.5L10 22L19 10.5H12.5L14 2Z" fill="white" fillOpacity="0.95" strokeLinejoin="round" />
+            <path d="M13 5L7.5 13H12L11 19L17 11H13L13 5Z" fill="rgba(255,255,255,0.25)" strokeLinejoin="round" />
           </svg>
         </div>
         <div>
-          <span className="text-white font-bold text-sm tracking-wide">Grupo F5</span>
-          <p className="text-indigo-300 text-xs">Gestão Interna</p>
+          <span className="text-white font-bold text-sm">Grupo F5</span>
+          <p className="text-gray-600 text-xs">Gestão Interna</p>
         </div>
       </div>
 
@@ -127,16 +110,16 @@ export function Sidebar() {
               className={clsx(
                 "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150",
                 active
-                  ? "bg-white/15 text-white shadow-sm border border-white/10"
-                  : "text-indigo-200 hover:bg-white/10 hover:text-white"
+                  ? "bg-violet-500/10 text-violet-400 border border-violet-500/20"
+                  : "text-gray-500 hover:bg-[#1a1a24] hover:text-gray-300"
               )}
             >
-              <span className={clsx("flex-shrink-0", active ? "text-indigo-300" : "text-indigo-400")}>
+              <span className={clsx("flex-shrink-0 transition-colors", active ? "text-violet-400" : "text-gray-600")}>
                 {item.icon}
               </span>
               {item.label}
               {active && (
-                <span className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-300"></span>
+                <span className="ml-auto w-1.5 h-1.5 rounded-full bg-violet-500" />
               )}
             </Link>
           );
@@ -144,11 +127,11 @@ export function Sidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="px-3 py-4 border-t border-indigo-700/50">
+      <div className="px-3 py-4 border-t border-[#1e1e2e]">
         <form action={logoutAction}>
           <button
             type="submit"
-            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-indigo-300 hover:bg-white/10 hover:text-white transition-all duration-150"
+            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-gray-600 hover:bg-[#1a1a24] hover:text-gray-300 transition-all duration-150"
           >
             <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
