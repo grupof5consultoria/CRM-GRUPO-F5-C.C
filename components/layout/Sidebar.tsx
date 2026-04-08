@@ -84,9 +84,9 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="flex flex-col w-64 min-h-screen bg-[#0d0d14] border-r border-[#1e1e2e]">
+    <aside className="flex flex-col w-64 min-h-screen bg-[#171717] border-r border-[#262626]">
       {/* Logo */}
-      <div className="flex items-center gap-3 px-6 py-5 border-b border-[#1e1e2e]">
+      <div className="flex items-center gap-3 px-6 py-5 border-b border-[#262626]">
         <div className="w-9 h-9 rounded-xl bg-violet-600 flex items-center justify-center flex-shrink-0">
           <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
             <path d="M14 2L5 13.5H11.5L10 22L19 10.5H12.5L14 2Z" fill="white" fillOpacity="0.95" strokeLinejoin="round" />
@@ -111,7 +111,7 @@ export function Sidebar() {
                 "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150",
                 active
                   ? "bg-violet-500/10 text-violet-400 border border-violet-500/20"
-                  : "text-gray-500 hover:bg-[#1a1a24] hover:text-gray-300"
+                  : "text-gray-500 hover:bg-[#222222] hover:text-gray-300"
               )}
             >
               <span className={clsx("flex-shrink-0 transition-colors", active ? "text-violet-400" : "text-gray-600")}>
@@ -127,11 +127,11 @@ export function Sidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="px-3 py-4 border-t border-[#1e1e2e]">
+      <div className="px-3 py-4 border-t border-[#262626]">
         <form action={logoutAction}>
           <button
             type="submit"
-            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-gray-600 hover:bg-[#1a1a24] hover:text-gray-300 transition-all duration-150"
+            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-gray-600 hover:bg-[#222222] hover:text-gray-300 transition-all duration-150"
           >
             <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />

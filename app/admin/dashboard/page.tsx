@@ -63,7 +63,7 @@ export default async function DashboardPage() {
   return (
     <>
       <Topbar title="Dashboard" />
-      <main className="flex-1 p-6 space-y-6 bg-[#0a0a0f] min-h-screen">
+      <main className="flex-1 p-6 space-y-6 bg-[#111111] min-h-screen">
 
         {/* Cabeçalho de boas-vindas */}
         <div className="flex items-center justify-between">
@@ -88,7 +88,7 @@ export default async function DashboardPage() {
             { label: "Cobranças Pendentes", value: data.pendingCharges, href: "/admin/billing" },
           ].map((stat) => (
             <Link key={stat.label} href={stat.href}>
-              <div className="bg-[#111118] border border-[#1e1e2e] rounded-2xl p-5 hover:border-violet-500/40 hover:bg-[#13131e] transition-all group cursor-pointer">
+              <div className="bg-[#1a1a1a] border border-[#262626] rounded-2xl p-5 hover:border-violet-500/40 hover:bg-[#1f1f1f] transition-all group cursor-pointer">
                 <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">{stat.label}</p>
                 <p className="text-4xl font-bold text-white mt-2 group-hover:text-violet-400 transition-colors">{stat.value}</p>
               </div>
@@ -97,12 +97,12 @@ export default async function DashboardPage() {
         </div>
 
         {/* Linha divisória sutil */}
-        <div className="border-t border-[#1e1e2e]" />
+        <div className="border-t border-[#262626]" />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
 
           {/* Tarefas atrasadas */}
-          <div className="bg-[#111118] border border-[#1e1e2e] rounded-2xl p-6">
+          <div className="bg-[#1a1a1a] border border-[#262626] rounded-2xl p-6">
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-2">
                 <div className="w-1.5 h-5 bg-violet-500 rounded-full" />
@@ -120,7 +120,7 @@ export default async function DashboardPage() {
             ) : (
               <div className="space-y-2">
                 {data.overdueTasks.map((t) => (
-                  <div key={t.id} className="flex items-center justify-between p-3 rounded-xl bg-[#0d0d14] border border-[#1e1e2e] hover:border-violet-500/20 transition-all">
+                  <div key={t.id} className="flex items-center justify-between p-3 rounded-xl bg-[#171717] border border-[#262626] hover:border-violet-500/20 transition-all">
                     <div className="min-w-0">
                       <Link href={`/admin/tasks/${t.id}`} className="text-sm font-medium text-gray-200 hover:text-violet-400 transition-colors truncate block">
                         {t.title}
@@ -137,7 +137,7 @@ export default async function DashboardPage() {
           </div>
 
           {/* Cobranças vencidas */}
-          <div className="bg-[#111118] border border-[#1e1e2e] rounded-2xl p-6">
+          <div className="bg-[#1a1a1a] border border-[#262626] rounded-2xl p-6">
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-2">
                 <div className="w-1.5 h-5 bg-violet-500 rounded-full" />
@@ -155,7 +155,7 @@ export default async function DashboardPage() {
             ) : (
               <div className="space-y-2">
                 {data.overdueCharges.map((c) => (
-                  <div key={c.id} className="flex items-center justify-between p-3 rounded-xl bg-[#0d0d14] border border-[#1e1e2e] hover:border-violet-500/20 transition-all">
+                  <div key={c.id} className="flex items-center justify-between p-3 rounded-xl bg-[#171717] border border-[#262626] hover:border-violet-500/20 transition-all">
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-gray-200 truncate">{c.description}</p>
                       <Link href={`/admin/clients/${c.client.id}`} className="text-xs text-gray-600 hover:text-violet-400 transition-colors">
@@ -173,7 +173,7 @@ export default async function DashboardPage() {
           </div>
 
           {/* Contratos pendentes */}
-          <div className="bg-[#111118] border border-[#1e1e2e] rounded-2xl p-6">
+          <div className="bg-[#1a1a1a] border border-[#262626] rounded-2xl p-6">
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-2">
                 <div className="w-1.5 h-5 bg-violet-500 rounded-full" />
@@ -189,7 +189,7 @@ export default async function DashboardPage() {
                 <p className="text-sm text-gray-600">Nenhum contrato pendente!</p>
               </div>
             ) : (
-              <div className="flex items-center gap-4 p-3 rounded-xl bg-[#0d0d14] border border-violet-500/20">
+              <div className="flex items-center gap-4 p-3 rounded-xl bg-[#171717] border border-violet-500/20">
                 <div className="w-14 h-14 rounded-2xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center flex-shrink-0">
                   <span className="text-2xl font-bold text-violet-400">{data.pendingContracts}</span>
                 </div>
@@ -202,7 +202,7 @@ export default async function DashboardPage() {
           </div>
 
           {/* Aguardando cliente */}
-          <div className="bg-[#111118] border border-[#1e1e2e] rounded-2xl p-6">
+          <div className="bg-[#1a1a1a] border border-[#262626] rounded-2xl p-6">
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-2">
                 <div className="w-1.5 h-5 bg-violet-500 rounded-full" />
@@ -220,7 +220,7 @@ export default async function DashboardPage() {
             ) : (
               <div className="space-y-2">
                 {data.waitingClientTasks.map((t) => (
-                  <div key={t.id} className="flex items-center justify-between p-3 rounded-xl bg-[#0d0d14] border border-[#1e1e2e] hover:border-violet-500/20 transition-all">
+                  <div key={t.id} className="flex items-center justify-between p-3 rounded-xl bg-[#171717] border border-[#262626] hover:border-violet-500/20 transition-all">
                     <Link href={`/admin/tasks/${t.id}`} className="text-sm font-medium text-gray-200 hover:text-violet-400 transition-colors truncate">
                       {t.title}
                     </Link>

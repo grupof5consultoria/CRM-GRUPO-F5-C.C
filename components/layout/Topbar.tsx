@@ -4,7 +4,7 @@ export async function Topbar({ title }: { title?: string }) {
   const session = await getSession();
 
   return (
-    <header className="bg-[#0d0d14] border-b border-[#1e1e2e] px-6 py-3.5 flex items-center justify-between">
+    <header className="bg-[#171717] border-b border-[#262626] px-6 py-3.5 flex items-center justify-between">
       <div>
         {title && (
           <h1 className="text-base font-semibold text-white tracking-tight">{title}</h1>
