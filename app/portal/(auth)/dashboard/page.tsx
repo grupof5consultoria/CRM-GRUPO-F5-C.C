@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { getPortalReport, getPortalTrend } from "@/services/portal";
 import Link from "next/link";
+import { PeriodSelect } from "./PeriodSelect";
 
 export const metadata = { title: "Dashboard | Portal do Cliente" };
 
@@ -116,18 +117,7 @@ export default async function PortalDashboardPage({
           <p className="text-sm text-gray-500 mt-0.5 capitalize">{periodLabel}</p>
         </div>
         {/* Period selector */}
-        <form method="GET">
-          <select
-            name="period"
-            defaultValue={period}
-            onChange={(e) => (e.target.form as HTMLFormElement).submit()}
-            className="bg-[#1a1a1a] border border-[#262626] rounded-xl px-3 py-2 text-sm text-gray-300 focus:outline-none focus:border-violet-500"
-          >
-            {periods.map((p) => (
-              <option key={p} value={p}>{p}</option>
-            ))}
-          </select>
-        </form>
+        <PeriodSelect periods={periods} current={period} />
       </div>
 
       {/* Main KPIs */}
