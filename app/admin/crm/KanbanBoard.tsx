@@ -55,10 +55,10 @@ function KanbanCard({ lead }: { lead: Lead }) {
   return (
     <div className={`bg-[#1a1a1a] rounded-xl border border-[#262626] p-3 shadow-sm hover:shadow-md transition-all group ${loading ? "opacity-50" : ""}`}>
       <div className="flex items-start justify-between gap-1 mb-2">
-        <Link href={`/admin/crm/${lead.id}`} className="font-semibold text-sm text-gray-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400 leading-tight">
+        <Link href={`/admin/crm/${lead.id}`} className="font-semibold text-sm text-white hover:text-violet-400 leading-tight transition-colors">
           {lead.name}
         </Link>
-        <Link href={`/admin/crm/${lead.id}`} className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-indigo-500 flex-shrink-0">
+        <Link href={`/admin/crm/${lead.id}`} className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-600 hover:text-violet-400 flex-shrink-0">
           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
           </svg>
@@ -66,13 +66,13 @@ function KanbanCard({ lead }: { lead: Lead }) {
       </div>
 
       {lead.company && (
-        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 truncate">{lead.company}</p>
+        <p className="text-xs text-gray-500 mb-2 truncate">{lead.company}</p>
       )}
 
       <div className="flex items-center justify-between mt-2">
-        <span className="text-xs text-gray-400 dark:text-gray-500">{lead.owner.name}</span>
+        <span className="text-xs text-gray-600">{lead.owner.name}</span>
         {lead.nextFollowUp && (
-          <span className={`text-xs font-medium ${isOverdue ? "text-red-400" : "text-gray-500"}`}>
+          <span className={`text-xs font-medium ${isOverdue ? "text-red-400" : "text-gray-600"}`}>
             {new Date(lead.nextFollowUp).toLocaleDateString("pt-BR")}
           </span>
         )}
@@ -82,7 +82,7 @@ function KanbanCard({ lead }: { lead: Lead }) {
         <button
           onClick={moveNext}
           disabled={loading}
-          className="mt-2 w-full text-xs text-indigo-500 hover:text-indigo-700 dark:hover:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950 rounded-lg py-1 transition-colors opacity-0 group-hover:opacity-100"
+          className="mt-2 w-full text-xs text-violet-500 hover:text-violet-300 hover:bg-violet-500/10 rounded-lg py-1 transition-colors opacity-0 group-hover:opacity-100"
         >
           Mover → {COLUMNS.find(c => c.status === nextStatus)?.label}
         </button>
