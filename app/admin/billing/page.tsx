@@ -127,7 +127,7 @@ export default async function BillingPage({ searchParams }: PageProps) {
                           </span>
                         </TableTd>
                         <TableTd>
-                          <div className="text-xs">
+                          <div className="text-xs space-y-0.5">
                             <span>{{
                               pix: "💠 PIX",
                               boleto: "📄 Boleto",
@@ -135,7 +135,9 @@ export default async function BillingPage({ searchParams }: PageProps) {
                               bank_transfer: "🏦 Transf.",
                               cash: "💵 Dinheiro",
                             }[charge.paymentMethod]}</span>
-                            {charge.isRecurring && <span className="ml-1 text-indigo-500">🔄</span>}
+                            {charge.isRecurring && (
+                              <p className="text-indigo-500 font-medium">🔄 Recorrente{charge.recurrenceDay ? ` · dia ${charge.recurrenceDay}` : ""}</p>
+                            )}
                           </div>
                         </TableTd>
                         <TableTd>
