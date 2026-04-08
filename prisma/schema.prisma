@@ -350,6 +350,7 @@ model ClientMetricEntry {
   cpc            Decimal? @db.Decimal(10, 4)
   ctr            Decimal? @db.Decimal(10, 4)
   costPerResult  Decimal? @db.Decimal(10, 2)
+  conversations  Int?
   budget         Decimal? @db.Decimal(10, 2)
   syncedAt       DateTime?
   createdAt      DateTime @default(now())

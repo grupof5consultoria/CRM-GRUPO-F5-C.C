@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireInternalAuth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { fetchMetaInsights, type MetaDailyInsight } from "@/lib/meta-api";
+import { fetchMetaInsights, fetchMetaCampaignInsights, type MetaDailyInsight } from "@/lib/meta-api";
 import { fetchGoogleAdsInsights, type GoogleDailyInsight } from "@/lib/google-ads-api";
 
 export async function syncMetricsAction(
@@ -63,6 +63,7 @@ export async function syncMetricsAction(
             cpc: (row as MetaDailyInsight).cpc,
             ctr: (row as MetaDailyInsight).ctr,
             costPerResult: (row as MetaDailyInsight).costPerResult,
+            conversations: (row as MetaDailyInsight).conversations,
           }
         : {
             ...base,
@@ -109,4 +110,32 @@ export async function saveClientCredentialsAction(
 
   revalidatePath(`/admin/clients/${clientId}`);
   return { success: true };
+}
+
+export async function fetchCampaignsAction(
+  clientId: string,
+  dateFrom: string,
+  dateTo: string
+) {
+  await requireInternalAuth();
+
+  const client = await prisma.client.findUnique({
+    where: { id: clientId },
+    select: { metaAdAccountId: true, metaAccessToken: true },
+  });
+
+  if (!client?.metaAdAccountId || !client?.metaAccessToken)
+    return { error: "Credenciais Meta não configuradas" };
+
+  try {
+    const campaigns = await fetchMetaCampaignInsights(
+      client.metaAdAccountId,
+      client.metaAccessToken,
+      dateFrom,
+      dateTo
+    );
+    return { campaigns };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Erro ao buscar campanhas" };
+  }
 }

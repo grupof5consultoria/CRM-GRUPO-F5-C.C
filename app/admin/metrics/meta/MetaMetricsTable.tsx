@@ -2,13 +2,14 @@
 
 import { useState, useEffect, useRef } from "react";
 import { SyncButton } from "../SyncButton";
+import { CampaignInsights } from "./CampaignInsights";
 
 // ─── Column definitions ───────────────────────────────────────────────────────
 
 type ColKey =
   | "reach" | "budget" | "spend" | "impressions" | "cpm"
   | "linkClicks" | "cpc" | "ctr" | "costPerResult"
-  | "leadsFromAds" | "leadsScheduled" | "revenue" | "roi";
+  | "leadsFromAds" | "conversations" | "leadsScheduled" | "revenue" | "roi";
 
 const ALL_COLUMNS: { key: ColKey; label: string; group: string }[] = [
   { key: "reach",         label: "Alcance",            group: "Entrega" },
@@ -21,6 +22,7 @@ const ALL_COLUMNS: { key: ColKey; label: string; group: string }[] = [
   { key: "ctr",           label: "CTR",                 group: "Engajamento" },
   { key: "costPerResult", label: "Custo por Resultado", group: "Resultados" },
   { key: "leadsFromAds",  label: "Leads (ads)",         group: "Resultados" },
+  { key: "conversations", label: "Conversas WhatsApp",  group: "Resultados" },
   { key: "leadsScheduled",label: "Leads Agendados",     group: "Resultados" },
   { key: "revenue",       label: "Faturamento",         group: "Resultados" },
   { key: "roi",           label: "ROI",                 group: "Resultados" },
@@ -29,7 +31,7 @@ const ALL_COLUMNS: { key: ColKey; label: string; group: string }[] = [
 const DEFAULT_COLS: ColKey[] = [
   "reach", "budget", "spend", "impressions", "cpm",
   "linkClicks", "cpc", "ctr", "costPerResult",
-  "leadsFromAds", "leadsScheduled", "revenue", "roi",
+  "leadsFromAds", "conversations", "leadsScheduled", "revenue", "roi",
 ];
 
 const LS_KEY = "metrics-meta-columns";
@@ -45,12 +47,13 @@ interface MetricEntry {
   reach: number | null; cpm: { toString(): string } | null;
   linkClicks: number | null; cpc: { toString(): string } | null;
   ctr: { toString(): string } | null; costPerResult: { toString(): string } | null;
+  conversations: number | null;
   budget: { toString(): string } | null; syncedAt: Date | null;
 }
 
 interface AggEntry {
   spend: number; impressions: number; reach: number; linkClicks: number;
-  leadsFromAds: number; leadsScheduled: number; revenue: number; budget: number;
+  leadsFromAds: number; conversations: number; leadsScheduled: number; revenue: number; budget: number;
   cpm: number | null; cpc: number | null; ctr: number | null; costPerResult: number | null;
   syncedAt: Date | null; count: number;
 }
@@ -141,10 +144,11 @@ function aggregateEntries(entries: MetricEntry[], platform: string, from: string
   const sumN = (k: keyof MetricEntry) => inRange.reduce((a, e) => a + ((e[k] as number) ?? 0), 0);
   const spend = sumD("spend"); const impressions = sumN("impressions");
   const reach = sumN("reach"); const linkClicks = sumN("linkClicks");
-  const leadsFromAds = sumN("leadsFromAds"); const leadsScheduled = sumN("leadsScheduled");
+  const leadsFromAds = sumN("leadsFromAds"); const conversations = sumN("conversations");
+  const leadsScheduled = sumN("leadsScheduled");
   const revenue = sumD("revenue"); const budget = sumD("budget");
   return {
-    spend, impressions, reach, linkClicks, leadsFromAds, leadsScheduled, revenue, budget,
+    spend, impressions, reach, linkClicks, leadsFromAds, conversations, leadsScheduled, revenue, budget,
     cpm: impressions > 0 ? (spend / impressions) * 1000 : null,
     cpc: linkClicks > 0 ? spend / linkClicks : null,
     ctr: impressions > 0 ? (linkClicks / impressions) * 100 : null,
@@ -169,6 +173,7 @@ function Cell({ agg, col }: { agg: AggEntry | null; col: ColKey }) {
     case "ctr":           return <span className="text-gray-300">{fmtPct(agg.ctr)}</span>;
     case "costPerResult": return <span className="text-gray-300">{fmtR(agg.costPerResult)}</span>;
     case "leadsFromAds":  return <span className="text-gray-300">{fmtN(agg.leadsFromAds)}</span>;
+    case "conversations": return <span className="text-blue-300 font-medium">{fmtN(agg.conversations)}</span>;
     case "leadsScheduled":return <span className="text-violet-400 font-medium">{agg.leadsScheduled || "—"}</span>;
     case "revenue":       return <span className="text-emerald-400 font-medium">{fmtR(agg.revenue || null)}</span>;
     case "roi": {
@@ -284,12 +289,13 @@ export function MetaMetricsTable({ clients, allClients }: Props) {
   const cols = ALL_COLUMNS.filter(c => visibleCols.includes(c.key));
 
   // Totals
-  const totals: AggEntry = { spend: 0, impressions: 0, reach: 0, linkClicks: 0, leadsFromAds: 0, leadsScheduled: 0, revenue: 0, budget: 0, cpm: null, cpc: null, ctr: null, costPerResult: null, syncedAt: null, count: 0 };
+  const totals: AggEntry = { spend: 0, impressions: 0, reach: 0, linkClicks: 0, leadsFromAds: 0, conversations: 0, leadsScheduled: 0, revenue: 0, budget: 0, cpm: null, cpc: null, ctr: null, costPerResult: null, syncedAt: null, count: 0 };
   filteredClients.forEach(c => {
     const a = aggregateEntries(c.metricEntries, "meta", dateFrom, dateTo);
     if (!a) return;
     totals.spend += a.spend; totals.impressions += a.impressions; totals.reach += a.reach;
     totals.linkClicks += a.linkClicks; totals.leadsFromAds += a.leadsFromAds;
+    totals.conversations += a.conversations;
     totals.leadsScheduled += a.leadsScheduled; totals.revenue += a.revenue; totals.budget += a.budget;
     totals.count += a.count;
   });
@@ -404,6 +410,7 @@ export function MetaMetricsTable({ clients, allClients }: Props) {
               {visibleCols.includes("cpc")           && <div><p className="text-xs text-gray-600">CPC Médio</p><p className="font-bold text-gray-300">{fmtR(totals.cpc)}</p></div>}
               {visibleCols.includes("ctr")           && <div><p className="text-xs text-gray-600">CTR Médio</p><p className="font-bold text-gray-300">{fmtPct(totals.ctr)}</p></div>}
               {visibleCols.includes("leadsFromAds")  && <div><p className="text-xs text-gray-600">Leads (ads)</p><p className="font-bold text-gray-300">{totals.leadsFromAds.toLocaleString("pt-BR")}</p></div>}
+              {visibleCols.includes("conversations")  && <div><p className="text-xs text-gray-600">Conversas</p><p className="font-bold text-blue-300">{totals.conversations.toLocaleString("pt-BR")}</p></div>}
               {visibleCols.includes("leadsScheduled")&& <div><p className="text-xs text-gray-600">Leads Agendados</p><p className="font-bold text-violet-400">{totals.leadsScheduled.toLocaleString("pt-BR")}</p></div>}
               {visibleCols.includes("revenue")       && <div><p className="text-xs text-gray-600">Faturamento</p><p className="font-bold text-emerald-400">{fmtR(totals.revenue)}</p></div>}
               {visibleCols.includes("roi") && (() => {
@@ -414,6 +421,19 @@ export function MetaMetricsTable({ clients, allClients }: Props) {
           )}
         </div>
       )}
+
+      {/* Campaign insights — only when a single client is selected */}
+      {selectedClientId !== "all" && (() => {
+        const client = filteredClients.find(c => c.id === selectedClientId);
+        return client ? (
+          <CampaignInsights
+            clientId={client.id}
+            clientName={client.name}
+            dateFrom={dateFrom}
+            dateTo={dateTo}
+          />
+        ) : null;
+      })()}
     </div>
   );
 }
