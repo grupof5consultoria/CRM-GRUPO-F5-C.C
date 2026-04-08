@@ -7,13 +7,10 @@ import { getClientById, getInternalUsersForSelect, CLIENT_STATUS_LABELS, CLIENT_
 import { CONTRACT_STATUS_LABELS, CONTRACT_STATUS_VARIANTS } from "@/services/contracts";
 import { CHARGE_STATUS_LABELS, CHARGE_STATUS_VARIANTS } from "@/services/billing";
 import { TASK_STATUS_LABELS, TASK_STATUS_VARIANTS } from "@/services/tasks";
-import { CLIENT_HEALTH_LABELS, CLIENT_HEALTH_VARIANTS, CLIENT_HEALTH_COLORS } from "@/utils/status-labels";
 import { EditClientForm } from "./EditClientForm";
 import { AddContactForm } from "./AddContactForm";
 import { DeleteContactButton } from "./DeleteContactButton";
-import { UpdateHealthForm } from "./UpdateHealthForm";
-import { ClientCredentialsForm } from "./ClientCredentialsForm";
-import { PortalAccessCard } from "./PortalAccessCard";
+import { ClientSidebar } from "./ClientSidebar";
 import { headers } from "next/headers";
 
 interface PageProps { params: Promise<{ id: string }> }
@@ -138,120 +135,29 @@ export default async function ClientDetailPage({ params }: PageProps) {
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-6">
-
-            {/* Métricas — Plataformas */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>Métricas — Plataformas</CardTitle>
-                  <div className="flex items-center gap-1">
-                    {client.metaAdAccountId && <span className="w-2 h-2 rounded-full bg-blue-400" title="Meta configurado" />}
-                    {client.googleAdsCustomerId && <span className="w-2 h-2 rounded-full bg-red-400" title="Google configurado" />}
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <ClientCredentialsForm
-                  clientId={client.id}
-                  metaAdAccountId={client.metaAdAccountId ?? null}
-                  googleAdsCustomerId={client.googleAdsCustomerId ?? null}
-                  hasMeta={!!client.metaAdAccountId}
-                  hasGoogle={!!client.googleAdsCustomerId}
-                />
-              </CardContent>
-            </Card>
-
-            {/* Acesso ao Portal */}
-            <Card>
-              <CardHeader><CardTitle>Acesso ao Portal</CardTitle></CardHeader>
-              <CardContent>
-                <PortalAccessCard
-                  clientId={client.id}
-                  portalUsers={client.clientUsers.map((cu) => ({
-                    id: cu.id,
-                    userId: cu.userId,
-                    user: cu.user,
-                  }))}
-                  portalUrl={portalUrl}
-                />
-              </CardContent>
-            </Card>
-
-            {/* Informações */}
-            <Card>
-              <CardHeader><CardTitle>Informações</CardTitle></CardHeader>
-              <CardContent className="space-y-3 text-sm">
-                <div><p className="text-xs text-gray-500 mb-0.5">Responsável</p><p className="font-medium">{client.owner.name}</p></div>
-                {client.monthlyValue != null && (
-                  <div className="bg-emerald-500/10 rounded-xl px-3 py-2.5">
-                    <p className="text-emerald-400 text-xs font-medium">Valor Mensal</p>
-                    <p className="text-emerald-300 text-xl font-bold">
-                      R$ {Number(client.monthlyValue).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                    </p>
-                  </div>
-                )}
-                {client.document && <div><p className="text-xs text-gray-500 mb-0.5">CPF / CNPJ</p><p className="font-medium">{client.document}</p></div>}
-                {client.email && <div><p className="text-xs text-gray-500 mb-0.5">Email</p><p className="font-medium">{client.email}</p></div>}
-                {client.phone && <div><p className="text-xs text-gray-500 mb-0.5">Telefone</p><p className="font-medium">{client.phone}</p></div>}
-                {client.startDate && (() => {
-                  const start = new Date(client.startDate);
-                  const now = new Date();
-                  const months = (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth());
-                  const years = Math.floor(months / 12);
-                  const remainingMonths = months % 12;
-                  const timeStr = years > 0
-                    ? `${years} ano${years > 1 ? "s" : ""}${remainingMonths > 0 ? ` e ${remainingMonths} mês${remainingMonths > 1 ? "es" : ""}` : ""}`
-                    : `${months} mês${months !== 1 ? "es" : ""}`;
-                  return (
-                    <div className="bg-violet-500/10 rounded-xl px-3 py-2.5">
-                      <p className="text-violet-400 text-xs font-medium">⏱️ Tempo de cliente</p>
-                      <p className="text-violet-300 font-bold">{timeStr}</p>
-                      <p className="text-violet-400 text-xs">desde {start.toLocaleDateString("pt-BR")}</p>
-                    </div>
-                  );
-                })()}
-                <div><p className="text-xs text-gray-500 mb-0.5">Cadastrado em</p><p className="font-medium">{new Date(client.createdAt).toLocaleDateString("pt-BR")}</p></div>
-                {client.notes && <div><p className="text-xs text-gray-500 mb-0.5">Observações</p><p className="text-gray-300">{client.notes}</p></div>}
-              </CardContent>
-            </Card>
-
-            {/* Saúde do Cliente */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>Saúde do Cliente</CardTitle>
-                  <Badge variant={CLIENT_HEALTH_VARIANTS[client.health]}>
-                    {CLIENT_HEALTH_LABELS[client.health]}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {client.healthNote && (
-                  <p className="text-xs text-gray-500 bg-[#171717] rounded-xl px-3 py-2">
-                    {client.healthNote}
-                  </p>
-                )}
-                <UpdateHealthForm clientId={client.id} currentHealth={client.health} />
-                {client.healthLogs.length > 0 && (
-                  <div className="border-t border-[#262626] pt-3 mt-3">
-                    <p className="text-xs font-semibold text-gray-500 mb-2">Histórico</p>
-                    <div className="space-y-1.5">
-                      {client.healthLogs.map((log) => (
-                        <div key={log.id} className="flex items-start gap-2 text-xs">
-                          <span className={`mt-0.5 font-bold ${CLIENT_HEALTH_COLORS[log.health]}`}>●</span>
-                          <div>
-                            <span className="font-medium text-gray-300">{CLIENT_HEALTH_LABELS[log.health]}</span>
-                            {log.note && <span className="text-gray-400"> — {log.note}</span>}
-                            <p className="text-gray-400">{new Date(log.createdAt).toLocaleDateString("pt-BR")}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+          <div>
+            <ClientSidebar
+              clientId={client.id}
+              portalUrl={portalUrl}
+              metaAdAccountId={client.metaAdAccountId ?? null}
+              googleAdsCustomerId={client.googleAdsCustomerId ?? null}
+              ownerName={client.owner.name}
+              monthlyValue={client.monthlyValue}
+              document={client.document ?? null}
+              email={client.email ?? null}
+              phone={client.phone ?? null}
+              startDate={client.startDate ?? null}
+              createdAt={client.createdAt}
+              notes={client.notes ?? null}
+              health={client.health}
+              healthNote={client.healthNote ?? null}
+              healthLogs={client.healthLogs}
+              portalUsers={client.clientUsers.map((cu) => ({
+                id: cu.id,
+                userId: cu.userId,
+                user: cu.user,
+              }))}
+            />
           </div>
         </div>
       </main>
