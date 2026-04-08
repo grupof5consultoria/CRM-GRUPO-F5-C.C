@@ -16,7 +16,7 @@ export async function getMetricsClients(platform: "meta" | "google") {
       metricEntries: {
         where: { platform },
         orderBy: { period: "desc" },
-        take: 6,
+        take: 24,
       },
     },
     orderBy: { name: "asc" },
