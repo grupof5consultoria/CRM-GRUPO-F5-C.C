@@ -4,9 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { clsx } from "clsx";
 import { logoutAction } from "@/lib/actions";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
-const navItems = [
+const DEFAULT_NAV_ITEMS = [
   {
     label: "Dashboard",
     href: "/admin/dashboard",
@@ -93,16 +93,72 @@ const navItems = [
 export function Sidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  const [items, setItems] = useState(DEFAULT_NAV_ITEMS);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [overIndex, setOverIndex] = useState<number | null>(null);
+  const dragNode = useRef<EventTarget | null>(null);
 
   useEffect(() => {
     const saved = localStorage.getItem("sidebar-collapsed");
     if (saved === "true") setCollapsed(true);
+
+    const savedOrder = localStorage.getItem("sidebar-order");
+    if (savedOrder) {
+      try {
+        const order: string[] = JSON.parse(savedOrder);
+        const reordered = order
+          .map((href) => DEFAULT_NAV_ITEMS.find((i) => i.href === href))
+          .filter(Boolean) as typeof DEFAULT_NAV_ITEMS;
+        // include any new items not in saved order
+        const missing = DEFAULT_NAV_ITEMS.filter((i) => !order.includes(i.href));
+        setItems([...reordered, ...missing]);
+      } catch {}
+    }
   }, []);
 
   function toggle() {
     const next = !collapsed;
     setCollapsed(next);
     localStorage.setItem("sidebar-collapsed", String(next));
+  }
+
+  function handleDragStart(e: React.DragEvent, index: number) {
+    dragNode.current = e.target;
+    setDragIndex(index);
+    e.dataTransfer.effectAllowed = "move";
+    // transparent drag image
+    const ghost = document.createElement("div");
+    ghost.style.opacity = "0";
+    document.body.appendChild(ghost);
+    e.dataTransfer.setDragImage(ghost, 0, 0);
+    setTimeout(() => document.body.removeChild(ghost), 0);
+  }
+
+  function handleDragOver(e: React.DragEvent, index: number) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    if (index !== overIndex) setOverIndex(index);
+  }
+
+  function handleDrop(e: React.DragEvent, index: number) {
+    e.preventDefault();
+    if (dragIndex === null || dragIndex === index) {
+      setDragIndex(null);
+      setOverIndex(null);
+      return;
+    }
+    const newItems = [...items];
+    const [moved] = newItems.splice(dragIndex, 1);
+    newItems.splice(index, 0, moved);
+    setItems(newItems);
+    localStorage.setItem("sidebar-order", JSON.stringify(newItems.map((i) => i.href)));
+    setDragIndex(null);
+    setOverIndex(null);
+  }
+
+  function handleDragEnd() {
+    setDragIndex(null);
+    setOverIndex(null);
   }
 
   return (
@@ -143,39 +199,73 @@ export function Sidebar() {
 
       {/* Nav */}
       <nav className={clsx("flex-1 py-4 space-y-0.5 overflow-y-auto overflow-x-hidden", collapsed ? "px-2" : "px-3")}>
-        {navItems.map((item) => {
+        {items.map((item, index) => {
           const active = pathname === item.href || pathname.startsWith(item.href + "/");
+          const isDragging = dragIndex === index;
+          const isOver = overIndex === index && dragIndex !== index;
 
-          return active ? (
-            <Link
-              key={item.href}
-              href={item.href}
-              title={collapsed ? item.label : undefined}
-              className={clsx(
-                "relative flex items-center rounded-xl text-sm font-medium overflow-hidden transition-all duration-150",
-                collapsed ? "justify-center w-10 h-10 mx-auto" : "gap-3 px-3 py-2.5"
-              )}
-              style={{ background: "linear-gradient(135deg, #6d28d9 0%, #7c3aed 40%, #5b21b6 100%)" }}
+          const wrapperClass = clsx(
+            "relative group/item transition-all duration-150",
+            isDragging && "opacity-40",
+            isOver && dragIndex !== null && (
+              dragIndex > index
+                ? "before:absolute before:-top-0.5 before:left-2 before:right-2 before:h-0.5 before:bg-violet-500 before:rounded-full"
+                : "after:absolute after:-bottom-0.5 after:left-2 after:right-2 after:h-0.5 after:bg-violet-500 after:rounded-full"
+            )
+          );
+
+          const dragHandle = !collapsed && (
+            <span
+              className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover/item:opacity-100 cursor-grab active:cursor-grabbing transition-opacity z-20 text-gray-600 hover:text-gray-400"
+              onMouseDown={(e) => e.stopPropagation()}
             >
-              <span className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.03) 40%, transparent 60%)" }} />
-              <span className="absolute top-0 left-0 right-0 h-px pointer-events-none" style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)" }} />
-              <span className="relative z-10 text-white">{item.icon}</span>
-              {!collapsed && <span className="relative z-10 text-white truncate">{item.label}</span>}
-              {!collapsed && <span className="relative z-10 ml-auto w-1.5 h-1.5 rounded-full bg-white/60 flex-shrink-0" />}
-            </Link>
-          ) : (
-            <Link
+              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M8 6a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm0 8a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm0 8a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm8-16a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm0 8a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm0 8a2 2 0 1 0 0-4 2 2 0 0 0 0 4z" />
+              </svg>
+            </span>
+          );
+
+          return (
+            <div
               key={item.href}
-              href={item.href}
-              title={collapsed ? item.label : undefined}
-              className={clsx(
-                "flex items-center rounded-xl text-sm font-medium text-gray-500 hover:bg-[#222222] hover:text-gray-300 transition-all duration-150",
-                collapsed ? "justify-center w-10 h-10 mx-auto" : "gap-3 px-3 py-2.5"
-              )}
+              className={wrapperClass}
+              draggable
+              onDragStart={(e) => handleDragStart(e, index)}
+              onDragOver={(e) => handleDragOver(e, index)}
+              onDrop={(e) => handleDrop(e, index)}
+              onDragEnd={handleDragEnd}
             >
-              {item.icon}
-              {!collapsed && <span className="truncate">{item.label}</span>}
-            </Link>
+              {active ? (
+                <Link
+                  href={item.href}
+                  title={collapsed ? item.label : undefined}
+                  className={clsx(
+                    "relative flex items-center rounded-xl text-sm font-medium overflow-hidden transition-all duration-150",
+                    collapsed ? "justify-center w-10 h-10 mx-auto" : "gap-3 px-3 py-2.5 pr-7"
+                  )}
+                  style={{ background: "linear-gradient(135deg, #6d28d9 0%, #7c3aed 40%, #5b21b6 100%)" }}
+                >
+                  <span className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.03) 40%, transparent 60%)" }} />
+                  <span className="absolute top-0 left-0 right-0 h-px pointer-events-none" style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)" }} />
+                  <span className="relative z-10 text-white">{item.icon}</span>
+                  {!collapsed && <span className="relative z-10 text-white truncate">{item.label}</span>}
+                  {!collapsed && <span className="relative z-10 ml-auto w-1.5 h-1.5 rounded-full bg-white/60 flex-shrink-0" />}
+                </Link>
+              ) : (
+                <Link
+                  href={item.href}
+                  title={collapsed ? item.label : undefined}
+                  className={clsx(
+                    "flex items-center rounded-xl text-sm font-medium text-gray-500 hover:bg-[#222222] hover:text-gray-300 transition-all duration-150",
+                    collapsed ? "justify-center w-10 h-10 mx-auto" : "gap-3 px-3 py-2.5 pr-7"
+                  )}
+                >
+                  {item.icon}
+                  {!collapsed && <span className="truncate">{item.label}</span>}
+                </Link>
+              )}
+              {dragHandle}
+            </div>
           );
         })}
       </nav>
