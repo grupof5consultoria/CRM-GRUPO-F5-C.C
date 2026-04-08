@@ -50,47 +50,47 @@ export default async function CRMPage({ searchParams }: PageProps) {
 
         {/* Métricas rápidas */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-5">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700/50 shadow-sm p-4">
+          <div className="bg-[#1a1a1a] rounded-2xl border border-[#262626] shadow-sm p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
-                <svg className="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0" /></svg>
+              <div className="w-10 h-10 rounded-xl bg-violet-500/10 flex items-center justify-center">
+                <svg className="w-5 h-5 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0" /></svg>
               </div>
               <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Total Pipeline</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">{leads.length}</p>
+                <p className="text-xs text-gray-500 font-medium">Total Pipeline</p>
+                <p className="text-2xl font-bold text-white">{leads.length}</p>
               </div>
             </div>
           </div>
-          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700/50 shadow-sm p-4">
+          <div className="bg-[#1a1a1a] rounded-2xl border border-[#262626] shadow-sm p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
-                <svg className="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
+                <svg className="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
               </div>
               <div>
-                <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">Clientes Ativos</p>
-                <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{activeClients}</p>
+                <p className="text-xs text-emerald-400 font-medium">Clientes Ativos</p>
+                <p className="text-2xl font-bold text-emerald-400">{activeClients}</p>
               </div>
             </div>
           </div>
-          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700/50 shadow-sm p-4">
+          <div className="bg-[#1a1a1a] rounded-2xl border border-[#262626] shadow-sm p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center">
-                <svg className="w-5 h-5 text-violet-600 dark:text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+              <div className="w-10 h-10 rounded-xl bg-violet-500/10 flex items-center justify-center">
+                <svg className="w-5 h-5 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
               </div>
               <div>
-                <p className="text-xs text-violet-600 dark:text-violet-400 font-medium">Em Onboarding</p>
-                <p className="text-2xl font-bold text-violet-600 dark:text-violet-400">{onboarding}</p>
+                <p className="text-xs text-violet-400 font-medium">Em Onboarding</p>
+                <p className="text-2xl font-bold text-violet-400">{onboarding}</p>
               </div>
             </div>
           </div>
-          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700/50 shadow-sm p-4">
+          <div className="bg-[#1a1a1a] rounded-2xl border border-[#262626] shadow-sm p-4">
             <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${atRisk > 0 ? "bg-red-100 dark:bg-red-900/30" : "bg-gray-100 dark:bg-gray-800"}`}>
-                <svg className={`w-5 h-5 ${atRisk > 0 ? "text-red-600 dark:text-red-400" : "text-gray-400"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" /></svg>
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${atRisk > 0 ? "bg-red-500/10" : "bg-[#222222]"}`}>
+                <svg className={`w-5 h-5 ${atRisk > 0 ? "text-red-400" : "text-gray-400"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" /></svg>
               </div>
               <div>
-                <p className="text-xs text-red-600 dark:text-red-400 font-medium">Risco de Churn</p>
-                <p className={`text-2xl font-bold ${atRisk > 0 ? "text-red-600 dark:text-red-400" : "text-gray-300 dark:text-gray-600"}`}>{atRisk}</p>
+                <p className="text-xs text-red-400 font-medium">Risco de Churn</p>
+                <p className={`text-2xl font-bold ${atRisk > 0 ? "text-red-400" : "text-gray-600"}`}>{atRisk}</p>
               </div>
             </div>
           </div>
@@ -103,12 +103,12 @@ export default async function CRMPage({ searchParams }: PageProps) {
               name="search"
               defaultValue={params.search}
               placeholder="Buscar por nome, empresa..."
-              className="flex-1 min-w-40 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="flex-1 min-w-40 rounded-xl border border-[#333333] bg-[#1a1a1a] text-gray-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
             />
             <select
               name="status"
               defaultValue={params.status ?? ""}
-              className="rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="rounded-xl border border-[#333333] bg-[#1a1a1a] text-gray-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
             >
               {STATUS_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -120,10 +120,10 @@ export default async function CRMPage({ searchParams }: PageProps) {
 
           <div className="flex items-center gap-2">
             {/* Toggle view */}
-            <div className="flex rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden bg-white dark:bg-gray-900">
+            <div className="flex rounded-xl border border-[#262626] overflow-hidden bg-[#1a1a1a]">
               <Link
                 href={`/admin/crm?view=kanban${params.search ? `&search=${params.search}` : ""}${params.status ? `&status=${params.status}` : ""}`}
-                className={`px-3 py-2 text-xs font-semibold flex items-center gap-1.5 transition-colors ${view === "kanban" ? "bg-indigo-600 text-white" : "text-gray-500 hover:text-gray-900 dark:hover:text-white"}`}
+                className={`px-3 py-2 text-xs font-semibold flex items-center gap-1.5 transition-colors ${view === "kanban" ? "bg-indigo-600 text-white" : "text-gray-500 hover:text-white"}`}
               >
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
@@ -132,7 +132,7 @@ export default async function CRMPage({ searchParams }: PageProps) {
               </Link>
               <Link
                 href={`/admin/crm?view=list${params.search ? `&search=${params.search}` : ""}${params.status ? `&status=${params.status}` : ""}`}
-                className={`px-3 py-2 text-xs font-semibold flex items-center gap-1.5 transition-colors ${view === "list" ? "bg-indigo-600 text-white" : "text-gray-500 hover:text-gray-900 dark:hover:text-white"}`}
+                className={`px-3 py-2 text-xs font-semibold flex items-center gap-1.5 transition-colors ${view === "list" ? "bg-indigo-600 text-white" : "text-gray-500 hover:text-white"}`}
               >
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
@@ -171,7 +171,7 @@ export default async function CRMPage({ searchParams }: PageProps) {
                   leads.map((lead) => (
                     <TableRow key={lead.id}>
                       <TableTd>
-                        <span className="font-medium text-gray-900 dark:text-gray-100">{lead.name}</span>
+                        <span className="font-medium text-gray-100">{lead.name}</span>
                       </TableTd>
                       <TableTd>{lead.company ?? "—"}</TableTd>
                       <TableTd>

@@ -15,12 +15,12 @@ interface BadgeProps {
 }
 
 const variants: Record<BadgeVariant, string> = {
-  default: "bg-indigo-100 text-indigo-700 ring-1 ring-indigo-200",
-  success: "bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200",
-  warning: "bg-amber-100 text-amber-700 ring-1 ring-amber-200",
-  danger: "bg-red-100 text-red-700 ring-1 ring-red-200",
-  info: "bg-violet-100 text-violet-700 ring-1 ring-violet-200",
-  gray: "bg-gray-100 text-gray-600 ring-1 ring-gray-200",
+  default: "bg-violet-500/10 text-violet-400 ring-1 ring-violet-500/20",
+  success: "bg-emerald-500/10 text-emerald-400 ring-1 ring-emerald-500/20",
+  warning: "bg-amber-500/10 text-amber-400 ring-1 ring-amber-500/20",
+  danger:  "bg-red-500/10 text-red-400 ring-1 ring-red-500/20",
+  info:    "bg-violet-500/10 text-violet-400 ring-1 ring-violet-500/20",
+  gray:    "bg-white/5 text-gray-400 ring-1 ring-white/10",
 };
 
 export function Badge({ children, variant = "default", className }: BadgeProps) {

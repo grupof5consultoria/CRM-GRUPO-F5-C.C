@@ -47,20 +47,20 @@ export default async function ClientsPage({ searchParams }: PageProps) {
               R$ {totalMRR.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
             </p>
           </div>
-          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700/50 shadow-sm p-4">
-            <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">Clientes Ativos</p>
-            <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">{clients.filter(c => c.status === "active").length}</p>
+          <div className="bg-[#1a1a1a] rounded-2xl border border-[#262626] shadow-sm p-4">
+            <p className="text-xs text-emerald-400 font-medium">Clientes Ativos</p>
+            <p className="text-2xl font-bold text-emerald-400 mt-1">{clients.filter(c => c.status === "active").length}</p>
           </div>
           {atRisk > 0 && (
-            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-red-200 dark:border-red-800/50 shadow-sm p-4">
-              <p className="text-xs text-red-600 dark:text-red-400 font-medium">Em Risco</p>
-              <p className="text-2xl font-bold text-red-600 dark:text-red-400 mt-1">{atRisk}</p>
+            <div className="bg-[#1a1a1a] rounded-2xl border border-red-500/20 shadow-sm p-4">
+              <p className="text-xs text-red-400 font-medium">Em Risco</p>
+              <p className="text-2xl font-bold text-red-400 mt-1">{atRisk}</p>
             </div>
           )}
           {attention > 0 && (
-            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-amber-200 dark:border-amber-800/50 shadow-sm p-4">
-              <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">Requer Atenção</p>
-              <p className="text-2xl font-bold text-amber-600 dark:text-amber-400 mt-1">{attention}</p>
+            <div className="bg-[#1a1a1a] rounded-2xl border border-amber-500/20 shadow-sm p-4">
+              <p className="text-xs text-amber-400 font-medium">Requer Atenção</p>
+              <p className="text-2xl font-bold text-amber-400 mt-1">{attention}</p>
             </div>
           )}
         </div>
@@ -71,16 +71,16 @@ export default async function ClientsPage({ searchParams }: PageProps) {
               name="search"
               defaultValue={params.search}
               placeholder="Buscar por nome ou email..."
-              className="flex-1 min-w-40 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="flex-1 min-w-40 rounded-xl border border-[#333333] bg-[#1a1a1a] text-gray-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
             />
-            <select name="health" defaultValue={params.health ?? ""} className="rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <select name="health" defaultValue={params.health ?? ""} className="rounded-xl border border-[#333333] bg-[#1a1a1a] text-gray-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
               <option value="">Toda saúde</option>
               <option value="thriving">🟢 Ativo e Engajado</option>
               <option value="stable">🔵 Estável</option>
               <option value="attention">🟡 Requer Atenção</option>
               <option value="at_risk">🔴 Em Risco</option>
             </select>
-            <select name="status" defaultValue={params.status ?? ""} className="rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <select name="status" defaultValue={params.status ?? ""} className="rounded-xl border border-[#333333] bg-[#1a1a1a] text-gray-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
               <option value="">Todo status</option>
               <option value="active">Ativos</option>
               <option value="inactive">Inativos</option>
@@ -120,7 +120,7 @@ export default async function ClientsPage({ searchParams }: PageProps) {
                     </div>
                   </TableTd>
                   <TableTd>
-                    <span className="font-medium text-gray-900 dark:text-gray-100">{c.name}</span>
+                    <span className="font-medium text-gray-100">{c.name}</span>
                     {c.document && <p className="text-xs text-gray-400">{c.document}</p>}
                   </TableTd>
                   <TableTd>
@@ -131,7 +131,7 @@ export default async function ClientsPage({ searchParams }: PageProps) {
                   </TableTd>
                   <TableTd>
                     {c.monthlyValue != null ? (
-                      <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                      <span className="font-semibold text-emerald-400">
                         R$ {Number(c.monthlyValue).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                       </span>
                     ) : (
@@ -143,7 +143,7 @@ export default async function ClientsPage({ searchParams }: PageProps) {
                       const months = (new Date().getFullYear() - new Date(c.startDate).getFullYear()) * 12 + (new Date().getMonth() - new Date(c.startDate).getMonth());
                       const years = Math.floor(months / 12);
                       return (
-                        <span className="text-xs font-medium text-indigo-600 dark:text-indigo-400">
+                        <span className="text-xs font-medium text-violet-400">
                           {years > 0 ? `${years}a ${months % 12}m` : `${months}m`}
                         </span>
                       );

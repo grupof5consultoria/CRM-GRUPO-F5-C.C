@@ -21,13 +21,13 @@ export default async function ContractsPage() {
 
         {/* Métricas */}
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700/50 shadow-sm p-4">
-            <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">Ativos</p>
-            <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">{activeCount}</p>
+          <div className="bg-[#1a1a1a] rounded-2xl border border-[#262626] shadow-sm p-4">
+            <p className="text-xs text-emerald-400 font-medium">Ativos</p>
+            <p className="text-2xl font-bold text-emerald-400 mt-1">{activeCount}</p>
           </div>
-          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700/50 shadow-sm p-4">
-            <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">Aguardando Assinatura</p>
-            <p className={`text-2xl font-bold mt-1 ${pendingCount > 0 ? "text-amber-600 dark:text-amber-400" : "text-gray-300 dark:text-gray-600"}`}>{pendingCount}</p>
+          <div className="bg-[#1a1a1a] rounded-2xl border border-[#262626] shadow-sm p-4">
+            <p className="text-xs text-amber-400 font-medium">Aguardando Assinatura</p>
+            <p className={`text-2xl font-bold mt-1 ${pendingCount > 0 ? "text-amber-400" : "text-gray-600"}`}>{pendingCount}</p>
           </div>
           <div className="bg-gradient-to-r from-indigo-500 to-violet-600 rounded-2xl shadow-md p-4">
             <p className="text-xs text-indigo-100 font-medium">Valor Contratado (Ativos)</p>
@@ -63,12 +63,12 @@ export default async function ContractsPage() {
               contracts.map((c) => (
                 <TableRow key={c.id}>
                   <TableTd>
-                    <span className="font-medium text-gray-900 dark:text-white">{c.title}</span>
+                    <span className="font-medium text-white">{c.title}</span>
                   </TableTd>
-                  <TableTd><span className="text-gray-700 dark:text-gray-300">{c.client.name}</span></TableTd>
+                  <TableTd><span className="text-gray-400">{c.client.name}</span></TableTd>
                   <TableTd>
                     {c.value ? (
-                      <span className="font-semibold text-gray-900 dark:text-white">
+                      <span className="font-semibold text-white">
                         R$ {Number(c.value).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                       </span>
                     ) : <span className="text-gray-400">—</span>}
@@ -79,24 +79,24 @@ export default async function ContractsPage() {
                     </Badge>
                   </TableTd>
                   <TableTd>
-                    <span className="text-gray-700 dark:text-gray-300">
+                    <span className="text-gray-400">
                       {c.startDate ? new Date(c.startDate).toLocaleDateString("pt-BR") : "—"}
                     </span>
                   </TableTd>
                   <TableTd>
-                    <span className="text-gray-700 dark:text-gray-300">
+                    <span className="text-gray-400">
                       {c.endDate ? new Date(c.endDate).toLocaleDateString("pt-BR") : "—"}
                     </span>
                   </TableTd>
                   <TableTd>
                     {c.proposal ? (
-                      <Link href={`/admin/proposals/${c.proposal.id}`} className="text-indigo-600 dark:text-indigo-400 hover:underline text-xs">
+                      <Link href={`/admin/proposals/${c.proposal.id}`} className="text-violet-400 hover:underline text-xs">
                         Ver proposta
                       </Link>
                     ) : <span className="text-gray-400">—</span>}
                   </TableTd>
                   <TableTd>
-                    <Link href={`/admin/contracts/${c.id}`} className="text-indigo-600 dark:text-indigo-400 hover:underline text-xs font-medium">
+                    <Link href={`/admin/contracts/${c.id}`} className="text-violet-400 hover:underline text-xs font-medium">
                       Ver
                     </Link>
                   </TableTd>
