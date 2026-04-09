@@ -525,6 +525,7 @@ model Attendance {
   valueClosed   Decimal?         @db.Decimal(10, 2)
   leadName      String?
   leadPhone     String?
+  scheduledAt   DateTime?        // data + hora do agendamento
   status        AttendanceStatus @default(scheduled)
   lostReason    String?
   followUpCount Int              @default(0)

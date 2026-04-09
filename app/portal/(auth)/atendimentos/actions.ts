@@ -110,6 +110,57 @@ export async function addAttendanceAction(
   return { success: true };
 }
 
+export async function updateAttendanceAction(
+  _prev: { error?: string; success?: boolean },
+  formData: FormData
+): Promise<{ error?: string; success?: boolean }> {
+  const session = await getSession();
+  if (!session?.clientId) redirect("/portal/login");
+
+  const attendanceId = formData.get("attendanceId") as string;
+  if (!attendanceId) return { error: "ID inválido" };
+
+  const status = formData.get("status") as string;
+  const scheduledDateRaw = formData.get("scheduledDate") as string;
+  const scheduledTimeRaw = formData.get("scheduledTime") as string;
+  const valueQuotedRaw   = formData.get("valueQuoted") as string;
+  const valueClosedRaw   = formData.get("valueClosed") as string;
+  const lostReason       = (formData.get("lostReason") as string)?.trim() || null;
+  const followUpCount    = parseInt(formData.get("followUpCount") as string || "0") || 0;
+  const notes            = (formData.get("notes") as string)?.trim() || null;
+  const leadName         = (formData.get("leadName") as string)?.trim() || null;
+  const leadPhone        = (formData.get("leadPhone") as string)?.trim() || null;
+
+  const valueQuoted = valueQuotedRaw ? parseFloat(valueQuotedRaw.replace(",", ".")) : null;
+  const valueClosed = valueClosedRaw ? parseFloat(valueClosedRaw.replace(",", ".")) : null;
+
+  // Build scheduledAt from date + time
+  let scheduledAt: Date | null = null;
+  if (scheduledDateRaw) {
+    const time = scheduledTimeRaw || "09:00";
+    scheduledAt = new Date(`${scheduledDateRaw}T${time}:00`);
+  }
+
+  await prisma.attendance.updateMany({
+    where: { id: attendanceId, clientId: session.clientId },
+    data: {
+      leadName,
+      leadPhone,
+      scheduledAt,
+      status: status as "scheduled" | "closed" | "not_closed" | "follow_up",
+      lostReason: status === "not_closed" ? lostReason : null,
+      followUpCount,
+      valueQuoted: valueQuoted && !isNaN(valueQuoted) ? valueQuoted : null,
+      valueClosed: valueClosed && !isNaN(valueClosed) && status === "closed" ? valueClosed : null,
+      notes,
+    },
+  });
+
+  revalidatePath("/portal/atendimentos");
+  revalidatePath("/portal/calendario");
+  return { success: true };
+}
+
 export async function deleteAttendanceAction(attendanceId: string) {
   const session = await getSession();
   if (!session?.clientId) redirect("/portal/login");
