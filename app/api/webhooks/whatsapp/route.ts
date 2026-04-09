@@ -32,8 +32,9 @@ export async function POST(req: NextRequest) {
         const c = change as Record<string, unknown>;
         if (c.field !== "messages") continue;
 
-        const value = c.value as Record<string, unknown>;
+        const value    = c.value as Record<string, unknown>;
         const messages: unknown[] = (value?.messages as unknown[]) ?? [];
+        const contacts: unknown[] = (value?.contacts as unknown[]) ?? [];
         const metadata = value?.metadata as Record<string, unknown> | undefined;
         const phoneNumberId = (metadata?.phone_number_id as string) ?? "";
 
@@ -55,33 +56,85 @@ export async function POST(req: NextRequest) {
 
         for (const msg of messages) {
           const m = msg as Record<string, unknown>;
-          // Only process incoming messages (type: text, button, interactive, etc.)
           if (m.type === "reaction") continue;
 
-          const from         = (m.from as string) ?? "unknown";
-          const timestamp    = m.timestamp ? new Date(Number(m.timestamp) * 1000) : new Date();
-          const date         = timestamp.toISOString().split("T")[0];
-          const firstMessage = extractText(m);
+          const from      = (m.from as string) ?? "unknown";
+          const timestamp = m.timestamp ? new Date(Number(m.timestamp) * 1000) : new Date();
+          const date      = timestamp.toISOString().split("T")[0];
+          const period    = date.slice(0, 7); // "YYYY-MM"
+          const msgText   = extractText(m);
 
-          // Detect campaign reference from message text
-          const campaignRef  = detectCampaignRef(firstMessage);
+          // ── Extract lead name from contacts ───────────────────────────
+          const contactEntry = (contacts[0] as Record<string, unknown> | undefined);
+          const leadName = (contactEntry?.profile as Record<string, unknown> | undefined)?.name as string | null ?? null;
+          const leadPhone = from; // real phone number for callback
 
-          // Deduplicate: one conversation per sender per day
+          // ── Detect origin ─────────────────────────────────────────────
+          // Priority: [ref:CODE] in message > Meta CTWA referral > keyword fallback
+          const campaignCode = extractCampaignCode(msgText);
+          let origin: string = "organic";
+          let campaignId: string | null = null;
+
+          if (campaignCode) {
+            // Look up campaign by code
+            const campaign = await prisma.whatsAppCampaign.findUnique({
+              where: { campaignCode },
+            });
+            if (campaign) {
+              origin     = campaign.origin;
+              campaignId = campaign.id;
+            }
+          } else {
+            // Check Meta CTWA referral object
+            const referral = m.referral as Record<string, unknown> | undefined;
+            if (referral?.source_type === "ad") {
+              origin = "meta_ads";
+            } else if (referral?.source_type === "post") {
+              origin = "instagram";
+            } else {
+              // Keyword fallback
+              origin = detectOriginFromText(msgText);
+            }
+          }
+
+          // ── Save to WhatsAppConversation (dedup per sender/day) ───────
           const existing = await prisma.whatsAppConversation.findFirst({
             where: { accountId: account.id, from: hashPhone(from), date },
           });
-          if (existing) continue;
 
-          await prisma.whatsAppConversation.create({
-            data: {
-              accountId:    account.id,
-              from:         hashPhone(from),
-              firstMessage: firstMessage?.slice(0, 200) ?? null,
-              campaignRef,
-              date,
-              startedAt:    timestamp,
-            },
+          if (!existing) {
+            await prisma.whatsAppConversation.create({
+              data: {
+                accountId:    account.id,
+                from:         hashPhone(from),
+                firstMessage: msgText?.slice(0, 200) ?? null,
+                campaignRef:  campaignId ?? origin,
+                date,
+                startedAt:    timestamp,
+              },
+            });
+          }
+
+          // ── Auto-create Attendance lead (dedup per phone/period) ──────
+          const existingLead = await prisma.attendance.findFirst({
+            where: { clientId: account.clientId, leadPhone, period },
           });
+
+          if (!existingLead) {
+            await prisma.attendance.create({
+              data: {
+                clientId:     account.clientId,
+                leadName:     leadName,
+                leadPhone:    leadPhone,
+                origin:       origin as "meta_ads" | "google_ads" | "instagram" | "google_organic" | "referral" | "organic" | "other",
+                status:       "follow_up",
+                followUpCount: 0,
+                contactDate:  timestamp,
+                period,
+                notes:        campaignCode ? `Lead via campanha [ref:${campaignCode}]` : "Lead via WhatsApp",
+              },
+            });
+          }
         }
       }
     }
@@ -111,19 +164,23 @@ function extractText(msg: Record<string, unknown>): string | null {
   return null;
 }
 
-function detectCampaignRef(text: string | null): string | null {
+// Extract [ref:XXXXXX] from message text
+function extractCampaignCode(text: string | null): string | null {
   if (!text) return null;
-  // Detect patterns like "vim pelo instagram", "vim pelo anuncio", UTM refs embedded in text
+  const match = text.match(/\[ref:([a-zA-Z0-9]{4,12})\]/);
+  return match ? match[1] : null;
+}
+
+function detectOriginFromText(text: string | null): string {
+  if (!text) return "organic";
   const lower = text.toLowerCase();
   if (lower.includes("instagram")) return "instagram";
   if (lower.includes("anuncio") || lower.includes("anúncio") || lower.includes("meta ads")) return "meta_ads";
-  if (lower.includes("facebook")) return "facebook";
-  if (lower.includes("google")) return "google";
-  return null;
+  if (lower.includes("google ads")) return "google_ads";
+  if (lower.includes("google")) return "google_organic";
+  return "organic";
 }
 
-// Simple one-way hash to avoid storing real phone numbers in plain text
 function hashPhone(phone: string): string {
-  // Replace last 4 digits with **** for basic privacy while still being useful for dedup
   return phone.slice(0, -4) + "****";
 }

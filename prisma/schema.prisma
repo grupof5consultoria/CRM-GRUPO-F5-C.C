@@ -329,9 +329,10 @@ model Client {
   charges         Charge[]
   healthLogs      ClientHealthLog[]
   metricEntries    ClientMetricEntry[]
-  clientServices   ClientService[]
-  attendances      Attendance[]
-  whatsappAccounts WhatsAppAccount[]
+  clientServices    ClientService[]
+  attendances       Attendance[]
+  whatsappAccounts  WhatsAppAccount[]
+  whatsappCampaigns WhatsAppCampaign[]
 
   @@map("clients")
 }
@@ -577,8 +578,29 @@ model WhatsAppAccount {
   updatedAt     DateTime        @updatedAt
 
   conversations WhatsAppConversation[]
+  campaigns     WhatsAppCampaign[]
 
   @@map("whatsapp_accounts")
+}
+
+model WhatsAppCampaign {
+  id                String           @id @default(cuid())
+  clientId          String
+  client            Client           @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  whatsAppAccountId String?
+  whatsAppAccount   WhatsAppAccount? @relation(fields: [whatsAppAccountId], references: [id])
+  name              String           // "Campanha Implante Dezembro"
+  origin            AttendanceOrigin // meta_ads, instagram, google_ads, etc.
+  campaignCode      String           @unique // 6-char code embedded in message [ref:abc123]
+  defaultMessage    String           // pre-filled WhatsApp message (without [ref:...])
+  utmSource         String?
+  utmMedium         String?
+  utmCampaign       String?
+  utmContent        String?
+  isActive          Boolean          @default(true)
+  createdAt         DateTime         @default(now())
+
+  @@map("whatsapp_campaigns")
 }
 
 model WhatsAppConversation {
