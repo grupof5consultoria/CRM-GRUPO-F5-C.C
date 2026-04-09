@@ -247,6 +247,9 @@ export interface MetaAdInsight {
   campaignId: string;
   spend: number;
   impressions: number;
+  clicks: number;
+  cpm: number;
+  ctr: number;
   conversations: number;
   leadsFromAds: number;
   newFollowers: number;
@@ -264,7 +267,8 @@ export async function fetchMetaAdInsights(
   const params = new URLSearchParams({
     fields: [
       "ad_id", "ad_name", "adset_id", "adset_name", "campaign_id",
-      "spend", "impressions", "actions", "cost_per_action_type",
+      "spend", "impressions", "inline_link_clicks", "cpm", "ctr",
+      "actions", "cost_per_action_type",
     ].join(","),
     time_range: JSON.stringify({ since: dateFrom, until: dateTo }),
     level: "ad",
@@ -316,6 +320,7 @@ export async function fetchMetaAdInsights(
       .filter(a => a.value > 0)
       .sort((a, b) => b.value - a.value);
 
+    const impressions = parseInt((row.impressions as string) ?? "0");
     return {
       adId:               (row.ad_id as string) ?? "",
       adName:             (row.ad_name as string) ?? "Anúncio sem nome",
@@ -323,7 +328,10 @@ export async function fetchMetaAdInsights(
       adsetName:          (row.adset_name as string) ?? "Conjunto sem nome",
       campaignId:         (row.campaign_id as string) ?? "",
       spend,
-      impressions:        parseInt((row.impressions as string) ?? "0"),
+      impressions,
+      clicks:             parseInt((row.inline_link_clicks as string) ?? "0"),
+      cpm:                parseFloat((row.cpm as string) ?? "0"),
+      ctr:                parseFloat((row.ctr as string) ?? "0"),
       conversations,
       leadsFromAds:       parseInt(leadAction?.value ?? "0"),
       newFollowers:       parseInt(followAction?.value ?? "0"),

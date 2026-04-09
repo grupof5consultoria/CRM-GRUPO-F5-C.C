@@ -279,6 +279,9 @@ export function CampaignInsights({ clientId, clientName, dateFrom, dateTo }: Pro
                       const adsetConv  = ads.reduce((s,a) => s + a.conversations, 0);
                       const adsetImp   = ads.reduce((s,a) => s + a.impressions, 0);
                       const adsetCPC   = adsetConv > 0 ? adsetSpend / adsetConv : 0;
+                      const adsetCPM   = adsetImp > 0 ? (adsetSpend / adsetImp) * 1000 : 0;
+                      const adsetClicks= ads.reduce((s,a) => s + a.clicks, 0);
+                      const adsetCTR   = adsetImp > 0 && adsetClicks > 0 ? (adsetClicks / adsetImp) * 100 : 0;
 
                       return (
                         <>
@@ -295,7 +298,8 @@ export function CampaignInsights({ clientId, clientName, dateFrom, dateTo }: Pro
                             </td>
                             <td /><td /><td />
                             <Td><span className="text-amber-400/70 text-[11px]">{fmtR(adsetSpend)}</span></Td>
-                            <td /><td />
+                            <Td><span className="text-gray-500 text-[11px]">{adsetCPM > 0 ? fmtR(adsetCPM) : "—"}</span></Td>
+                            <Td><span className="text-gray-500 text-[11px]">{adsetCTR > 0 ? fmtPct(adsetCTR) : "—"}</span></Td>
                             <Td><span className="text-gray-500 text-[11px]">{fmtN(adsetImp)}</span></Td>
                             <Td><span className="text-blue-400/80 text-[11px] font-semibold">{adsetConv > 0 ? fmtN(adsetConv) : "—"}</span></Td>
                             <Td><span className="text-blue-300/70 text-[11px]">{adsetCPC > 0 ? fmtR(adsetCPC) : "—"}</span></Td>
@@ -317,7 +321,8 @@ export function CampaignInsights({ clientId, clientName, dateFrom, dateTo }: Pro
                               </td>
                               <td /><td /><td />
                               <Td><span className="text-amber-400/60 text-[11px]">{fmtR(ad.spend)}</span></Td>
-                              <td /><td />
+                              <Td><span className="text-gray-600 text-[11px]">{ad.cpm > 0 ? fmtR(ad.cpm) : "—"}</span></Td>
+                              <Td><span className="text-gray-600 text-[11px]">{ad.ctr > 0 ? fmtPct(ad.ctr) : "—"}</span></Td>
                               <Td><span className="text-gray-600 text-[11px]">{fmtN(ad.impressions)}</span></Td>
                               <Td>{ad.conversations > 0 ? <span className="text-blue-400/80 text-[11px] font-semibold">{fmtN(ad.conversations)}</span> : <span className="text-gray-700 text-[11px]">—</span>}</Td>
                               <Td>{ad.costPerConversation > 0 ? <span className="text-blue-300/70 text-[11px]">{fmtR(ad.costPerConversation)}</span> : <span className="text-gray-700 text-[11px]">—</span>}</Td>
