@@ -196,18 +196,59 @@ export async function recordPaymentAction(
     : null;
   const valueClosed = valueClosedRaw ? parseFloat(valueClosedRaw.replace(",", ".")) : null;
 
-  await prisma.attendance.updateMany({
+  // Fetch attendance to get service name + lead info for billing description
+  const attendance = await prisma.attendance.findFirst({
     where: { id: attendanceId, clientId: session.clientId },
+    include: { service: { select: { name: true } } },
+  });
+  if (!attendance) return { error: "Atendimento não encontrado" };
+
+  const finalValue = valueClosed && !isNaN(valueClosed) ? valueClosed : null;
+
+  await prisma.attendance.update({
+    where: { id: attendanceId },
     data: {
       status: "closed",
       paymentMethod,
       paymentInstallments: paymentMethod === "credit_card" ? paymentInstallments : null,
-      valueClosed: valueClosed && !isNaN(valueClosed) ? valueClosed : null,
+      valueClosed: finalValue,
     },
   });
 
+  // Auto-generate billing charge if there is a value
+  if (finalValue && finalValue > 0) {
+    const serviceName =
+      attendance.service?.name ??
+      (attendance.notes?.startsWith("Serviço:")
+        ? attendance.notes.split("|")[0].replace("Serviço:", "").trim()
+        : null) ??
+      "Atendimento";
+
+    const leadLabel = attendance.leadName ?? attendance.leadPhone ?? null;
+    const description = leadLabel ? `${serviceName} — ${leadLabel}` : serviceName;
+
+    const billingPM =
+      paymentMethod === "pix" ? "pix"
+      : paymentMethod === "cash" ? "cash"
+      : "credit_card";
+
+    await prisma.charge.create({
+      data: {
+        clientId: session.clientId,
+        description,
+        value: finalValue,
+        dueDate: new Date(),
+        status: "paid",
+        paidAt: new Date(),
+        paymentMethod: billingPM,
+        isRecurring: false,
+      },
+    });
+  }
+
   revalidatePath("/portal/atendimentos");
   revalidatePath("/portal/calendario");
+  revalidatePath("/portal/billing");
   return { success: true };
 }
 

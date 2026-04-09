@@ -61,7 +61,7 @@ export async function updateChargeStatus(chargeId: string, status: ChargeStatus)
   const charge = await prisma.charge.findUnique({ where: { id: chargeId } });
   if (!charge) return;
 
-  // Se pago e recorrente: registra o pagamento no histórico e renova a cobrança para o próximo mês
+  // Se pago e recorrente: marca como pago E cria nova cobrança para o próximo mês
   if (status === "paid" && charge.isRecurring) {
     const paidDate = new Date();
     const currentDue = new Date(charge.dueDate);
@@ -69,21 +69,40 @@ export async function updateChargeStatus(chargeId: string, status: ChargeStatus)
     nextDue.setMonth(nextDue.getMonth() + 1);
     if (charge.recurrenceDay) nextDue.setDate(charge.recurrenceDay);
 
-    // Registra pagamento no histórico e renova no lugar
+    // Marca a cobrança atual como paga
     await prisma.charge.update({
       where: { id: chargeId },
-      data: {
-        status: "pending",
-        paidAt: null,
-        dueDate: nextDue,
-      },
+      data: { status: "paid", paidAt: paidDate },
     });
 
     await prisma.chargeEvent.create({
       data: {
         chargeId,
         type: "paid",
-        description: `Pagamento confirmado em ${paidDate.toLocaleDateString("pt-BR")}. Próximo vencimento: ${nextDue.toLocaleDateString("pt-BR")}.`,
+        description: `Pagamento confirmado em ${paidDate.toLocaleDateString("pt-BR")}.`,
+      },
+    });
+
+    // Cria nova cobrança para o próximo mês
+    const newCharge = await prisma.charge.create({
+      data: {
+        clientId: charge.clientId,
+        contractId: charge.contractId,
+        description: charge.description,
+        value: charge.value,
+        dueDate: nextDue,
+        paymentMethod: charge.paymentMethod,
+        isRecurring: true,
+        recurrenceDay: charge.recurrenceDay,
+        status: "pending",
+      },
+    });
+
+    await prisma.chargeEvent.create({
+      data: {
+        chargeId: newCharge.id,
+        type: "created",
+        description: `Cobrança recorrente gerada automaticamente. Vencimento: ${nextDue.toLocaleDateString("pt-BR")}.`,
       },
     });
 

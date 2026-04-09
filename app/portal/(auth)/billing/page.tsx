@@ -20,6 +20,23 @@ export default async function PortalBillingPage() {
     <main className="flex-1 p-4 md:p-6 bg-[#111111] min-h-screen space-y-6">
       <h1 className="text-xl font-bold text-white">Cobranças</h1>
 
+      {/* PIX payment info */}
+      <div className="relative bg-[#1a1a1a] rounded-2xl border border-emerald-500/20 p-4 overflow-hidden">
+        <span className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(135deg, rgba(16,185,129,0.06) 0%, transparent 60%)" }} />
+        <div className="flex items-start gap-3">
+          <div className="w-9 h-9 rounded-xl bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
+            <svg className="w-5 h-5 text-emerald-400" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M11.9 2c-.8 0-1.6.3-2.2.9L4.9 7.7c-.6.6-.9 1.4-.9 2.2s.3 1.6.9 2.2l4.8 4.8c.6.6 1.4.9 2.2.9s1.6-.3 2.2-.9l4.8-4.8c.6-.6.9-1.4.9-2.2s-.3-1.6-.9-2.2L14.1 2.9c-.6-.6-1.4-.9-2.2-.9zm0 2c.3 0 .6.1.8.3l4.8 4.8c.2.2.3.5.3.8s-.1.6-.3.8L12.7 15.5c-.2.2-.5.3-.8.3s-.6-.1-.8-.3L6.3 10.7c-.2-.2-.3-.5-.3-.8s.1-.6.3-.8L11.1 4.3c.2-.2.5-.3.8-.3z" />
+            </svg>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-semibold text-emerald-400 uppercase tracking-wider mb-1">Chave PIX para pagamento</p>
+            <p className="text-base font-bold text-white tracking-widest">502.786.368-37</p>
+            <p className="text-xs text-gray-500 mt-0.5">Banco Itaú &nbsp;·&nbsp; Bruno Alves Nascimento</p>
+          </div>
+        </div>
+      </div>
+
       <div className="grid grid-cols-2 gap-4">
         <div className="relative bg-[#1a1a1a] rounded-2xl border border-[#262626] p-5 overflow-hidden">
           <span className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.04) 0%, transparent 60%)" }} />
