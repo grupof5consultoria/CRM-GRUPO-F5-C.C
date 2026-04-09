@@ -100,6 +100,14 @@ enum AttendanceStatus {
   closed       // fechou
   not_closed   // não fechou
   follow_up    // em follow-up
+  no_show      // não compareceu
+  rescheduled  // marcou para outra data
+}
+
+enum AttendancePaymentMethod {
+  pix
+  cash
+  credit_card
 }
 
 enum AttendanceOrigin {
@@ -525,9 +533,11 @@ model Attendance {
   valueClosed   Decimal?         @db.Decimal(10, 2)
   leadName      String?
   leadPhone     String?
-  scheduledAt   DateTime?        // data + hora do agendamento
-  status        AttendanceStatus @default(scheduled)
-  lostReason    String?
+  scheduledAt          DateTime?                 // data + hora do agendamento
+  status               AttendanceStatus          @default(scheduled)
+  lostReason           String?
+  paymentMethod        AttendancePaymentMethod?  // pix / cash / credit_card
+  paymentInstallments  Int?                      // parcelas (cartão)
   followUpCount Int              @default(0)
   origin        AttendanceOrigin @default(other)
   contactDate   DateTime         @default(now())

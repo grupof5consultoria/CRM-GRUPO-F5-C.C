@@ -67,7 +67,7 @@ export async function addAttendanceAction(
 
   const serviceId = formData.get("serviceId") as string || null;
   const customService = (formData.get("customService") as string)?.trim() || null;
-  const status = formData.get("status") as "scheduled" | "closed" | "not_closed" | "follow_up";
+  const status = formData.get("status") as "scheduled" | "closed" | "not_closed" | "follow_up" | "no_show" | "rescheduled";
   const origin = formData.get("origin") as "meta_ads" | "google_ads" | "instagram" | "google_organic" | "referral" | "organic" | "other";
   const leadName = (formData.get("leadName") as string)?.trim() || null;
   const leadPhone = (formData.get("leadPhone") as string)?.trim() || null;
@@ -130,9 +130,18 @@ export async function updateAttendanceAction(
   const notes            = (formData.get("notes") as string)?.trim() || null;
   const leadName         = (formData.get("leadName") as string)?.trim() || null;
   const leadPhone        = (formData.get("leadPhone") as string)?.trim() || null;
+  const paymentMethodRaw = formData.get("paymentMethod") as string | null;
+  const paymentInstallmentsRaw = formData.get("paymentInstallments") as string | null;
 
   const valueQuoted = valueQuotedRaw ? parseFloat(valueQuotedRaw.replace(",", ".")) : null;
   const valueClosed = valueClosedRaw ? parseFloat(valueClosedRaw.replace(",", ".")) : null;
+  const paymentInstallments = paymentInstallmentsRaw ? parseInt(paymentInstallmentsRaw) : null;
+
+  const validPaymentMethods = ["pix", "cash", "credit_card"] as const;
+  type PM = typeof validPaymentMethods[number];
+  const paymentMethod = validPaymentMethods.includes(paymentMethodRaw as PM)
+    ? (paymentMethodRaw as PM)
+    : null;
 
   // Build scheduledAt from date + time
   let scheduledAt: Date | null = null;
@@ -147,11 +156,13 @@ export async function updateAttendanceAction(
       leadName,
       leadPhone,
       scheduledAt,
-      status: status as "scheduled" | "closed" | "not_closed" | "follow_up",
+      status: status as "scheduled" | "closed" | "not_closed" | "follow_up" | "no_show" | "rescheduled",
       lostReason: status === "not_closed" ? lostReason : null,
       followUpCount,
       valueQuoted: valueQuoted && !isNaN(valueQuoted) ? valueQuoted : null,
       valueClosed: valueClosed && !isNaN(valueClosed) && status === "closed" ? valueClosed : null,
+      paymentMethod: status === "closed" ? paymentMethod : null,
+      paymentInstallments: status === "closed" && paymentMethod === "credit_card" ? paymentInstallments : null,
       notes,
     },
   });
@@ -159,6 +170,58 @@ export async function updateAttendanceAction(
   revalidatePath("/portal/atendimentos");
   revalidatePath("/portal/calendario");
   return { success: true };
+}
+
+export async function recordPaymentAction(
+  _prev: { error?: string; success?: boolean },
+  formData: FormData
+): Promise<{ error?: string; success?: boolean }> {
+  const session = await getSession();
+  if (!session?.clientId) redirect("/portal/login");
+
+  const attendanceId = formData.get("attendanceId") as string;
+  if (!attendanceId) return { error: "ID inválido" };
+
+  const paymentMethodRaw = formData.get("paymentMethod") as string;
+  const paymentInstallmentsRaw = formData.get("paymentInstallments") as string;
+  const valueClosedRaw = formData.get("valueClosed") as string;
+
+  const validMethods = ["pix", "cash", "credit_card"] as const;
+  type PM = typeof validMethods[number];
+  if (!validMethods.includes(paymentMethodRaw as PM)) return { error: "Forma de pagamento inválida" };
+
+  const paymentMethod = paymentMethodRaw as PM;
+  const paymentInstallments = paymentMethod === "credit_card" && paymentInstallmentsRaw
+    ? parseInt(paymentInstallmentsRaw)
+    : null;
+  const valueClosed = valueClosedRaw ? parseFloat(valueClosedRaw.replace(",", ".")) : null;
+
+  await prisma.attendance.updateMany({
+    where: { id: attendanceId, clientId: session.clientId },
+    data: {
+      status: "closed",
+      paymentMethod,
+      paymentInstallments: paymentMethod === "credit_card" ? paymentInstallments : null,
+      valueClosed: valueClosed && !isNaN(valueClosed) ? valueClosed : null,
+    },
+  });
+
+  revalidatePath("/portal/atendimentos");
+  revalidatePath("/portal/calendario");
+  return { success: true };
+}
+
+export async function markNoShowAction(attendanceId: string, status: "no_show" | "rescheduled") {
+  const session = await getSession();
+  if (!session?.clientId) redirect("/portal/login");
+
+  await prisma.attendance.updateMany({
+    where: { id: attendanceId, clientId: session.clientId },
+    data: { status },
+  });
+
+  revalidatePath("/portal/atendimentos");
+  revalidatePath("/portal/calendario");
 }
 
 export async function deleteAttendanceAction(attendanceId: string) {

@@ -12,6 +12,8 @@ interface Appointment {
   status: string;
   service: { name: string } | null;
   notes: string | null;
+  paymentMethod: string | null;
+  paymentInstallments: number | null;
 }
 
 interface Props {
@@ -23,6 +25,8 @@ const STATUS_LABELS: Record<string, string> = {
   closed: "Fechou",
   not_closed: "Não fechou",
   follow_up: "Em follow-up",
+  no_show: "Não compareceu",
+  rescheduled: "Reagendou",
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -30,6 +34,8 @@ const STATUS_COLORS: Record<string, string> = {
   closed: "text-emerald-400 bg-emerald-400/10 border-emerald-400/20",
   not_closed: "text-red-400 bg-red-400/10 border-red-400/20",
   follow_up: "text-amber-400 bg-amber-400/10 border-amber-400/20",
+  no_show: "text-orange-400 bg-orange-400/10 border-orange-400/20",
+  rescheduled: "text-sky-400 bg-sky-400/10 border-sky-400/20",
 };
 
 const DOT_COLORS: Record<string, string> = {
@@ -37,6 +43,14 @@ const DOT_COLORS: Record<string, string> = {
   closed: "bg-emerald-400",
   not_closed: "bg-red-400",
   follow_up: "bg-amber-400",
+  no_show: "bg-orange-400",
+  rescheduled: "bg-sky-400",
+};
+
+const PAYMENT_LABELS: Record<string, string> = {
+  pix: "PIX",
+  cash: "Dinheiro",
+  credit_card: "Cartão de crédito",
 };
 
 function fmtR(v: { toString(): string } | null | undefined) {
@@ -239,9 +253,24 @@ export function CalendarClient({ appointments }: Props) {
                               <span className="text-xs text-gray-500">Orçado: {fmtR(a.valueQuoted)}</span>
                             )}
                             {a.valueClosed && (
-                              <span className="text-xs text-emerald-400 font-semibold">Fechado: {fmtR(a.valueClosed)}</span>
+                              <span className="text-xs text-emerald-400 font-semibold">Recebido: {fmtR(a.valueClosed)}</span>
                             )}
                           </div>
+
+                          {/* Payment method */}
+                          {a.paymentMethod && (
+                            <div className="flex items-center gap-1.5 mt-1">
+                              <svg className="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                              </svg>
+                              <span className="text-xs text-emerald-400">
+                                {PAYMENT_LABELS[a.paymentMethod] ?? a.paymentMethod}
+                                {a.paymentMethod === "credit_card" && a.paymentInstallments
+                                  ? ` — ${a.paymentInstallments}x`
+                                  : ""}
+                              </span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
