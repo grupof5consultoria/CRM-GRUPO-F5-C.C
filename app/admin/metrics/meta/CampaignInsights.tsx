@@ -8,8 +8,17 @@ interface RawAction { action_type: string; value: number; costPer: number | null
 interface Campaign {
   campaignId: string;
   campaignName: string;
+  objective: string;
+  status: string;
+  startDate: string;
+  dailyBudget: number;
   spend: number;
   impressions: number;
+  clicks: number;
+  cpc: number;
+  ctr: number;
+  ctrLink: number;
+  cpm: number;
   leadsFromAds: number;
   conversations: number;
   newFollowers: number;
@@ -20,55 +29,14 @@ interface Campaign {
 }
 
 interface AdInsight {
-  adId: string;
-  adName: string;
-  adsetId: string;
-  adsetName: string;
+  adId: string; adName: string;
+  adsetId: string; adsetName: string;
   campaignId: string;
-  spend: number;
-  impressions: number;
-  conversations: number;
-  leadsFromAds: number;
-  newFollowers: number;
-  costPerConversation: number;
+  spend: number; impressions: number;
+  conversations: number; leadsFromAds: number;
+  newFollowers: number; costPerConversation: number;
   rawActions: RawAction[];
 }
-
-// Human-readable labels for Meta action types (pt-BR)
-const ACTION_LABELS: Record<string, string> = {
-  "follow":                                                     "Seguidores Ganhos",
-  "like":                                                       "Curtidas / Seguidores",
-  "page_fan":                                                   "Seguidores da Página",
-  "onsite_conversion.post_reactions":                           "Reações",
-  "onsite_conversion.post_save":                                "Salvamentos",
-  "comment":                                                    "Comentários",
-  "post_engagement":                                            "Engajamento no Post",
-  "page_engagement":                                            "Engajamento na Página",
-  "video_view":                                                 "Visualizações de Vídeo",
-  "link_click":                                                 "Cliques no Link",
-  "lead":                                                       "Leads",
-  "onsite_conversion.lead_grouped":                             "Leads (agrupado)",
-  "onsite_conversion.messaging_conversation_started_7d":        "Conversas Iniciadas (7d)",
-  "onsite_conversion.total_messaging_connection":               "Conexões Mensagens",
-  "onsite_conversion.messaging_first_reply":                    "Primeiras Respostas",
-  "onsite_conversion.messaging_welcome_message_sent":           "Msg de Boas-vindas",
-  "app_install":                                                "Instalações do App",
-  "offsite_conversion.fb_pixel_purchase":                       "Compras",
-  "offsite_conversion.fb_pixel_lead":                           "Leads (pixel)",
-};
-
-function actionLabel(type: string) {
-  return ACTION_LABELS[type] ?? type.split(".").pop()?.replace(/_/g, " ") ?? type;
-}
-
-// Action types already shown in the fixed metric grid (avoid duplicating)
-const KNOWN_TYPES = new Set([
-  "lead", "onsite_conversion.lead_grouped",
-  "onsite_conversion.messaging_conversation_started_7d",
-  "onsite_conversion.total_messaging_connection",
-  "onsite_conversion.messaging_first_reply",
-  "follow", "like", "page_fan", "onsite_conversion.post_reactions",
-]);
 
 interface Props {
   clientId: string;
@@ -77,139 +45,103 @@ interface Props {
   dateTo: string;
 }
 
-function fmtR(v: number) {
-  if (!v) return "—";
-  return `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
-}
-function fmtN(v: number) {
-  return v ? v.toLocaleString("pt-BR") : "—";
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function fmtR(v: number) { return v ? `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` : "—"; }
+function fmtN(v: number) { return v ? v.toLocaleString("pt-BR") : "—"; }
+function fmtPct(v: number) { return v ? `${v.toFixed(2)}%` : "—"; }
+function fmtDate(d: string) {
+  if (!d) return "—";
+  const [y, m, day] = d.split("-");
+  return `${day}/${m}/${y}`;
 }
 
-const MEDAL = ["🥇", "🥈", "🥉"];
+const OBJECTIVE_LABELS: Record<string, string> = {
+  MESSAGES: "Mensagens", ENGAGEMENT: "Engajamento",
+  LEAD_GENERATION: "Leads", TRAFFIC: "Tráfego",
+  BRAND_AWARENESS: "Reconhecimento", VIDEO_VIEWS: "Visualizações",
+  CONVERSIONS: "Conversões", APP_INSTALLS: "Instalações",
+  REACH: "Alcance", OUTCOME_ENGAGEMENT: "Engajamento",
+  OUTCOME_LEADS: "Leads", OUTCOME_TRAFFIC: "Tráfego",
+  OUTCOME_AWARENESS: "Reconhecimento", OUTCOME_SALES: "Vendas",
+  OUTCOME_APP_PROMOTION: "App",
+};
 
-function IdBadge({ label, id }: { label: string; id: string }) {
-  const [copied, setCopied] = useState(false);
-  function copy() {
-    navigator.clipboard.writeText(id);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
-  }
+const OBJECTIVE_COLORS: Record<string, string> = {
+  MESSAGES: "bg-blue-500/15 text-blue-400 border-blue-500/20",
+  ENGAGEMENT: "bg-amber-500/15 text-amber-400 border-amber-500/20",
+  OUTCOME_ENGAGEMENT: "bg-amber-500/15 text-amber-400 border-amber-500/20",
+  LEAD_GENERATION: "bg-emerald-500/15 text-emerald-400 border-emerald-500/20",
+  OUTCOME_LEADS: "bg-emerald-500/15 text-emerald-400 border-emerald-500/20",
+  TRAFFIC: "bg-violet-500/15 text-violet-400 border-violet-500/20",
+  OUTCOME_TRAFFIC: "bg-violet-500/15 text-violet-400 border-violet-500/20",
+  BRAND_AWARENESS: "bg-gray-500/15 text-gray-400 border-gray-500/20",
+  OUTCOME_AWARENESS: "bg-gray-500/15 text-gray-400 border-gray-500/20",
+  CONVERSIONS: "bg-pink-500/15 text-pink-400 border-pink-500/20",
+  OUTCOME_SALES: "bg-pink-500/15 text-pink-400 border-pink-500/20",
+};
+
+function ObjectiveBadge({ objective }: { objective: string }) {
+  const label = OBJECTIVE_LABELS[objective] ?? objective.replace(/_/g, " ");
+  const color = OBJECTIVE_COLORS[objective] ?? "bg-gray-500/15 text-gray-400 border-gray-500/20";
   return (
-    <button
-      onClick={copy}
-      title={`Copiar ${label} ID: ${id}`}
-      className="inline-flex items-center gap-1 text-[10px] font-mono bg-[#111] border border-[#2a2a2a] hover:border-violet-500/40 text-gray-600 hover:text-gray-400 px-1.5 py-0.5 rounded-md transition-all"
-    >
-      <span className="text-gray-700">{label}</span>
-      <span>{id.slice(-8)}</span>
-      {copied
-        ? <svg className="w-2.5 h-2.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
-        : <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-      }
-    </button>
+    <span className={`inline-flex items-center text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${color}`}>
+      {label}
+    </span>
   );
 }
 
-function AdRow({ ad }: { ad: AdInsight }) {
-  const extraActions = ad.rawActions.filter(a => !KNOWN_TYPES.has(a.action_type));
+function StatusDot({ status }: { status: string }) {
+  const active = status === "ACTIVE";
   return (
-    <div className="pl-4 border-l-2 border-[#2a2a2a] ml-4 py-3 hover:border-violet-500/30 transition-colors">
-      {/* Ad name + IDs */}
-      <div className="flex items-start gap-2 flex-wrap mb-2">
-        <svg className="w-3.5 h-3.5 text-gray-700 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-        </svg>
-        <span className="text-xs font-semibold text-gray-300 flex-1">{ad.adName}</span>
-        <div className="flex gap-1 flex-wrap">
-          <IdBadge label="Ad" id={ad.adId} />
-          <IdBadge label="Adset" id={ad.adsetId} />
-        </div>
-      </div>
-      {/* Ad metrics */}
-      <div className="flex flex-wrap gap-3 text-xs">
-        {ad.conversations > 0 && (
-          <span className="text-blue-400 font-bold">{fmtN(ad.conversations)} conv</span>
-        )}
-        {ad.costPerConversation > 0 && (
-          <span className="text-blue-300">{fmtR(ad.costPerConversation)}/conv</span>
-        )}
-        {ad.leadsFromAds > 0 && (
-          <span className="text-emerald-400">{fmtN(ad.leadsFromAds)} leads</span>
-        )}
-        {ad.newFollowers > 0 && (
-          <span className="text-pink-400">{fmtN(ad.newFollowers)} seguidores</span>
-        )}
-        <span className="text-amber-400">{fmtR(ad.spend)}</span>
-        <span className="text-gray-600">{fmtN(ad.impressions)} imp.</span>
-        {extraActions.slice(0, 2).map(a => (
-          <span key={a.action_type} className="text-gray-500">
-            {fmtN(a.value)} {actionLabel(a.action_type).toLowerCase()}
-          </span>
-        ))}
-      </div>
-    </div>
+    <span className={`inline-flex items-center gap-1.5 text-xs ${active ? "text-emerald-400" : "text-gray-500"}`}>
+      <span className={`w-2 h-2 rounded-full ${active ? "bg-emerald-400" : "bg-gray-600"}`} />
+      {active ? "Ativo" : status ? status.toLowerCase() : "—"}
+    </span>
   );
 }
 
-function AdsetGroup({ adsetName, adsetId, ads }: { adsetName: string; adsetId: string; ads: AdInsight[] }) {
-  const [open, setOpen] = useState(true);
-  const totalConv = ads.reduce((s, a) => s + a.conversations, 0);
-  const totalSpend = ads.reduce((s, a) => s + a.spend, 0);
+// ── Column header ─────────────────────────────────────────────────────────────
+function Th({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className="mt-2">
-      <button
-        onClick={() => setOpen(o => !o)}
-        className="flex items-center gap-2 w-full text-left px-3 py-2 bg-[#161616] rounded-xl hover:bg-[#1c1c1c] transition-colors group"
-      >
-        <svg className={`w-3 h-3 text-gray-600 transition-transform ${open ? "rotate-90" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-        </svg>
-        <span className="text-xs font-semibold text-gray-400 flex-1">{adsetName}</span>
-        <IdBadge label="Adset" id={adsetId} />
-        <span className="text-[10px] text-gray-600">{ads.length} anúncio{ads.length !== 1 ? "s" : ""}</span>
-        {totalConv > 0 && <span className="text-xs text-blue-400 font-bold">{fmtN(totalConv)} conv</span>}
-        <span className="text-xs text-amber-500">{fmtR(totalSpend)}</span>
-      </button>
-      {open && (
-        <div className="mt-1 space-y-1">
-          {ads.map(ad => <AdRow key={ad.adId} ad={ad} />)}
-        </div>
-      )}
-    </div>
+    <th className={`px-3 py-3 text-[10px] font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap text-right ${className}`}>
+      {children}
+    </th>
+  );
+}
+function Td({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return (
+    <td className={`px-3 py-3 text-xs text-right whitespace-nowrap ${className}`}>
+      {children}
+    </td>
   );
 }
 
+// ── Main component ────────────────────────────────────────────────────────────
 export function CampaignInsights({ clientId, clientName, dateFrom, dateTo }: Props) {
   const [campaigns, setCampaigns] = useState<Campaign[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // Per-campaign ad data: campaignId → { loading, ads, error }
   const [adsState, setAdsState] = useState<Record<string, { loading: boolean; ads: AdInsight[] | null; error: string | null }>>({});
-  const [expandedCampaigns, setExpandedCampaigns] = useState<Set<string>>(new Set());
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   async function load() {
-    setLoading(true);
-    setError(null);
+    setLoading(true); setError(null);
     const res = await fetchCampaignsAction(clientId, dateFrom, dateTo);
     setLoading(false);
     if (res.error) { setError(res.error); return; }
     const sorted = [...(res.campaigns ?? [])].sort((a, b) =>
-      b.conversations !== a.conversations
-        ? b.conversations - a.conversations
-        : b.leadsFromAds - a.leadsFromAds
+      b.conversations !== a.conversations ? b.conversations - a.conversations : b.leadsFromAds - a.leadsFromAds
     );
     setCampaigns(sorted);
   }
 
-  async function toggleAds(campaignId: string) {
-    const isExpanded = expandedCampaigns.has(campaignId);
-    if (isExpanded) {
-      setExpandedCampaigns(prev => { const s = new Set(prev); s.delete(campaignId); return s; });
+  async function toggleExpand(campaignId: string) {
+    const isOpen = expanded.has(campaignId);
+    if (isOpen) {
+      setExpanded(prev => { const s = new Set(prev); s.delete(campaignId); return s; });
       return;
     }
-    setExpandedCampaigns(prev => new Set([...prev, campaignId]));
-    // Fetch if not already loaded
+    setExpanded(prev => new Set([...prev, campaignId]));
     if (adsState[campaignId]?.ads != null) return;
     setAdsState(prev => ({ ...prev, [campaignId]: { loading: true, ads: null, error: null } }));
     const res = await fetchAdsAction(clientId, dateFrom, dateTo, campaignId);
@@ -217,8 +149,26 @@ export function CampaignInsights({ clientId, clientName, dateFrom, dateTo }: Pro
       setAdsState(prev => ({ ...prev, [campaignId]: { loading: false, ads: null, error: res.error! } }));
       return;
     }
-    const sortedAds = [...(res.ads ?? [])].sort((a, b) => b.conversations - a.conversations || b.spend - a.spend);
-    setAdsState(prev => ({ ...prev, [campaignId]: { loading: false, ads: sortedAds, error: null } }));
+    const sorted = [...(res.ads ?? [])].sort((a, b) => b.conversations - a.conversations || b.spend - a.spend);
+    setAdsState(prev => ({ ...prev, [campaignId]: { loading: false, ads: sorted, error: null } }));
+  }
+
+  // Totals
+  const totals = campaigns ? {
+    spend:         campaigns.reduce((s, c) => s + c.spend, 0),
+    cpc:           0,
+    ctr:           0,
+    ctrLink:       0,
+    cpm:           0,
+    impressions:   campaigns.reduce((s, c) => s + c.impressions, 0),
+    conversations: campaigns.reduce((s, c) => s + c.conversations, 0),
+    clicks:        campaigns.reduce((s, c) => s + c.clicks, 0),
+  } : null;
+
+  if (totals && totals.impressions > 0) {
+    totals.cpm    = (totals.spend / totals.impressions) * 1000;
+    totals.ctrLink = totals.impressions > 0 ? (totals.clicks / totals.impressions) * 100 : 0;
+    totals.cpc    = totals.clicks > 0 ? totals.spend / totals.clicks : 0;
   }
 
   return (
@@ -244,15 +194,17 @@ export function CampaignInsights({ clientId, clientName, dateFrom, dateTo }: Pro
         </button>
       </div>
 
-      {/* States */}
+      {/* Error */}
       {error && (
         <div className="px-5 py-4">
           <p className="text-xs text-red-400 bg-red-500/10 rounded-xl px-3 py-2">{error}</p>
         </div>
       )}
+
+      {/* Empty / loading states */}
       {!campaigns && !error && !loading && (
         <div className="px-5 py-10 text-center">
-          <p className="text-sm text-gray-600">Clique em "Carregar campanhas" para ver o ranking.</p>
+          <p className="text-sm text-gray-600">Clique em "Carregar campanhas" para ver o detalhamento.</p>
         </div>
       )}
       {loading && (
@@ -266,168 +218,160 @@ export function CampaignInsights({ clientId, clientName, dateFrom, dateTo }: Pro
         </div>
       )}
 
-      {campaigns && campaigns.length > 0 && (() => {
-        const withConv = campaigns.filter(c => c.conversations > 0 && c.costPerConversation > 0);
-        const avgCpC = withConv.length > 0
-          ? withConv.reduce((s, c) => s + c.costPerConversation, 0) / withConv.length
-          : null;
-
-        return (
-          <div className="divide-y divide-[#1e1e1e]">
-            {/* Totals bar */}
-            <div className="px-5 py-3 bg-[#111111] flex items-center gap-6 flex-wrap text-xs">
-              <div>
-                <p className="text-gray-600">Total conversas</p>
-                <p className="font-bold text-blue-400 text-sm">{fmtN(campaigns.reduce((s, c) => s + c.conversations, 0))}</p>
-              </div>
-              <div>
-                <p className="text-gray-600">Total leads</p>
-                <p className="font-bold text-gray-300 text-sm">{fmtN(campaigns.reduce((s, c) => s + c.leadsFromAds, 0))}</p>
-              </div>
-              <div>
-                <p className="text-gray-600">Total investido</p>
-                <p className="font-bold text-amber-400 text-sm">{fmtR(campaigns.reduce((s, c) => s + c.spend, 0))}</p>
-              </div>
-              {avgCpC && (
-                <div>
-                  <p className="text-gray-600">Custo médio/conv</p>
-                  <p className="font-bold text-blue-300 text-sm">{fmtR(avgCpC)}</p>
-                </div>
-              )}
-              <div>
-                <p className="text-gray-600">{campaigns.length} campanha{campaigns.length !== 1 ? "s" : ""}</p>
-              </div>
-            </div>
-
-            {/* Campaign rows */}
-            {campaigns.map((c, i) => {
-              const alertLevel = avgCpC && c.costPerConversation > 0
-                ? c.costPerConversation >= avgCpC * 2 ? "red"
-                : c.costPerConversation >= avgCpC * 1.5 ? "yellow"
-                : null
-                : null;
-
-              const isExpanded = expandedCampaigns.has(c.campaignId);
-              const adState = adsState[c.campaignId];
-
-              // Group ads by adset
-              const adsByAdset: Record<string, AdInsight[]> = {};
-              if (adState?.ads) {
-                for (const ad of adState.ads) {
-                  if (!adsByAdset[ad.adsetId]) adsByAdset[ad.adsetId] = [];
-                  adsByAdset[ad.adsetId].push(ad);
+      {/* Table */}
+      {campaigns && campaigns.length > 0 && (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[900px]">
+            <thead>
+              <tr className="border-b border-[#222] bg-[#111]">
+                <th className="px-3 py-3 text-[10px] font-semibold text-gray-500 uppercase tracking-wider text-left w-28">Objetivo</th>
+                <th className="px-3 py-3 text-[10px] font-semibold text-gray-500 uppercase tracking-wider text-left">Campanha</th>
+                <Th className="text-left w-24">Status</Th>
+                <Th>Data início</Th>
+                <Th>Orçamento</Th>
+                <Th>Gasto</Th>
+                <Th>CPC (todos)</Th>
+                <Th>CPC (no link)</Th>
+                <Th>CTR (todos)</Th>
+                <Th>CTR (link)</Th>
+                <Th>CPM</Th>
+                <Th>Impressões</Th>
+                <Th>Resultados</Th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#1e1e1e]">
+              {campaigns.map((c) => {
+                const isOpen = expanded.has(c.campaignId);
+                const adState = adsState[c.campaignId];
+                const adsByAdset: Record<string, AdInsight[]> = {};
+                if (adState?.ads) {
+                  for (const ad of adState.ads) {
+                    if (!adsByAdset[ad.adsetId]) adsByAdset[ad.adsetId] = [];
+                    adsByAdset[ad.adsetId].push(ad);
+                  }
                 }
-              }
+                const results = c.conversations > 0 ? c.conversations : c.leadsFromAds > 0 ? c.leadsFromAds : c.newFollowers;
+                const resultsLabel = c.conversations > 0 ? "Conv" : c.leadsFromAds > 0 ? "Leads" : c.newFollowers > 0 ? "Seg." : null;
 
-              return (
-                <div key={c.campaignId} className="px-5 py-4 hover:bg-[#1d1d1d] transition-colors">
-                  <div className="flex items-start gap-3">
-                    {/* Medal / rank */}
-                    <span className="text-lg flex-shrink-0 mt-0.5">
-                      {i < 3 ? MEDAL[i] : <span className="text-xs text-gray-600 font-bold w-6 text-center inline-block">#{i + 1}</span>}
-                    </span>
+                return (
+                  <>
+                    {/* Campaign row */}
+                    <tr key={c.campaignId} className="hover:bg-[#1d1d1d] transition-colors">
+                      <td className="px-3 py-3">
+                        <ObjectiveBadge objective={c.objective} />
+                      </td>
+                      <td className="px-3 py-3">
+                        <button
+                          onClick={() => toggleExpand(c.campaignId)}
+                          className="flex items-center gap-2 text-left group w-full"
+                        >
+                          <svg className={`w-3.5 h-3.5 text-gray-600 flex-shrink-0 transition-transform ${isOpen ? "rotate-90" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                          <span className="text-gray-200 group-hover:text-white font-medium text-xs truncate max-w-[240px]">{c.campaignName}</span>
+                          {adState?.loading && <span className="text-[10px] text-gray-600 ml-1">...</span>}
+                        </button>
+                      </td>
+                      <td className="px-3 py-3"><StatusDot status={c.status} /></td>
+                      <Td>{fmtDate(c.startDate)}</Td>
+                      <Td>{c.dailyBudget > 0 ? fmtR(c.dailyBudget) : "—"}</Td>
+                      <Td><span className="text-amber-400 font-medium">{fmtR(c.spend)}</span></Td>
+                      <Td><span className="text-gray-300">{fmtR(c.cpc)}</span></Td>
+                      <Td><span className="text-gray-300">{c.costPerConversation > 0 ? fmtR(c.costPerConversation) : "—"}</span></Td>
+                      <Td><span className="text-gray-300">{fmtPct(c.ctr)}</span></Td>
+                      <Td><span className="text-gray-300">{fmtPct(c.ctrLink)}</span></Td>
+                      <Td><span className="text-gray-300">{fmtR(c.cpm)}</span></Td>
+                      <Td><span className="text-gray-300">{fmtN(c.impressions)}</span></Td>
+                      <Td>
+                        {results > 0
+                          ? <span className="text-blue-400 font-semibold">{fmtN(results)} <span className="text-gray-600 font-normal">{resultsLabel}</span></span>
+                          : <span className="text-gray-700">0 Conv</span>
+                        }
+                      </Td>
+                    </tr>
 
-                    <div className="flex-1 min-w-0">
-                      {/* Campaign name + IDs */}
-                      <div className="flex items-center gap-2 flex-wrap mb-1">
-                        <p className="text-sm font-semibold text-white">{c.campaignName}</p>
-                        {alertLevel === "red" && (
-                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-red-500/15 text-red-400 border border-red-500/20 flex-shrink-0">Custo alto</span>
-                        )}
-                        {alertLevel === "yellow" && (
-                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-500/15 text-amber-400 border border-amber-500/20 flex-shrink-0">Atenção</span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2 mb-3">
-                        <IdBadge label="Campaign" id={c.campaignId} />
-                      </div>
+                    {/* Adset/Ad rows when expanded */}
+                    {isOpen && adState?.ads && Object.entries(adsByAdset).map(([adsetId, ads]) => (
+                      <>
+                        {/* Adset row */}
+                        <tr key={`adset-${adsetId}`} className="bg-[#161616] border-t border-[#1e1e1e]">
+                          <td />
+                          <td className="px-3 py-2 pl-10" colSpan={1}>
+                            <div className="flex items-center gap-2">
+                              <svg className="w-3 h-3 text-gray-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                              </svg>
+                              <span className="text-[11px] text-gray-400 font-medium truncate max-w-[220px]">{ads[0].adsetName}</span>
+                            </div>
+                          </td>
+                          <td /><td /><td />
+                          <Td><span className="text-amber-400/70 text-[11px]">{fmtR(ads.reduce((s, a) => s + a.spend, 0))}</span></Td>
+                          <td /><td /><td /><td /><td />
+                          <Td><span className="text-gray-500 text-[11px]">{fmtN(ads.reduce((s, a) => s + a.impressions, 0))}</span></Td>
+                          <Td><span className="text-blue-400/70 text-[11px]">{fmtN(ads.reduce((s, a) => s + a.conversations, 0))} Conv</span></Td>
+                        </tr>
 
-                      {/* Metrics grid */}
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                        <div className="bg-[#111111] rounded-xl px-3 py-2">
-                          <p className="text-xs text-gray-600 mb-0.5">Conversas</p>
-                          <p className="text-sm font-bold text-blue-400">{fmtN(c.conversations)}</p>
-                        </div>
-                        <div className="bg-[#111111] rounded-xl px-3 py-2">
-                          <p className="text-xs text-gray-600 mb-0.5">Custo por Conversa</p>
-                          <p className="text-sm font-bold text-blue-300">{c.costPerConversation > 0 ? fmtR(c.costPerConversation) : "—"}</p>
-                        </div>
-                        <div className="bg-[#111111] rounded-xl px-3 py-2">
-                          <p className="text-xs text-gray-600 mb-0.5">Investimento</p>
-                          <p className="text-sm font-bold text-amber-400">{fmtR(c.spend)}</p>
-                        </div>
-                        <div className="bg-[#111111] rounded-xl px-3 py-2">
-                          <p className="text-xs text-gray-600 mb-0.5">Impressões</p>
-                          <p className="text-sm font-bold text-gray-400">{fmtN(c.impressions)}</p>
-                        </div>
-                        <div className={`rounded-xl px-3 py-2 ${c.newFollowers > 0 ? "bg-[#111111] border border-pink-500/20" : "bg-[#111111]"}`}>
-                          <p className="text-xs text-gray-600 mb-0.5">Seguidores Ganhos</p>
-                          <p className={`text-sm font-bold ${c.newFollowers > 0 ? "text-pink-400" : "text-gray-700"}`}>
-                            {c.newFollowers > 0 ? fmtN(c.newFollowers) : "—"}
-                          </p>
-                          {c.costPerFollower > 0 && (
-                            <p className="text-xs text-gray-600 mt-0.5">{fmtR(c.costPerFollower)}/seguidor</p>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Extra actions */}
-                      {c.rawActions.filter(a => !KNOWN_TYPES.has(a.action_type)).length > 0 && (
-                        <div className="mt-3 border-t border-[#1a1a1a] pt-3">
-                          <p className="text-[10px] text-gray-700 uppercase tracking-wider font-semibold mb-2">Todos os resultados</p>
-                          <div className="flex flex-wrap gap-2">
-                            {c.rawActions.map(a => (
-                              <div key={a.action_type} className="bg-[#111111] rounded-xl px-3 py-2 min-w-[110px]">
-                                <p className="text-[10px] text-gray-600 mb-0.5 leading-tight">{actionLabel(a.action_type)}</p>
-                                <p className="text-sm font-bold text-gray-200">{fmtN(a.value)}</p>
-                                {a.costPer != null && a.costPer > 0 && (
-                                  <p className="text-[10px] text-gray-600 mt-0.5">{fmtR(a.costPer)}/result.</p>
-                                )}
+                        {/* Ad rows */}
+                        {ads.map((ad) => (
+                          <tr key={`ad-${ad.adId}`} className="bg-[#131313] border-t border-[#1a1a1a] hover:bg-[#181818] transition-colors">
+                            <td />
+                            <td className="px-3 py-2 pl-16" colSpan={1}>
+                              <div className="flex items-center gap-2">
+                                <div className="w-5 h-5 rounded bg-[#222] flex items-center justify-center flex-shrink-0">
+                                  <svg className="w-3 h-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                  </svg>
+                                </div>
+                                <span className="text-[11px] text-gray-500 truncate max-w-[200px]">{ad.adName}</span>
                               </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
+                            </td>
+                            <td /><td /><td />
+                            <Td><span className="text-amber-400/60 text-[11px]">{fmtR(ad.spend)}</span></Td>
+                            <td /><td /><td /><td /><td />
+                            <Td><span className="text-gray-600 text-[11px]">{fmtN(ad.impressions)}</span></Td>
+                            <Td>
+                              {ad.conversations > 0
+                                ? <span className="text-blue-400/70 text-[11px]">{fmtN(ad.conversations)} Conv</span>
+                                : <span className="text-gray-700 text-[11px]">0 Conv</span>
+                              }
+                            </Td>
+                          </tr>
+                        ))}
+                      </>
+                    ))}
 
-                      {/* Toggle ads button */}
-                      <button
-                        onClick={() => toggleAds(c.campaignId)}
-                        className="mt-3 flex items-center gap-1.5 text-xs text-violet-400 hover:text-violet-300 font-semibold transition-colors"
-                      >
-                        <svg className={`w-3.5 h-3.5 transition-transform ${isExpanded ? "rotate-90" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                        {isExpanded ? "Ocultar anúncios" : "Ver conjuntos e anúncios"}
-                        {adState?.loading && <span className="text-gray-600 font-normal ml-1">carregando...</span>}
-                      </button>
+                    {/* Error loading ads */}
+                    {isOpen && adState?.error && (
+                      <tr>
+                        <td colSpan={13} className="px-5 py-2">
+                          <p className="text-xs text-red-400 bg-red-500/10 rounded-xl px-3 py-2">{adState.error}</p>
+                        </td>
+                      </tr>
+                    )}
+                  </>
+                );
+              })}
+            </tbody>
 
-                      {/* Ads expanded */}
-                      {isExpanded && (
-                        <div className="mt-3">
-                          {adState?.error && (
-                            <p className="text-xs text-red-400 bg-red-500/10 rounded-xl px-3 py-2">{adState.error}</p>
-                          )}
-                          {adState?.ads && Object.keys(adsByAdset).length === 0 && (
-                            <p className="text-xs text-gray-600">Nenhum anúncio encontrado.</p>
-                          )}
-                          {adState?.ads && Object.entries(adsByAdset).map(([adsetId, ads]) => (
-                            <AdsetGroup
-                              key={adsetId}
-                              adsetId={adsetId}
-                              adsetName={ads[0].adsetName}
-                              ads={ads}
-                            />
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        );
-      })()}
+            {/* Totals row */}
+            {totals && (
+              <tfoot>
+                <tr className="border-t border-[#262626] bg-[#111]">
+                  <td colSpan={5} />
+                  <td className="px-3 py-3 text-right text-xs font-bold text-amber-400">{fmtR(totals.spend)}</td>
+                  <td className="px-3 py-3 text-right text-xs text-gray-400">{totals.cpc > 0 ? fmtR(totals.cpc) : "—"}</td>
+                  <td className="px-3 py-3 text-right text-xs text-gray-400">—</td>
+                  <td className="px-3 py-3 text-right text-xs text-gray-400">{totals.ctrLink > 0 ? fmtPct(totals.ctrLink) : "—"}</td>
+                  <td className="px-3 py-3 text-right text-xs text-gray-400">—</td>
+                  <td className="px-3 py-3 text-right text-xs text-gray-400">{totals.cpm > 0 ? fmtR(totals.cpm) : "—"}</td>
+                  <td className="px-3 py-3 text-right text-xs text-gray-400">{fmtN(totals.impressions)}</td>
+                  <td className="px-3 py-3 text-right text-xs font-bold text-blue-400">{fmtN(totals.conversations)} Conv</td>
+                </tr>
+              </tfoot>
+            )}
+          </table>
+        </div>
+      )}
     </div>
   );
 }

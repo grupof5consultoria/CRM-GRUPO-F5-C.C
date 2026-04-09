@@ -89,8 +89,17 @@ export async function fetchMetaInsights(
 export interface MetaCampaignInsight {
   campaignId: string;
   campaignName: string;
+  objective: string;
+  status: string;
+  startDate: string;
+  dailyBudget: number;
   spend: number;
   impressions: number;
+  clicks: number;
+  cpc: number;
+  ctr: number;
+  ctrLink: number;
+  cpm: number;
   leadsFromAds: number;
   conversations: number;
   newFollowers: number;
@@ -107,26 +116,48 @@ export async function fetchMetaCampaignInsights(
   dateFrom: string,
   dateTo: string
 ): Promise<MetaCampaignInsight[]> {
-  const params = new URLSearchParams({
+  const insightsParams = new URLSearchParams({
     fields: [
-      "campaign_name",
-      "campaign_id",
-      "spend",
-      "impressions",
-      "cost_per_action_type",
-      "actions",
+      "campaign_name", "campaign_id",
+      "spend", "impressions",
+      "inline_link_clicks", "cpm", "ctr",
+      "inline_link_click_ctr", "cost_per_inline_link_click",
+      "cost_per_action_type", "actions",
     ].join(","),
     time_range: JSON.stringify({ since: dateFrom, until: dateTo }),
     level: "campaign",
     access_token: accessToken,
   });
 
-  const res = await fetch(
-    `https://graph.facebook.com/v19.0/act_${adAccountId}/insights?${params}`,
-    { next: { revalidate: 0 } }
-  );
-  const data = await res.json();
+  const metaParams = new URLSearchParams({
+    fields: "id,name,objective,status,start_time,daily_budget,lifetime_budget",
+    limit: "500",
+    access_token: accessToken,
+  });
+
+  const [insightsRes, metaRes] = await Promise.all([
+    fetch(`https://graph.facebook.com/v19.0/act_${adAccountId}/insights?${insightsParams}`, { next: { revalidate: 0 } }),
+    fetch(`https://graph.facebook.com/v19.0/act_${adAccountId}/campaigns?${metaParams}`, { next: { revalidate: 0 } }),
+  ]);
+
+  const data = await insightsRes.json();
+  const metaData = await metaRes.json();
+
   if (data.error) throw new Error(`Meta API (campaigns): ${data.error.message}`);
+
+  // Build metadata lookup map
+  type CampaignMeta = { objective: string; status: string; startDate: string; dailyBudget: number };
+  const metaMap = new Map<string, CampaignMeta>();
+  for (const c of (metaData.data ?? [])) {
+    metaMap.set(c.id as string, {
+      objective:   (c.objective as string) ?? "",
+      status:      (c.status    as string) ?? "",
+      startDate:   c.start_time ? (c.start_time as string).substring(0, 10) : "",
+      dailyBudget: c.daily_budget
+        ? parseInt(c.daily_budget as string) / 100
+        : c.lifetime_budget ? parseInt(c.lifetime_budget as string) / 100 : 0,
+    });
+  }
 
   const rows: Array<Record<string, unknown>> = data.data ?? [];
 
@@ -178,11 +209,23 @@ export async function fetchMetaCampaignInsights(
       .filter(a => a.value > 0)
       .sort((a, b) => b.value - a.value);
 
+    const campaignId = (row.campaign_id as string) ?? "";
+    const meta = metaMap.get(campaignId) ?? { objective: "", status: "", startDate: "", dailyBudget: 0 };
+
     return {
-      campaignId:          (row.campaign_id as string) ?? "",
+      campaignId,
       campaignName:        (row.campaign_name as string) ?? "Campanha sem nome",
+      objective:           meta.objective,
+      status:              meta.status,
+      startDate:           meta.startDate,
+      dailyBudget:         meta.dailyBudget,
       spend,
       impressions:         parseInt((row.impressions as string) ?? "0"),
+      clicks:              parseInt((row.inline_link_clicks as string) ?? "0"),
+      cpc:                 parseFloat((row.cost_per_inline_link_click as string) ?? "0"),
+      ctr:                 parseFloat((row.ctr as string) ?? "0"),
+      ctrLink:             parseFloat((row.inline_link_click_ctr as string) ?? "0"),
+      cpm:                 parseFloat((row.cpm as string) ?? "0"),
       leadsFromAds,
       conversations,
       newFollowers,
