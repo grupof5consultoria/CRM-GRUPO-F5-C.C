@@ -3,9 +3,6 @@
 import { useState, useActionState } from "react";
 import {
   addAttendanceAction,
-  addServiceAction,
-  toggleServiceAction,
-  deleteServiceAction,
   deleteAttendanceAction,
 } from "./actions";
 
@@ -294,109 +291,6 @@ function AddAttendanceForm({ services }: { services: Service[] }) {
   );
 }
 
-// ─── Services Manager ─────────────────────────────────────────────────────────
-
-function ServicesManager({ services }: { services: Service[] }) {
-  const [open, setOpen] = useState(false);
-  const [state, action, pending] = useActionState(addServiceAction, {});
-
-  return (
-    <div className="mt-6">
-      <button
-        onClick={() => setOpen(!open)}
-        className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-300 transition-colors w-full"
-      >
-        <svg className={`w-4 h-4 transition-transform ${open ? "rotate-90" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-        </svg>
-        Gerenciar Meus Serviços
-        <span className="ml-auto text-xs text-gray-700">{services.length} cadastrado{services.length !== 1 ? "s" : ""}</span>
-      </button>
-
-      {open && (
-        <div className="mt-3 bg-[#1a1a1a] border border-[#262626] rounded-2xl overflow-hidden">
-          {/* Service list */}
-          {services.length > 0 && (
-            <div className="divide-y divide-[#222]">
-              {services.map((s) => (
-                <div key={s.id} className="flex items-center justify-between px-4 py-3">
-                  <div>
-                    <p className={`text-sm font-medium ${s.isActive ? "text-gray-300" : "text-gray-600 line-through"}`}>
-                      {s.name}
-                    </p>
-                    {s.price && (
-                      <p className="text-xs text-gray-600">R$ {Number(s.price).toLocaleString("pt-BR", { minimumFractionDigits: 0 })}</p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <form action={() => toggleServiceAction(s.id, !s.isActive)}>
-                      <button
-                        type="submit"
-                        className={`text-xs px-2 py-1 rounded-lg transition-colors ${
-                          s.isActive
-                            ? "text-gray-500 hover:text-amber-400"
-                            : "text-emerald-600 hover:text-emerald-400"
-                        }`}
-                      >
-                        {s.isActive ? "Ocultar" : "Ativar"}
-                      </button>
-                    </form>
-                    <form action={() => deleteServiceAction(s.id)}>
-                      <button type="submit" className="text-xs text-gray-700 hover:text-red-400 transition-colors">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
-                    </form>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Add service form */}
-          <div className="border-t border-[#262626] p-4">
-            <p className="text-xs text-gray-600 mb-3">Adicionar serviço</p>
-            {state.error && <p className="text-xs text-red-400 mb-2">{state.error}</p>}
-            <form action={action} className="space-y-2">
-              <input
-                name="name"
-                type="text"
-                placeholder="Nome do serviço *"
-                required
-                className="w-full bg-[#111111] border border-[#333] rounded-xl px-3 py-2 text-sm text-gray-300 placeholder-gray-700 focus:outline-none focus:border-violet-500"
-              />
-              <div className="grid grid-cols-2 gap-2">
-                <input
-                  name="description"
-                  type="text"
-                  placeholder="Descrição (opcional)"
-                  className="bg-[#111111] border border-[#333] rounded-xl px-3 py-2 text-sm text-gray-300 placeholder-gray-700 focus:outline-none focus:border-violet-500"
-                />
-                <input
-                  name="price"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  placeholder="Preço (R$)"
-                  className="bg-[#111111] border border-[#333] rounded-xl px-3 py-2 text-sm text-gray-300 placeholder-gray-700 focus:outline-none focus:border-violet-500"
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={pending}
-                className="w-full py-2 rounded-xl text-sm font-medium text-violet-400 border border-violet-500/30 hover:bg-violet-500/10 transition-colors disabled:opacity-60"
-              >
-                {pending ? "Adicionando..." : "+ Adicionar Serviço"}
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
 // ─── Attendance list ──────────────────────────────────────────────────────────
 
 function AttendanceList({
@@ -488,7 +382,6 @@ export function AttendanceClient({ services, attendances, currentPeriod, periods
     <div>
       <AddAttendanceForm services={services} />
       <AttendanceList attendances={attendances} periods={periods} />
-      <ServicesManager services={services} />
     </div>
   );
 }
