@@ -398,59 +398,78 @@ function PlatformCard({
     whatsapp:  "from-[#25D366]/10 to-transparent border-[#25D366]/15",
   };
 
+  const accentBar: Record<FormType, string> = {
+    whatsapp: "bg-[#25D366]",
+    meta:     "bg-[#1877F2]",
+    google:   "bg-[#EA4335]",
+  };
+
   return (
-    <div className={`bg-gradient-to-b ${gradients[platform]} border rounded-3xl overflow-hidden`}>
-      {/* Card header */}
-      <div className="px-6 pt-6 pb-5">
-        <div className="flex items-start gap-4">
-          <div className={`w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 p-3 ${logoWrapperClass}`}>
-            {logo}
+    <div className={`bg-gradient-to-r ${gradients[platform]} border rounded-3xl overflow-hidden`}>
+      {/* Card header — horizontal banner */}
+      <div className="flex items-center gap-6 px-8 py-7">
+        {/* Logo block */}
+        <div className={`w-20 h-20 rounded-2xl flex items-center justify-center flex-shrink-0 p-4 ${logoWrapperClass}`}>
+          {logo}
+        </div>
+
+        {/* Title + subtitle */}
+        <div className="flex-1 min-w-0">
+          <h2 className="text-2xl font-bold text-white">{title}</h2>
+          <p className="text-sm text-gray-500 mt-1">{subtitle}</p>
+        </div>
+
+        {/* Stats */}
+        <div className="flex items-center gap-8 flex-shrink-0">
+          <div className="text-center">
+            <p className="text-4xl font-black text-white">{connectedCount}</p>
+            <p className="text-xs text-gray-500 mt-0.5">conectado{connectedCount !== 1 ? "s" : ""}</p>
           </div>
-          <div className="flex-1">
-            <h2 className="text-lg font-bold text-white">{title}</h2>
-            <p className="text-sm text-gray-500 mt-0.5">{subtitle}</p>
-          </div>
-          <div className="text-right flex-shrink-0">
-            <p className="text-2xl font-bold text-white">{connectedCount}</p>
-            <p className="text-xs text-gray-600">de {clients.length} ativo{connectedCount !== 1 ? "s" : ""}</p>
+          <div className="text-center">
+            <p className="text-4xl font-black text-gray-600">{clients.length - connectedCount}</p>
+            <p className="text-xs text-gray-600 mt-0.5">pendente{(clients.length - connectedCount) !== 1 ? "s" : ""}</p>
           </div>
         </div>
       </div>
 
-      {/* Divider */}
-      <div className="h-px bg-[#1f1f1f] mx-6" />
+      {/* Accent divider */}
+      <div className={`h-0.5 ${accentBar[platform]} opacity-20`} />
 
-      {/* Client list */}
-      <div className="px-6 py-4 space-y-2">
+      {/* Client grid */}
+      <div className="px-8 py-5">
         {clients.length === 0 ? (
-          <p className="text-sm text-gray-600 text-center py-4">Nenhum cliente ativo.</p>
+          <p className="text-sm text-gray-600 text-center py-6">Nenhum cliente ativo.</p>
         ) : (
-          clients.map(client => {
-            let connected = false;
-            let detail: string | undefined;
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+            {clients.map(client => {
+              let connected = false;
+              let detail: string | undefined;
 
-            if (platform === "meta") {
-              connected = !!client.metaAdAccountId;
-              detail = connected ? `Conta: ${client.metaAdAccountId}` : undefined;
-            } else if (platform === "google") {
-              connected = !!client.googleAdsCustomerId;
-              detail = connected ? `ID: ${client.googleAdsCustomerId}` : undefined;
-            } else {
-              const active = client.whatsappAccounts.find(a => a.status === "active");
-              connected = !!active;
-              detail = active ? `${active.phoneNumber}${active.displayName ? ` · ${active.displayName}` : ""}` : undefined;
-            }
+              if (platform === "meta") {
+                connected = !!client.metaAdAccountId;
+                detail = connected ? `act_${client.metaAdAccountId}` : undefined;
+              } else if (platform === "google") {
+                connected = !!client.googleAdsCustomerId;
+                detail = connected ? client.googleAdsCustomerId! : undefined;
+              } else {
+                const active = client.whatsappAccounts.find(a => a.status === "active");
+                connected = !!active;
+                detail = active
+                  ? `${active.phoneNumber}${active.displayName ? ` · ${active.displayName}` : ""}`
+                  : undefined;
+              }
 
-            return (
-              <ClientPlatformRow
-                key={client.id}
-                client={client}
-                platform={platform}
-                connected={connected}
-                detail={detail}
-              />
-            );
-          })
+              return (
+                <ClientPlatformRow
+                  key={client.id}
+                  client={client}
+                  platform={platform}
+                  connected={connected}
+                  detail={detail}
+                />
+              );
+            })}
+          </div>
         )}
       </div>
     </div>
@@ -461,7 +480,7 @@ function PlatformCard({
 
 export function ConnectionsManager({ clients }: { clients: Client[] }) {
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div className="flex flex-col gap-6">
       <PlatformCard
         platform="whatsapp"
         title="WhatsApp"

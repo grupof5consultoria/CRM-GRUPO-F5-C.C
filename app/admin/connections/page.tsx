@@ -32,7 +32,7 @@ export default async function ConnectionsPage() {
 
   return (
     <div className="min-h-screen bg-[#0d0d0d] text-white">
-      <div className="max-w-6xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
           <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-violet-600/30 to-violet-900/20 border border-violet-500/20 flex items-center justify-center flex-shrink-0">
