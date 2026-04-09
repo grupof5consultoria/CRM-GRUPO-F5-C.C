@@ -102,26 +102,38 @@ function GoogleForm({ client, onClose }: { client: Client; onClose: () => void }
 
 function WhatsAppForm({ client, onClose }: { client: Client; onClose: () => void }) {
   const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [numbers, setNumbers] = useState<{ phoneNumberId: string; phoneNumber: string; displayName: string; verificationStatus: string }[]>([]);
+  const [selectedNumberId, setSelectedNumberId] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [displayName, setDisplayName] = useState("");
-  const [phoneNumberId, setPhoneNumberId] = useState("");
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  async function handleLoadNumbers() {
+    setLoading(true); setError(null);
+    const res = await fetch("/api/admin/whatsapp/list-numbers");
+    const data = await res.json();
+    setLoading(false);
+    if (data.error) { setError(data.error); return; }
+    setNumbers(data.numbers ?? []);
+  }
+
+  // Load numbers on mount
+  useState(() => { handleLoadNumbers(); });
+
   async function handleSendCode(e: React.FormEvent) {
     e.preventDefault();
-    if (!phoneNumber) { setError("Número obrigatório."); return; }
+    if (!selectedNumberId) { setError("Selecione um número."); return; }
     setLoading(true); setError(null);
-    const res = await fetch("/api/admin/whatsapp/add-number", {
+    const res = await fetch("/api/admin/whatsapp/request-code", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ phoneNumber, displayName }),
+      body: JSON.stringify({ phoneNumberId: selectedNumberId }),
     });
     const data = await res.json();
     setLoading(false);
     if (data.error) { setError(data.error); return; }
-    setPhoneNumberId(data.phoneNumberId);
     setStep(2);
   }
 
@@ -132,7 +144,7 @@ function WhatsAppForm({ client, onClose }: { client: Client; onClose: () => void
     const res = await fetch("/api/admin/whatsapp/confirm-code", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ clientId: client.id, phoneNumber, displayName, phoneNumberId, code }),
+      body: JSON.stringify({ clientId: client.id, phoneNumber, displayName, phoneNumberId: selectedNumberId, code }),
     });
     const data = await res.json();
     setLoading(false);
@@ -140,6 +152,8 @@ function WhatsAppForm({ client, onClose }: { client: Client; onClose: () => void
     setStep(3);
     setTimeout(() => { onClose(); window.location.reload(); }, 2000);
   }
+
+  const selectedNum = numbers.find(n => n.phoneNumberId === selectedNumberId);
 
   return (
     <div className="space-y-4">
@@ -156,31 +170,73 @@ function WhatsAppForm({ client, onClose }: { client: Client; onClose: () => void
           </div>
         ))}
         <span className="text-xs text-gray-600 ml-1">
-          {step === 1 ? "Dados do número" : step === 2 ? "Confirmar SMS" : "Conectado!"}
+          {step === 1 ? "Selecionar número" : step === 2 ? "Confirmar SMS" : "Conectado!"}
         </span>
       </div>
 
-      {/* Step 1 — Phone number */}
+      {/* Step 1 — Select number from WABA */}
       {step === 1 && (
         <form onSubmit={handleSendCode} className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs text-gray-500 mb-1 block">Número da doutora *</label>
-              <input value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)}
-                placeholder="+5511999999999" autoFocus
-                className="w-full bg-[#0d0d0d] border border-[#2a2a2a] rounded-xl px-3 py-2 text-sm text-white placeholder-gray-700 focus:outline-none focus:border-emerald-500/50" required />
+          {loading && <p className="text-xs text-gray-500 animate-pulse">Buscando números do WABA...</p>}
+
+          {!loading && numbers.length === 0 && !error && (
+            <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-3 space-y-2">
+              <p className="text-xs text-amber-400 font-semibold">Nenhum número encontrado no WABA</p>
+              <p className="text-xs text-gray-500">Primeiro adicione o número no Meta Business Manager:</p>
+              <ol className="text-xs text-gray-500 list-decimal list-inside space-y-1">
+                <li>Acesse <strong className="text-gray-400">business.facebook.com</strong></li>
+                <li>Configurações → WhatsApp Accounts → seu WABA</li>
+                <li>Adicionar número de telefone</li>
+                <li>Volte aqui e clique em <strong className="text-gray-400">Atualizar</strong></li>
+              </ol>
+              <button type="button" onClick={handleLoadNumbers}
+                className="text-xs text-emerald-400 hover:text-emerald-300 underline">
+                Atualizar lista →
+              </button>
             </div>
-            <div>
-              <label className="text-xs text-gray-500 mb-1 block">Nome de exibição</label>
-              <input value={displayName} onChange={e => setDisplayName(e.target.value)}
-                placeholder="Dra. Ana Silva"
-                className="w-full bg-[#0d0d0d] border border-[#2a2a2a] rounded-xl px-3 py-2 text-sm text-white placeholder-gray-700 focus:outline-none focus:border-emerald-500/50" />
+          )}
+
+          {numbers.length > 0 && (
+            <div className="space-y-2">
+              <label className="text-xs text-gray-500 block">Selecione o número a conectar</label>
+              {numbers.map(n => (
+                <label key={n.phoneNumberId} className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
+                  selectedNumberId === n.phoneNumberId
+                    ? "border-emerald-500/40 bg-emerald-500/5"
+                    : "border-[#2a2a2a] hover:border-[#3a3a3a]"
+                }`}>
+                  <input type="radio" name="number" value={n.phoneNumberId}
+                    checked={selectedNumberId === n.phoneNumberId}
+                    onChange={() => {
+                      setSelectedNumberId(n.phoneNumberId);
+                      setPhoneNumber(n.phoneNumber);
+                      setDisplayName(n.displayName);
+                    }}
+                    className="accent-emerald-500" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-white font-medium">{n.phoneNumber}</p>
+                    <p className="text-xs text-gray-500">{n.displayName}</p>
+                  </div>
+                  <span className={`text-xs px-2 py-0.5 rounded-lg font-medium ${
+                    n.verificationStatus === "VERIFIED"
+                      ? "bg-emerald-500/10 text-emerald-400"
+                      : "bg-amber-500/10 text-amber-400"
+                  }`}>
+                    {n.verificationStatus === "VERIFIED" ? "Verificado" : "Não verificado"}
+                  </span>
+                </label>
+              ))}
+              <button type="button" onClick={handleLoadNumbers}
+                className="text-xs text-gray-600 hover:text-gray-400 underline">
+                Atualizar lista
+              </button>
             </div>
-          </div>
-          <p className="text-xs text-gray-600">A Meta vai enviar um SMS com código para esse número.</p>
+          )}
+
           {error && <p className="text-xs text-red-400 bg-red-500/10 rounded-lg px-3 py-2">{error}</p>}
+
           <div className="flex gap-2">
-            <button type="submit" disabled={loading}
+            <button type="submit" disabled={loading || !selectedNumberId}
               className="flex-1 py-2.5 rounded-xl text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 transition-colors">
               {loading ? "Enviando SMS..." : "Enviar código SMS →"}
             </button>
@@ -195,7 +251,7 @@ function WhatsAppForm({ client, onClose }: { client: Client; onClose: () => void
       {step === 2 && (
         <form onSubmit={handleConfirmCode} className="space-y-3">
           <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl px-4 py-3">
-            <p className="text-xs text-emerald-400 font-semibold">SMS enviado para {phoneNumber}</p>
+            <p className="text-xs text-emerald-400 font-semibold">SMS enviado para {selectedNum?.phoneNumber ?? phoneNumber}</p>
             <p className="text-xs text-gray-600 mt-0.5">Peça o código de verificação para a doutora e digite abaixo.</p>
           </div>
           <div>
