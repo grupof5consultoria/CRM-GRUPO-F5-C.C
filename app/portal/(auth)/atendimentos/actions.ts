@@ -252,17 +252,44 @@ export async function recordPaymentAction(
   return { success: true };
 }
 
-export async function markNoShowAction(attendanceId: string, status: "no_show" | "rescheduled") {
+export async function markNoShowAction(attendanceId: string) {
   const session = await getSession();
   if (!session?.clientId) redirect("/portal/login");
 
   await prisma.attendance.updateMany({
     where: { id: attendanceId, clientId: session.clientId },
-    data: { status },
+    data: { status: "no_show" },
   });
 
   revalidatePath("/portal/atendimentos");
   revalidatePath("/portal/calendario");
+}
+
+export async function rescheduleAttendanceAction(
+  _prev: { error?: string; success?: boolean },
+  formData: FormData
+): Promise<{ error?: string; success?: boolean }> {
+  const session = await getSession();
+  if (!session?.clientId) redirect("/portal/login");
+
+  const attendanceId = formData.get("attendanceId") as string;
+  const scheduledDateRaw = formData.get("scheduledDate") as string;
+  const scheduledTimeRaw = formData.get("scheduledTime") as string;
+
+  if (!attendanceId) return { error: "ID inválido" };
+  if (!scheduledDateRaw) return { error: "Data obrigatória" };
+
+  const time = scheduledTimeRaw || "09:00";
+  const scheduledAt = new Date(`${scheduledDateRaw}T${time}:00`);
+
+  await prisma.attendance.updateMany({
+    where: { id: attendanceId, clientId: session.clientId },
+    data: { status: "scheduled", scheduledAt },
+  });
+
+  revalidatePath("/portal/atendimentos");
+  revalidatePath("/portal/calendario");
+  return { success: true };
 }
 
 export async function deleteAttendanceAction(attendanceId: string) {
