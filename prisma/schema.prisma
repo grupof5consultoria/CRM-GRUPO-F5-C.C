@@ -326,9 +326,10 @@ model Client {
   tasks           Task[]
   charges         Charge[]
   healthLogs      ClientHealthLog[]
-  metricEntries   ClientMetricEntry[]
-  clientServices  ClientService[]
-  attendances     Attendance[]
+  metricEntries    ClientMetricEntry[]
+  clientServices   ClientService[]
+  attendances      Attendance[]
+  whatsappAccounts WhatsAppAccount[]
 
   @@map("clients")
 }
@@ -547,4 +548,45 @@ model AuditLog {
   createdAt DateTime @default(now())
 
   @@map("audit_logs")
+}
+
+// ─── WhatsApp Business ────────────────────────────────────────────────────────
+
+enum WhatsAppStatus {
+  pending
+  active
+  disconnected
+}
+
+model WhatsAppAccount {
+  id            String          @id @default(cuid())
+  clientId      String
+  client        Client          @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  phoneNumber   String          // +5511999999999 (display)
+  phoneNumberId String          @unique // Meta's Phone Number ID
+  displayName   String?
+  accessToken   String          // Meta System User Token or page token
+  wabaId        String?         // WhatsApp Business Account ID
+  status        WhatsAppStatus  @default(pending)
+  verifiedAt    DateTime?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  conversations WhatsAppConversation[]
+
+  @@map("whatsapp_accounts")
+}
+
+model WhatsAppConversation {
+  id           String          @id @default(cuid())
+  accountId    String
+  account      WhatsAppAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  from         String          // sender phone number (hashed for privacy)
+  firstMessage String?         // first message text (trimmed to 200 chars)
+  campaignRef  String?         // extracted from message if present (UTM etc.)
+  date         String          // YYYY-MM-DD for aggregation
+  startedAt    DateTime        @default(now())
+
+  @@index([accountId, date])
+  @@map("whatsapp_conversations")
 }

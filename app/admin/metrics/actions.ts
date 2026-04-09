@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireInternalAuth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { fetchMetaInsights, fetchMetaCampaignInsights, type MetaDailyInsight } from "@/lib/meta-api";
+import { fetchMetaInsights, fetchMetaCampaignInsights, fetchMetaAdInsights, type MetaDailyInsight } from "@/lib/meta-api";
 import { fetchGoogleAdsInsights, type GoogleDailyInsight } from "@/lib/google-ads-api";
 
 export async function syncMetricsAction(
@@ -148,5 +148,35 @@ export async function fetchCampaignsAction(
     return { campaigns };
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Erro ao buscar campanhas" };
+  }
+}
+
+export async function fetchAdsAction(
+  clientId: string,
+  dateFrom: string,
+  dateTo: string,
+  campaignId?: string
+) {
+  await requireInternalAuth();
+
+  const client = await prisma.client.findUnique({
+    where: { id: clientId },
+    select: { metaAdAccountId: true, metaAccessToken: true },
+  });
+
+  if (!client?.metaAdAccountId || !client?.metaAccessToken)
+    return { error: "Credenciais Meta não configuradas" };
+
+  try {
+    const ads = await fetchMetaAdInsights(
+      client.metaAdAccountId,
+      client.metaAccessToken,
+      dateFrom,
+      dateTo,
+      campaignId
+    );
+    return { ads };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Erro ao buscar anúncios" };
   }
 }

@@ -130,6 +130,15 @@ const DEFAULT_NAV_ITEMS: NavItem[] = [
       },
     ],
   },
+  {
+    label: "Conexões",
+    href: "/admin/connections",
+    icon: (
+      <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+      </svg>
+    ),
+  },
 ];
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -153,12 +162,19 @@ export function Sidebar() {
     if (savedOrder) {
       try {
         const order: string[] = JSON.parse(savedOrder);
-        const reordered = order
-          .map((href) => DEFAULT_NAV_ITEMS.find((i) => i.href === href))
-          .filter(Boolean) as typeof DEFAULT_NAV_ITEMS;
-        const missing = DEFAULT_NAV_ITEMS.filter((i) => !order.includes(i.href));
-        setItems([...reordered, ...missing]);
-      } catch {}
+        // Se o número de itens mudou (novo item adicionado), descarta o cache
+        if (order.length !== DEFAULT_NAV_ITEMS.length) {
+          localStorage.removeItem("sidebar-order");
+        } else {
+          const reordered = order
+            .map((href) => DEFAULT_NAV_ITEMS.find((i) => i.href === href))
+            .filter(Boolean) as typeof DEFAULT_NAV_ITEMS;
+          const missing = DEFAULT_NAV_ITEMS.filter((i) => !order.includes(i.href));
+          setItems([...reordered, ...missing]);
+        }
+      } catch {
+        localStorage.removeItem("sidebar-order");
+      }
     }
 
     // Auto-open metrics submenu if on a metrics page
