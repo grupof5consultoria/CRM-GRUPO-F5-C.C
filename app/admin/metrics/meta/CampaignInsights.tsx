@@ -66,10 +66,10 @@ function StatusDot({ status }: { status: string }) {
 }
 
 const Th = ({ children }: { children: React.ReactNode }) => (
-  <th className="px-3 py-3 text-[10px] font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap text-right">{children}</th>
+  <th className="px-3 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap text-right">{children}</th>
 );
 const Td = ({ children, className="" }: { children: React.ReactNode; className?: string }) => (
-  <td className={`px-3 py-3 text-xs text-right whitespace-nowrap ${className}`}>{children}</td>
+  <td className={`px-3 py-3.5 text-sm text-right whitespace-nowrap ${className}`}>{children}</td>
 );
 
 // ── Main ──────────────────────────────────────────────────────────────────────
@@ -198,7 +198,7 @@ export function CampaignInsights({ clientId, clientName, dateFrom, dateTo }: Pro
       )}
       {adsLoading && (
         <div className="px-5 py-2">
-          <p className="text-[11px] text-gray-600 flex items-center gap-2">
+          <p className="text-xs text-gray-600 flex items-center gap-2">
             <svg className="w-3 h-3 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
             Carregando conjuntos e anúncios...
           </p>
@@ -220,9 +220,9 @@ export function CampaignInsights({ clientId, clientName, dateFrom, dateTo }: Pro
           <table className="w-full text-sm min-w-[900px]">
             <thead>
               <tr className="border-b border-[#222] bg-[#111]">
-                <th className="px-3 py-3 text-[10px] font-semibold text-gray-500 uppercase tracking-wider text-left w-28">Objetivo</th>
-                <th className="px-3 py-3 text-[10px] font-semibold text-gray-500 uppercase tracking-wider text-left">Campanha / Conjunto / Anúncio</th>
-                <th className="px-3 py-3 text-[10px] font-semibold text-gray-500 uppercase tracking-wider text-left w-24">Status</th>
+                <th className="px-3 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider text-left w-28">Objetivo</th>
+                <th className="px-3 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider text-left">Campanha / Conjunto / Anúncio</th>
+                <th className="px-3 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider text-left w-24">Status</th>
                 <Th>Início</Th>
                 <Th>Orçamento</Th>
                 <Th>Gasto</Th>
@@ -256,7 +256,7 @@ export function CampaignInsights({ clientId, clientName, dateFrom, dateTo }: Pro
                           <svg className={`w-3.5 h-3.5 flex-shrink-0 transition-transform ${isOpen ? "rotate-90" : ""} ${isLoading ? "animate-spin text-blue-400" : "text-gray-600"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={isLoading ? "M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" : "M9 5l7 7-7 7"} />
                           </svg>
-                          <span className="text-gray-200 group-hover:text-white font-medium text-xs truncate max-w-[280px]">{c.campaignName}</span>
+                          <span className="text-gray-200 group-hover:text-white font-medium text-sm truncate max-w-[280px]">{c.campaignName}</span>
                           {campaignAds.length > 0 && (
                             <span className="text-[10px] text-gray-600 flex-shrink-0">{campaignAds.length} anúncio{campaignAds.length !== 1 ? "s" : ""}</span>
                           )}
@@ -292,17 +292,17 @@ export function CampaignInsights({ clientId, clientName, dateFrom, dateTo }: Pro
                                 <svg className="w-3.5 h-3.5 text-gray-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                                 </svg>
-                                <span className="text-[11px] text-gray-400 font-medium truncate max-w-[260px]">{ads[0].adsetName}</span>
+                                <span className="text-xs text-gray-400 font-medium truncate max-w-[260px]">{ads[0].adsetName}</span>
                                 <span className="text-[10px] text-gray-600">{ads.length} anúncio{ads.length !== 1 ? "s" : ""}</span>
                               </div>
                             </td>
                             <td /><td /><td />
-                            <Td><span className="text-amber-400/70 text-[11px]">{fmtR(adsetSpend)}</span></Td>
-                            <Td><span className="text-gray-500 text-[11px]">{adsetCPM > 0 ? fmtR(adsetCPM) : "—"}</span></Td>
-                            <Td><span className="text-gray-500 text-[11px]">{adsetCTR > 0 ? fmtPct(adsetCTR) : "—"}</span></Td>
-                            <Td><span className="text-gray-500 text-[11px]">{fmtN(adsetImp)}</span></Td>
-                            <Td><span className="text-blue-400/80 text-[11px] font-semibold">{adsetConv > 0 ? fmtN(adsetConv) : "—"}</span></Td>
-                            <Td><span className="text-blue-300/70 text-[11px]">{adsetCPC > 0 ? fmtR(adsetCPC) : "—"}</span></Td>
+                            <Td><span className="text-amber-400/70 text-xs">{fmtR(adsetSpend)}</span></Td>
+                            <Td><span className="text-gray-500 text-xs">{adsetCPM > 0 ? fmtR(adsetCPM) : "—"}</span></Td>
+                            <Td><span className="text-gray-500 text-xs">{adsetCTR > 0 ? fmtPct(adsetCTR) : "—"}</span></Td>
+                            <Td><span className="text-gray-500 text-xs">{fmtN(adsetImp)}</span></Td>
+                            <Td><span className="text-blue-400/80 text-xs font-semibold">{adsetConv > 0 ? fmtN(adsetConv) : "—"}</span></Td>
+                            <Td><span className="text-blue-300/70 text-xs">{adsetCPC > 0 ? fmtR(adsetCPC) : "—"}</span></Td>
                           </tr>
 
                           {/* ── Ad rows ────────────────────────────────── */}
@@ -316,16 +316,16 @@ export function CampaignInsights({ clientId, clientName, dateFrom, dateTo }: Pro
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                     </svg>
                                   </div>
-                                  <span className="text-[11px] text-gray-500 truncate max-w-[240px]">{ad.adName}</span>
+                                  <span className="text-xs text-gray-500 truncate max-w-[240px]">{ad.adName}</span>
                                 </div>
                               </td>
                               <td /><td /><td />
-                              <Td><span className="text-amber-400/60 text-[11px]">{fmtR(ad.spend)}</span></Td>
-                              <Td><span className="text-gray-600 text-[11px]">{ad.cpm > 0 ? fmtR(ad.cpm) : "—"}</span></Td>
-                              <Td><span className="text-gray-600 text-[11px]">{ad.ctr > 0 ? fmtPct(ad.ctr) : "—"}</span></Td>
-                              <Td><span className="text-gray-600 text-[11px]">{fmtN(ad.impressions)}</span></Td>
-                              <Td>{ad.conversations > 0 ? <span className="text-blue-400/80 text-[11px] font-semibold">{fmtN(ad.conversations)}</span> : <span className="text-gray-700 text-[11px]">—</span>}</Td>
-                              <Td>{ad.costPerConversation > 0 ? <span className="text-blue-300/70 text-[11px]">{fmtR(ad.costPerConversation)}</span> : <span className="text-gray-700 text-[11px]">—</span>}</Td>
+                              <Td><span className="text-amber-400/60 text-xs">{fmtR(ad.spend)}</span></Td>
+                              <Td><span className="text-gray-600 text-xs">{ad.cpm > 0 ? fmtR(ad.cpm) : "—"}</span></Td>
+                              <Td><span className="text-gray-600 text-xs">{ad.ctr > 0 ? fmtPct(ad.ctr) : "—"}</span></Td>
+                              <Td><span className="text-gray-600 text-xs">{fmtN(ad.impressions)}</span></Td>
+                              <Td>{ad.conversations > 0 ? <span className="text-blue-400/80 text-xs font-semibold">{fmtN(ad.conversations)}</span> : <span className="text-gray-700 text-xs">—</span>}</Td>
+                              <Td>{ad.costPerConversation > 0 ? <span className="text-blue-300/70 text-xs">{fmtR(ad.costPerConversation)}</span> : <span className="text-gray-700 text-xs">—</span>}</Td>
                             </tr>
                           ))}
                         </>
