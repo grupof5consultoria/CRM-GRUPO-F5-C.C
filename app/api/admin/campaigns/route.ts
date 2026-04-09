@@ -29,7 +29,11 @@ export async function GET(req: NextRequest) {
 // POST /api/admin/campaigns
 export async function POST(req: NextRequest) {
   await requireInternalAuth();
-  const { clientId, whatsAppAccountId, name, origin, defaultMessage, utmSource, utmMedium, utmCampaign, utmContent } = await req.json();
+  const {
+    clientId, whatsAppAccountId, name, origin, defaultMessage,
+    utmSource, utmMedium, utmCampaign, utmContent,
+    adPlatformCampaignId, adPlatformCampaignName,
+  } = await req.json();
 
   if (!clientId || !name || !origin || !defaultMessage) {
     return NextResponse.json({ error: "clientId, name, origin e defaultMessage são obrigatórios" }, { status: 400 });
@@ -57,6 +61,8 @@ export async function POST(req: NextRequest) {
       utmMedium: utmMedium || null,
       utmCampaign: utmCampaign || null,
       utmContent: utmContent || null,
+      adPlatformCampaignId: adPlatformCampaignId || null,
+      adPlatformCampaignName: adPlatformCampaignName || null,
     },
     include: { whatsAppAccount: { select: { phoneNumber: true, displayName: true } } },
   });
