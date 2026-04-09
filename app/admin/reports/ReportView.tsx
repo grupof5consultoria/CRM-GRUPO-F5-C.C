@@ -19,10 +19,64 @@ const STATUS_COLORS: Record<string, string> = {
 const ORIGIN_LABELS: Record<string, string> = {
   meta_ads: "Meta Ads",
   google_ads: "Google Ads",
+  instagram: "Instagram (orgânico)",
+  google_organic: "Google (orgânico)",
   referral: "Indicação",
   organic: "Orgânico",
   other: "Outro",
 };
+
+// ── Platform logo components ──────────────────────────────────────────────────
+
+function InstagramLogo() {
+  return (
+    <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
+      style={{ background: "linear-gradient(135deg, #f09433 0%, #e6683c 20%, #dc2743 50%, #cc2366 75%, #bc1888 100%)" }}>
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+        <circle cx="12" cy="12" r="4.5"/>
+        <circle cx="17.5" cy="6.5" r="0.8" fill="white" stroke="none"/>
+      </svg>
+    </div>
+  );
+}
+
+function GoogleOrganicLogo() {
+  return (
+    <div className="w-11 h-11 rounded-xl bg-white flex items-center justify-center flex-shrink-0">
+      <svg viewBox="0 0 24 24" width="22" height="22">
+        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57C21.36 18.13 22.56 15.41 22.56 12.25z" fill="#4285F4"/>
+        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+      </svg>
+    </div>
+  );
+}
+
+function GoogleAdsLogo() {
+  return (
+    <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "#1a73e8" }}>
+      <svg viewBox="0 0 24 24" width="22" height="22">
+        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57C21.36 18.13 22.56 15.41 22.56 12.25z" fill="white"/>
+        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="rgba(255,255,255,0.75)"/>
+        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="rgba(255,255,255,0.55)"/>
+        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="rgba(255,255,255,0.55)"/>
+      </svg>
+    </div>
+  );
+}
+
+function MetaAdsLogo() {
+  return (
+    <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
+      style={{ background: "linear-gradient(135deg, #0668E1 0%, #0050A0 100%)" }}>
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="white">
+        <path d="M12 2.04C6.5 2.04 2 6.53 2 12.06C2 17.06 5.66 21.21 10.44 21.96V14.96H7.9V12.06H10.44V9.85C10.44 7.34 11.93 5.96 14.22 5.96C15.31 5.96 16.45 6.15 16.45 6.15V8.62H15.19C13.95 8.62 13.56 9.39 13.56 10.18V12.06H16.34L15.89 14.96H13.56V21.96C18.34 21.21 22 17.06 22 12.06C22 6.53 17.5 2.04 12 2.04Z"/>
+      </svg>
+    </div>
+  );
+}
 
 interface MetricEntry {
   spend: { toString(): string } | null;
@@ -275,6 +329,127 @@ export function ReportView({ clients, selectedClientId, period, periods, metricE
           </div>
         </div>
       )}
+
+      {/* Leads Capturados */}
+      <div className="bg-[#1a1a1a] border border-[#262626] rounded-2xl overflow-hidden">
+        <div className="px-4 py-3 border-b border-[#262626] flex items-center justify-between">
+          <div>
+            <p className="text-sm font-semibold text-white">Leads Capturados</p>
+            <p className="text-xs text-gray-600 mt-0.5">Origem dos leads no período — {attendances.length} total</p>
+          </div>
+        </div>
+        <div className="p-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Instagram orgânico */}
+            {(() => {
+              const count = byOrigin["instagram"] ?? 0;
+              const pct = attendances.length > 0 ? (count / attendances.length) * 100 : 0;
+              return (
+                <div className="bg-[#111] border border-[#262626] rounded-xl p-4">
+                  <div className="flex items-center gap-3 mb-3">
+                    <InstagramLogo />
+                    <div>
+                      <p className="text-xs font-semibold text-gray-200">Instagram</p>
+                      <p className="text-xs text-gray-600">Orgânico</p>
+                    </div>
+                  </div>
+                  <p className="text-3xl font-bold text-white">{count}</p>
+                  <div className="mt-2 h-1.5 bg-[#262626] rounded-full overflow-hidden">
+                    <div className="h-full rounded-full" style={{ width: `${pct}%`, background: "linear-gradient(90deg, #f09433, #dc2743, #bc1888)" }} />
+                  </div>
+                  <p className="text-xs text-gray-600 mt-1">{pct.toFixed(1)}% do total</p>
+                </div>
+              );
+            })()}
+
+            {/* Google orgânico */}
+            {(() => {
+              const count = (byOrigin["google_organic"] ?? 0) + (byOrigin["organic"] ?? 0);
+              const pct = attendances.length > 0 ? (count / attendances.length) * 100 : 0;
+              return (
+                <div className="bg-[#111] border border-[#262626] rounded-xl p-4">
+                  <div className="flex items-center gap-3 mb-3">
+                    <GoogleOrganicLogo />
+                    <div>
+                      <p className="text-xs font-semibold text-gray-200">Google</p>
+                      <p className="text-xs text-gray-600">Orgânico</p>
+                    </div>
+                  </div>
+                  <p className="text-3xl font-bold text-white">{count}</p>
+                  <div className="mt-2 h-1.5 bg-[#262626] rounded-full overflow-hidden">
+                    <div className="h-full rounded-full bg-[#4285F4]" style={{ width: `${pct}%` }} />
+                  </div>
+                  <p className="text-xs text-gray-600 mt-1">{pct.toFixed(1)}% do total</p>
+                </div>
+              );
+            })()}
+
+            {/* Google Ads */}
+            {(() => {
+              const count = byOrigin["google_ads"] ?? 0;
+              const pct = attendances.length > 0 ? (count / attendances.length) * 100 : 0;
+              return (
+                <div className="bg-[#111] border border-[#262626] rounded-xl p-4">
+                  <div className="flex items-center gap-3 mb-3">
+                    <GoogleAdsLogo />
+                    <div>
+                      <p className="text-xs font-semibold text-gray-200">Google Ads</p>
+                      <p className="text-xs text-amber-500/80">Anúncio pago</p>
+                    </div>
+                  </div>
+                  <p className="text-3xl font-bold text-white">{count}</p>
+                  <div className="mt-2 h-1.5 bg-[#262626] rounded-full overflow-hidden">
+                    <div className="h-full rounded-full bg-[#1a73e8]" style={{ width: `${pct}%` }} />
+                  </div>
+                  <p className="text-xs text-gray-600 mt-1">{pct.toFixed(1)}% do total</p>
+                </div>
+              );
+            })()}
+
+            {/* Meta Ads */}
+            {(() => {
+              const count = byOrigin["meta_ads"] ?? 0;
+              const pct = attendances.length > 0 ? (count / attendances.length) * 100 : 0;
+              return (
+                <div className="bg-[#111] border border-[#262626] rounded-xl p-4">
+                  <div className="flex items-center gap-3 mb-3">
+                    <MetaAdsLogo />
+                    <div>
+                      <p className="text-xs font-semibold text-gray-200">Meta Ads</p>
+                      <p className="text-xs text-amber-500/80">Anúncio pago</p>
+                    </div>
+                  </div>
+                  <p className="text-3xl font-bold text-white">{count}</p>
+                  <div className="mt-2 h-1.5 bg-[#262626] rounded-full overflow-hidden">
+                    <div className="h-full rounded-full bg-[#0668E1]" style={{ width: `${pct}%` }} />
+                  </div>
+                  <p className="text-xs text-gray-600 mt-1">{pct.toFixed(1)}% do total</p>
+                </div>
+              );
+            })()}
+          </div>
+
+          {/* Other origins if any */}
+          {(byOrigin["referral"] || byOrigin["other"]) && (
+            <div className="mt-4 flex flex-wrap gap-3">
+              {byOrigin["referral"] && (
+                <div className="flex items-center gap-2 bg-[#111] border border-[#262626] rounded-xl px-4 py-2.5">
+                  <span className="w-2 h-2 rounded-full bg-violet-500 flex-shrink-0" />
+                  <span className="text-xs text-gray-400">Indicação</span>
+                  <span className="text-sm font-bold text-white ml-1">{byOrigin["referral"]}</span>
+                </div>
+              )}
+              {byOrigin["other"] && (
+                <div className="flex items-center gap-2 bg-[#111] border border-[#262626] rounded-xl px-4 py-2.5">
+                  <span className="w-2 h-2 rounded-full bg-gray-500 flex-shrink-0" />
+                  <span className="text-xs text-gray-400">Outro</span>
+                  <span className="text-sm font-bold text-white ml-1">{byOrigin["other"]}</span>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Attendance detail table */}
       <div className="bg-[#1a1a1a] border border-[#262626] rounded-2xl overflow-hidden">

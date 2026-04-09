@@ -26,6 +26,8 @@ const STATUS_COLORS: Record<string, string> = {
 const ORIGIN_LABELS: Record<string, string> = {
   meta_ads: "Meta Ads",
   google_ads: "Google Ads",
+  instagram: "Instagram (orgânico)",
+  google_organic: "Google (orgânico)",
   referral: "Indicação",
   organic: "Orgânico",
   other: "Outro",
@@ -233,10 +235,12 @@ function AddAttendanceForm({ services }: { services: Service[] }) {
                 name="origin"
                 className="w-full bg-[#111111] border border-[#333] rounded-xl px-3 py-2.5 text-sm text-gray-300 focus:outline-none focus:border-violet-500"
               >
-                <option value="meta_ads">Meta Ads</option>
-                <option value="google_ads">Google Ads</option>
+                <option value="meta_ads">Meta Ads (anúncio)</option>
+                <option value="google_ads">Google Ads (anúncio)</option>
+                <option value="instagram">Instagram (orgânico)</option>
+                <option value="google_organic">Google (orgânico)</option>
                 <option value="referral">Indicação</option>
-                <option value="organic">Orgânico</option>
+                <option value="organic">Orgânico (outros)</option>
                 <option value="other">Outro</option>
               </select>
             </div>
