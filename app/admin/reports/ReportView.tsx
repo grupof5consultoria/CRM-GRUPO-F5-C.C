@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { useRouter } from "next/navigation";
 
 const STATUS_LABELS: Record<string, string> = {
@@ -91,6 +92,8 @@ interface Attendance {
   id: string;
   serviceId: string | null;
   service: { name: string } | null;
+  leadName: string | null;
+  leadPhone: string | null;
   valueQuoted: { toString(): string } | null;
   valueClosed: { toString(): string } | null;
   status: string;
@@ -332,120 +335,103 @@ export function ReportView({ clients, selectedClientId, period, periods, metricE
 
       {/* Leads Capturados */}
       <div className="bg-[#1a1a1a] border border-[#262626] rounded-2xl overflow-hidden">
-        <div className="px-4 py-3 border-b border-[#262626] flex items-center justify-between">
-          <div>
-            <p className="text-sm font-semibold text-white">Leads Capturados</p>
-            <p className="text-xs text-gray-600 mt-0.5">Origem dos leads no período — {attendances.length} total</p>
-          </div>
+        <div className="px-4 py-3 border-b border-[#262626]">
+          <p className="text-sm font-semibold text-white">Leads Capturados</p>
+          <p className="text-xs text-gray-600 mt-0.5">{attendances.length} leads registrados no período</p>
         </div>
-        <div className="p-4">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Instagram orgânico */}
-            {(() => {
-              const count = byOrigin["instagram"] ?? 0;
-              const pct = attendances.length > 0 ? (count / attendances.length) * 100 : 0;
-              return (
-                <div className="bg-[#111] border border-[#262626] rounded-xl p-4">
-                  <div className="flex items-center gap-3 mb-3">
-                    <InstagramLogo />
-                    <div>
-                      <p className="text-xs font-semibold text-gray-200">Instagram</p>
-                      <p className="text-xs text-gray-600">Orgânico</p>
-                    </div>
-                  </div>
-                  <p className="text-3xl font-bold text-white">{count}</p>
-                  <div className="mt-2 h-1.5 bg-[#262626] rounded-full overflow-hidden">
-                    <div className="h-full rounded-full" style={{ width: `${pct}%`, background: "linear-gradient(90deg, #f09433, #dc2743, #bc1888)" }} />
-                  </div>
-                  <p className="text-xs text-gray-600 mt-1">{pct.toFixed(1)}% do total</p>
-                </div>
-              );
-            })()}
+        <div className="p-4 space-y-4">
 
-            {/* Google orgânico */}
-            {(() => {
-              const count = (byOrigin["google_organic"] ?? 0) + (byOrigin["organic"] ?? 0);
+          {/* Source summary cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            {[
+              { key: "instagram", label: "Instagram", sub: "Orgânico", logo: <InstagramLogo />, bar: "linear-gradient(90deg,#f09433,#dc2743,#bc1888)" },
+              { key: "google_organic", label: "Google", sub: "Orgânico", logo: <GoogleOrganicLogo />, bar: "#4285F4" },
+              { key: "google_ads", label: "Google Ads", sub: "Anúncio pago", logo: <GoogleAdsLogo />, bar: "#1a73e8" },
+              { key: "meta_ads", label: "Meta Ads", sub: "Anúncio pago", logo: <MetaAdsLogo />, bar: "#0668E1" },
+            ].map(({ key, label, sub, logo, bar }) => {
+              const count = key === "google_organic"
+                ? (byOrigin["google_organic"] ?? 0) + (byOrigin["organic"] ?? 0)
+                : (byOrigin[key] ?? 0);
               const pct = attendances.length > 0 ? (count / attendances.length) * 100 : 0;
               return (
-                <div className="bg-[#111] border border-[#262626] rounded-xl p-4">
-                  <div className="flex items-center gap-3 mb-3">
-                    <GoogleOrganicLogo />
+                <div key={key} className="bg-[#111] border border-[#262626] rounded-xl p-3">
+                  <div className="flex items-center gap-2.5 mb-2.5">
+                    {logo}
                     <div>
-                      <p className="text-xs font-semibold text-gray-200">Google</p>
-                      <p className="text-xs text-gray-600">Orgânico</p>
+                      <p className="text-xs font-semibold text-gray-200 leading-tight">{label}</p>
+                      <p className="text-xs text-gray-600 leading-tight">{sub}</p>
                     </div>
                   </div>
-                  <p className="text-3xl font-bold text-white">{count}</p>
-                  <div className="mt-2 h-1.5 bg-[#262626] rounded-full overflow-hidden">
-                    <div className="h-full rounded-full bg-[#4285F4]" style={{ width: `${pct}%` }} />
+                  <p className="text-2xl font-bold text-white">{count}</p>
+                  <div className="mt-1.5 h-1 bg-[#262626] rounded-full overflow-hidden">
+                    <div className="h-full rounded-full" style={{ width: `${pct}%`, background: bar }} />
                   </div>
-                  <p className="text-xs text-gray-600 mt-1">{pct.toFixed(1)}% do total</p>
+                  <p className="text-xs text-gray-600 mt-1">{pct.toFixed(1)}%</p>
                 </div>
               );
-            })()}
-
-            {/* Google Ads */}
-            {(() => {
-              const count = byOrigin["google_ads"] ?? 0;
-              const pct = attendances.length > 0 ? (count / attendances.length) * 100 : 0;
-              return (
-                <div className="bg-[#111] border border-[#262626] rounded-xl p-4">
-                  <div className="flex items-center gap-3 mb-3">
-                    <GoogleAdsLogo />
-                    <div>
-                      <p className="text-xs font-semibold text-gray-200">Google Ads</p>
-                      <p className="text-xs text-amber-500/80">Anúncio pago</p>
-                    </div>
-                  </div>
-                  <p className="text-3xl font-bold text-white">{count}</p>
-                  <div className="mt-2 h-1.5 bg-[#262626] rounded-full overflow-hidden">
-                    <div className="h-full rounded-full bg-[#1a73e8]" style={{ width: `${pct}%` }} />
-                  </div>
-                  <p className="text-xs text-gray-600 mt-1">{pct.toFixed(1)}% do total</p>
-                </div>
-              );
-            })()}
-
-            {/* Meta Ads */}
-            {(() => {
-              const count = byOrigin["meta_ads"] ?? 0;
-              const pct = attendances.length > 0 ? (count / attendances.length) * 100 : 0;
-              return (
-                <div className="bg-[#111] border border-[#262626] rounded-xl p-4">
-                  <div className="flex items-center gap-3 mb-3">
-                    <MetaAdsLogo />
-                    <div>
-                      <p className="text-xs font-semibold text-gray-200">Meta Ads</p>
-                      <p className="text-xs text-amber-500/80">Anúncio pago</p>
-                    </div>
-                  </div>
-                  <p className="text-3xl font-bold text-white">{count}</p>
-                  <div className="mt-2 h-1.5 bg-[#262626] rounded-full overflow-hidden">
-                    <div className="h-full rounded-full bg-[#0668E1]" style={{ width: `${pct}%` }} />
-                  </div>
-                  <p className="text-xs text-gray-600 mt-1">{pct.toFixed(1)}% do total</p>
-                </div>
-              );
-            })()}
+            })}
           </div>
 
-          {/* Other origins if any */}
+          {/* Pills for other origins */}
           {(byOrigin["referral"] || byOrigin["other"]) && (
-            <div className="mt-4 flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-2">
               {byOrigin["referral"] && (
-                <div className="flex items-center gap-2 bg-[#111] border border-[#262626] rounded-xl px-4 py-2.5">
-                  <span className="w-2 h-2 rounded-full bg-violet-500 flex-shrink-0" />
+                <div className="flex items-center gap-2 bg-[#111] border border-[#262626] rounded-xl px-3 py-2">
+                  <span className="w-2 h-2 rounded-full bg-violet-500" />
                   <span className="text-xs text-gray-400">Indicação</span>
-                  <span className="text-sm font-bold text-white ml-1">{byOrigin["referral"]}</span>
+                  <span className="text-sm font-bold text-white">{byOrigin["referral"]}</span>
                 </div>
               )}
               {byOrigin["other"] && (
-                <div className="flex items-center gap-2 bg-[#111] border border-[#262626] rounded-xl px-4 py-2.5">
-                  <span className="w-2 h-2 rounded-full bg-gray-500 flex-shrink-0" />
+                <div className="flex items-center gap-2 bg-[#111] border border-[#262626] rounded-xl px-3 py-2">
+                  <span className="w-2 h-2 rounded-full bg-gray-500" />
                   <span className="text-xs text-gray-400">Outro</span>
-                  <span className="text-sm font-bold text-white ml-1">{byOrigin["other"]}</span>
+                  <span className="text-sm font-bold text-white">{byOrigin["other"]}</span>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Individual leads list */}
+          {attendances.some(a => a.leadName || a.leadPhone) && (
+            <div className="border border-[#262626] rounded-xl overflow-hidden">
+              <div className="px-4 py-2.5 border-b border-[#262626] bg-[#111]">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Lista de Leads</p>
+              </div>
+              <div className="divide-y divide-[#1e1e1e]">
+                {attendances.filter(a => a.leadName || a.leadPhone).map((a) => {
+                  const originLogoMap: Record<string, React.ReactNode> = {
+                    instagram: <InstagramLogo />,
+                    google_organic: <GoogleOrganicLogo />,
+                    organic: <GoogleOrganicLogo />,
+                    google_ads: <GoogleAdsLogo />,
+                    meta_ads: <MetaAdsLogo />,
+                  };
+                  const logo = originLogoMap[a.origin];
+                  return (
+                    <div key={a.id} className="flex items-center gap-4 px-4 py-3 hover:bg-[#1a1a1a] transition-colors">
+                      {/* Logo */}
+                      <div className="flex-shrink-0">
+                        {logo ?? <div className="w-11 h-11 rounded-xl bg-[#262626] flex items-center justify-center"><span className="text-xs text-gray-600">?</span></div>}
+                      </div>
+                      {/* Name + phone */}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-200 truncate">{a.leadName ?? "—"}</p>
+                        <p className="text-xs text-gray-600">{a.leadPhone ?? "sem telefone"}</p>
+                      </div>
+                      {/* Origin label */}
+                      <div className="text-right flex-shrink-0">
+                        <p className="text-xs text-gray-500">{ORIGIN_LABELS[a.origin] ?? a.origin}</p>
+                        <p className="text-xs text-gray-700">{new Date(a.contactDate).toLocaleDateString("pt-BR")}</p>
+                      </div>
+                      {/* Status badge */}
+                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-lg whitespace-nowrap flex-shrink-0 ${STATUS_COLORS[a.status]}`}>
+                        {STATUS_LABELS[a.status]}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
         </div>

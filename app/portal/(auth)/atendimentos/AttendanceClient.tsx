@@ -112,6 +112,28 @@ function AddAttendanceForm({ services }: { services: Service[] }) {
               </div>
             )}
 
+            {/* Lead info */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs text-gray-500 mb-1.5">Nome do lead</label>
+                <input
+                  name="leadName"
+                  type="text"
+                  placeholder="Ex: Maria Silva"
+                  className="w-full bg-[#111111] border border-[#333] rounded-xl px-3 py-2.5 text-sm text-gray-300 placeholder-gray-700 focus:outline-none focus:border-violet-500"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1.5">Telefone do lead</label>
+                <input
+                  name="leadPhone"
+                  type="tel"
+                  placeholder="(11) 99999-9999"
+                  className="w-full bg-[#111111] border border-[#333] rounded-xl px-3 py-2.5 text-sm text-gray-300 placeholder-gray-700 focus:outline-none focus:border-violet-500"
+                />
+              </div>
+            </div>
+
             {/* Service */}
             <div>
               <label className="block text-xs text-gray-500 mb-1.5">Serviço</label>

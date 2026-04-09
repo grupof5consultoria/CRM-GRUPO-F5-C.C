@@ -68,7 +68,9 @@ export async function addAttendanceAction(
   const serviceId = formData.get("serviceId") as string || null;
   const customService = (formData.get("customService") as string)?.trim() || null;
   const status = formData.get("status") as "scheduled" | "closed" | "not_closed" | "follow_up";
-  const origin = formData.get("origin") as "meta_ads" | "google_ads" | "referral" | "organic" | "other";
+  const origin = formData.get("origin") as "meta_ads" | "google_ads" | "instagram" | "google_organic" | "referral" | "organic" | "other";
+  const leadName = (formData.get("leadName") as string)?.trim() || null;
+  const leadPhone = (formData.get("leadPhone") as string)?.trim() || null;
   const contactDateRaw = formData.get("contactDate") as string;
   const contactDate = contactDateRaw ? new Date(contactDateRaw) : new Date();
   const period = `${contactDate.getFullYear()}-${String(contactDate.getMonth() + 1).padStart(2, "0")}`;
@@ -89,6 +91,8 @@ export async function addAttendanceAction(
     data: {
       clientId: session.clientId,
       serviceId: resolvedServiceId,
+      leadName,
+      leadPhone,
       // Store custom service name in notes if no catalog service
       notes: resolvedServiceId ? notes : [customService ? `Serviço: ${customService}` : null, notes].filter(Boolean).join(" | ") || null,
       valueQuoted: valueQuoted && !isNaN(valueQuoted) ? valueQuoted : null,

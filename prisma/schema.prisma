@@ -105,6 +105,8 @@ enum AttendanceStatus {
 enum AttendanceOrigin {
   meta_ads
   google_ads
+  instagram
+  google_organic
   referral     // indicação
   organic
   other
@@ -520,6 +522,8 @@ model Attendance {
   service       ClientService?   @relation(fields: [serviceId], references: [id])
   valueQuoted   Decimal?         @db.Decimal(10, 2)
   valueClosed   Decimal?         @db.Decimal(10, 2)
+  leadName      String?
+  leadPhone     String?
   status        AttendanceStatus @default(scheduled)
   lostReason    String?
   followUpCount Int              @default(0)
