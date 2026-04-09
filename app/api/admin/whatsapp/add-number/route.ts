@@ -31,6 +31,7 @@ export async function POST(req: NextRequest) {
       migrate_phone_number: false,
       display_phone_number: phoneNumber,
       verified_name: displayName ?? "WhatsApp Business",
+      access_token: SYSTEM_TOKEN,
     }),
   });
   const addData = await addRes.json();
