@@ -263,18 +263,12 @@ export async function fetchMetaAdInsights(
 ): Promise<MetaAdInsight[]> {
   const params = new URLSearchParams({
     fields: [
-      "ad_id",
-      "ad_name",
-      "adset_id",
-      "adset_name",
-      "campaign_id",
-      "spend",
-      "impressions",
-      "actions",
-      "cost_per_action_type",
+      "ad_id", "ad_name", "adset_id", "adset_name", "campaign_id",
+      "spend", "impressions", "actions", "cost_per_action_type",
     ].join(","),
     time_range: JSON.stringify({ since: dateFrom, until: dateTo }),
     level: "ad",
+    limit: "500",
     access_token: accessToken,
   });
   if (campaignId) {
