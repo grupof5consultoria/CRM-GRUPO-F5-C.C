@@ -113,7 +113,7 @@ export default async function PortalMetricsPage({
   const frequency   = reach > 0 && impressions > 0 ? impressions / reach : null;
   const cprAvg      = cprCount > 0 ? cprSum / cprCount : null;
 
-  const hasData = hasMeta && periodEntries.length > 0 && spend > 0;
+  const hasData = hasMeta && periodEntries.length > 0;
 
   // ── Chart: last 14 days of period ─────────────────────────────────────────
   const dailyEntries = periodEntries
