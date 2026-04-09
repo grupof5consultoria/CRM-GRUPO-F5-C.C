@@ -240,32 +240,43 @@ interface PlatformCellProps {
   connected: boolean;
   detail?: string;
   color: string;
+  bgColor: string;
   borderColor: string;
   dotColor: string;
   isOpen: boolean;
   onToggle: () => void;
 }
 
-function PlatformCell({ connected, detail, color, borderColor, dotColor, isOpen, onToggle }: PlatformCellProps) {
+function PlatformCell({ connected, detail, color, bgColor, borderColor, dotColor, isOpen, onToggle }: PlatformCellProps) {
   return (
-    <div className="flex flex-col items-start gap-1.5">
-      <div className="flex items-center gap-2">
-        {connected ? (
-          <span className={`flex items-center gap-1.5 text-xs font-semibold ${color} bg-opacity-10 px-2.5 py-1 rounded-full border ${borderColor}`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${dotColor} animate-pulse`} />
+    <div className="flex flex-col items-start gap-2">
+      {connected ? (
+        <>
+          <span className={`flex items-center gap-2 text-xs font-bold ${color} ${bgColor} px-3 py-1.5 rounded-xl border ${borderColor}`}>
+            <span className={`w-2 h-2 rounded-full ${dotColor} animate-pulse`} />
             Ativo
           </span>
-        ) : (
-          <span className="text-xs text-gray-700 bg-[#161616] px-2.5 py-1 rounded-full border border-[#222]">
-            — Inativo
-          </span>
-        )}
-      </div>
-      {detail && <p className="text-[10px] text-gray-600 font-mono leading-none">{detail}</p>}
-      <button onClick={onToggle}
-        className={`text-[10px] font-semibold transition-colors ${isOpen ? "text-gray-500" : connected ? "text-gray-500 hover:text-gray-300" : `${color} opacity-80 hover:opacity-100`}`}>
-        {isOpen ? "↑ fechar" : connected ? "editar" : "+ conectar"}
-      </button>
+          {detail && <p className="text-xs text-gray-500 font-mono">{detail}</p>}
+          <button onClick={onToggle}
+            className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-all ${
+              isOpen
+                ? "text-gray-400 border-[#333] bg-[#1a1a1a]"
+                : "text-gray-400 border-[#2a2a2a] hover:border-[#444] hover:text-white bg-[#161616]"
+            }`}>
+            {isOpen ? "↑ Fechar" : "Editar"}
+          </button>
+        </>
+      ) : (
+        <button onClick={onToggle}
+          className={`flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-xl border transition-all ${
+            isOpen
+              ? `${color} ${bgColor} ${borderColor}`
+              : `text-gray-500 border-[#2a2a2a] hover:${color} hover:${bgColor} hover:${borderColor} bg-[#141414]`
+          }`}>
+          <span className="text-lg leading-none">{isOpen ? "×" : "+"}</span>
+          {isOpen ? "Cancelar" : "Conectar"}
+        </button>
+      )}
     </div>
   );
 }
@@ -289,49 +300,49 @@ function ClientRow({ client, index }: { client: Client; index: number }) {
       {/* Main row */}
       <tr className={`border-b border-[#1a1a1a] hover:bg-[#141414] transition-colors group ${openPlatform ? "bg-[#141414]" : ""}`}>
         {/* Client */}
-        <td className="px-5 py-4">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-600/30 to-violet-800/20 border border-violet-500/20 flex items-center justify-center flex-shrink-0">
-              <span className="text-xs font-bold text-violet-300">{initials}</span>
+        <td className="px-5 py-5">
+          <div className="flex items-center gap-4">
+            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-violet-600/30 to-violet-800/20 border border-violet-500/20 flex items-center justify-center flex-shrink-0">
+              <span className="text-sm font-bold text-violet-300">{initials}</span>
             </div>
             <div>
-              <p className="text-sm font-semibold text-white leading-tight">{client.name}</p>
-              <div className="flex items-center gap-1 mt-0.5">
+              <p className="text-sm font-bold text-white leading-tight">{client.name}</p>
+              <div className="flex items-center gap-1.5 mt-1">
                 {[hasMeta, hasGoogle, hasWA].map((v, i) => (
-                  <span key={i} className={`w-1.5 h-1.5 rounded-full ${v ? ["bg-blue-400", "bg-red-400", "bg-emerald-400"][i] : "bg-[#2a2a2a]"}`} />
+                  <span key={i} className={`w-2 h-2 rounded-full ${v ? ["bg-blue-400", "bg-red-400", "bg-emerald-400"][i] : "bg-[#2a2a2a]"}`} />
                 ))}
-                <span className="text-[10px] text-gray-700 ml-1">{connected}/3 ativas</span>
+                <span className="text-xs text-gray-600 ml-1">{connected}/3 ativas</span>
               </div>
             </div>
           </div>
         </td>
 
         {/* Meta */}
-        <td className="px-5 py-4">
+        <td className="px-5 py-5">
           <PlatformCell
             connected={hasMeta}
             detail={hasMeta ? `act_${client.metaAdAccountId?.slice(-8)}` : undefined}
-            color="text-blue-400" borderColor="border-blue-500/25" dotColor="bg-blue-400"
+            color="text-blue-400" bgColor="bg-blue-500/10" borderColor="border-blue-500/25" dotColor="bg-blue-400"
             isOpen={openPlatform === "meta"} onToggle={() => toggle("meta")}
           />
         </td>
 
         {/* Google */}
-        <td className="px-5 py-4">
+        <td className="px-5 py-5">
           <PlatformCell
             connected={hasGoogle}
             detail={hasGoogle ? client.googleAdsCustomerId! : undefined}
-            color="text-red-400" borderColor="border-red-500/25" dotColor="bg-red-400"
+            color="text-red-400" bgColor="bg-red-500/10" borderColor="border-red-500/25" dotColor="bg-red-400"
             isOpen={openPlatform === "google"} onToggle={() => toggle("google")}
           />
         </td>
 
         {/* WhatsApp */}
-        <td className="px-5 py-4">
+        <td className="px-5 py-5">
           <PlatformCell
             connected={hasWA}
             detail={hasWA ? client.whatsappAccounts.find(a => a.status === "active")?.phoneNumber : undefined}
-            color="text-emerald-400" borderColor="border-emerald-500/25" dotColor="bg-emerald-400"
+            color="text-emerald-400" bgColor="bg-emerald-500/10" borderColor="border-emerald-500/25" dotColor="bg-emerald-400"
             isOpen={openPlatform === "whatsapp"} onToggle={() => toggle("whatsapp")}
           />
         </td>
