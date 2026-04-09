@@ -437,14 +437,6 @@ export function MetaMetricsTable({ clients, allClients }: Props) {
   if (totals.linkClicks > 0) totals.cpc = totals.spend / totals.linkClicks;
   if (totals.leadsFromAds > 0) totals.costPerResult = totals.spend / totals.leadsFromAds;
 
-  // Extra derived KPIs
-  const costPerConv = totals.conversations > 0 && totals.spend > 0 ? totals.spend / totals.conversations : null;
-  const cpcLink     = totals.linkClicks > 0 && totals.spend > 0 ? totals.spend / totals.linkClicks : null;
-  const ctrLink     = totals.impressions > 0 && totals.linkClicks > 0 ? (totals.linkClicks / totals.impressions) * 100 : null;
-  const frequency   = totals.reach > 0 && totals.impressions > 0 ? totals.impressions / totals.reach : null;
-  const spendDelta  = pctChange(totals.spend, prevTotals.spend);
-  const convDelta   = pctChange(totals.conversations, prevTotals.conversations);
-  const hasKpis     = totals.count > 0;
 
   // Previous period (same duration immediately before dateFrom)
   const daysInRange = Math.round((new Date(dateTo).getTime() - new Date(dateFrom).getTime()) / 86400000) + 1;
@@ -461,6 +453,15 @@ export function MetaMetricsTable({ clients, allClients }: Props) {
     if (prev === 0) return null;
     return ((curr - prev) / prev) * 100;
   }
+
+  // Extra derived KPIs
+  const costPerConv = totals.conversations > 0 && totals.spend > 0 ? totals.spend / totals.conversations : null;
+  const cpcLink     = totals.linkClicks > 0 && totals.spend > 0 ? totals.spend / totals.linkClicks : null;
+  const ctrLink     = totals.impressions > 0 && totals.linkClicks > 0 ? (totals.linkClicks / totals.impressions) * 100 : null;
+  const frequency   = totals.reach > 0 && totals.impressions > 0 ? totals.impressions / totals.reach : null;
+  const spendDelta  = pctChange(totals.spend, prevTotals.spend);
+  const convDelta   = pctChange(totals.conversations, prevTotals.conversations);
+  const hasKpis     = totals.count > 0;
 
   // Daily trend data for chart (single client only)
   const trendEntries = selectedClientId !== "all" && filteredClients.length === 1
