@@ -12,15 +12,14 @@ import { AddContactForm } from "./AddContactForm";
 import { DeleteContactButton } from "./DeleteContactButton";
 import { ClientSidebar } from "./ClientSidebar";
 import { headers } from "next/headers";
+// searchParams no longer used (meta connection moved to /admin/connections)
 
 interface PageProps {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ meta_success?: string; meta_error?: string }>;
 }
 
-export default async function ClientDetailPage({ params, searchParams }: PageProps) {
+export default async function ClientDetailPage({ params }: PageProps) {
   const { id } = await params;
-  const { meta_success, meta_error } = await searchParams;
   const headersList = await headers();
   const host = headersList.get("host") ?? "localhost:3000";
   const protocol = host.includes("localhost") ? "http" : "https";
@@ -143,10 +142,6 @@ export default async function ClientDetailPage({ params, searchParams }: PagePro
             <ClientSidebar
               clientId={client.id}
               portalUrl={portalUrl}
-              metaAdAccountId={client.metaAdAccountId ?? null}
-              googleAdsCustomerId={client.googleAdsCustomerId ?? null}
-              metaSuccess={meta_success === "1"}
-              metaError={meta_error ? decodeURIComponent(meta_error) : undefined}
               ownerName={client.owner.name}
               monthlyValue={client.monthlyValue}
               document={client.document ?? null}

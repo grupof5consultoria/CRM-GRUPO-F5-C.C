@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { ClientCredentialsForm } from "./ClientCredentialsForm";
 import { PortalAccessCard } from "./PortalAccessCard";
 import { UpdateHealthForm } from "./UpdateHealthForm";
 import type { ClientHealth } from "@prisma/client";
@@ -41,11 +40,6 @@ interface PortalUser {
 interface Props {
   clientId: string;
   portalUrl: string;
-  // Plataformas
-  metaAdAccountId: string | null;
-  googleAdsCustomerId: string | null;
-  metaSuccess?: boolean;
-  metaError?: string;
   // Informações
   ownerName: string;
   monthlyValue: { toString(): string } | null;
@@ -64,7 +58,6 @@ interface Props {
 }
 
 const TABS = [
-  { key: "plataformas", label: "Plataformas" },
   { key: "portal",      label: "Portal" },
   { key: "info",        label: "Informações" },
   { key: "saude",       label: "Saúde" },
@@ -74,12 +67,11 @@ type TabKey = typeof TABS[number]["key"];
 
 export function ClientSidebar({
   clientId, portalUrl,
-  metaAdAccountId, googleAdsCustomerId, metaSuccess, metaError,
   ownerName, monthlyValue, document, email, phone, startDate, createdAt, notes,
   health, healthNote, healthLogs,
   portalUsers,
 }: Props) {
-  const [tab, setTab] = useState<TabKey>("plataformas");
+  const [tab, setTab] = useState<TabKey>("portal");
 
   // Compute time as client
   let timeStr = "";
@@ -114,36 +106,6 @@ export function ClientSidebar({
 
       {/* Tab content */}
       <div className="p-4">
-
-        {/* ── Plataformas ── */}
-        {tab === "plataformas" && (
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 mb-1">
-              {metaAdAccountId && (
-                <span className="flex items-center gap-1.5 text-xs text-blue-400 bg-blue-400/10 px-2 py-1 rounded-lg">
-                  <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />Meta configurado
-                </span>
-              )}
-              {googleAdsCustomerId && (
-                <span className="flex items-center gap-1.5 text-xs text-red-400 bg-red-400/10 px-2 py-1 rounded-lg">
-                  <span className="w-1.5 h-1.5 rounded-full bg-red-400" />Google configurado
-                </span>
-              )}
-              {!metaAdAccountId && !googleAdsCustomerId && (
-                <p className="text-xs text-gray-600">Nenhuma plataforma configurada</p>
-              )}
-            </div>
-            <ClientCredentialsForm
-              clientId={clientId}
-              metaAdAccountId={metaAdAccountId}
-              googleAdsCustomerId={googleAdsCustomerId}
-              hasMeta={!!metaAdAccountId}
-              hasGoogle={!!googleAdsCustomerId}
-              metaSuccess={metaSuccess}
-              metaError={metaError}
-            />
-          </div>
-        )}
 
         {/* ── Portal ── */}
         {tab === "portal" && (
