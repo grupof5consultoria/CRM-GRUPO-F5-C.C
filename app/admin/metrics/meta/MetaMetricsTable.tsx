@@ -228,6 +228,34 @@ function DateRangePicker({
   );
 }
 
+// ─── Icons ────────────────────────────────────────────────────────────────────
+const IcoDollar = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>;
+const IcoChat   = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>;
+const IcoEye    = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>;
+const IcoTrend  = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>;
+const IcoLink   = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.1-1.1m-.758-4.9a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>;
+const IcoTarget = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" strokeWidth={1.5}/><circle cx="12" cy="12" r="6" strokeWidth={1.5}/><circle cx="12" cy="12" r="2" strokeWidth={1.5}/></svg>;
+const IcoBars   = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>;
+
+function KpiCard({ label, value, icon, delta }: { label: string; value: string; icon: React.ReactNode; delta?: { value: number } | null }) {
+  return (
+    <div className="bg-[#1a1a1a] border border-[#262626] rounded-2xl p-4 flex flex-col justify-between gap-3 min-h-[88px]">
+      <div className="flex items-start justify-between gap-2">
+        <p className="text-[11px] text-gray-500 leading-snug">{label}</p>
+        <span className="text-blue-500/60 flex-shrink-0">{icon}</span>
+      </div>
+      <div>
+        <p className="text-xl font-bold text-white leading-none">{value}</p>
+        {delta != null && (
+          <p className={`text-[10px] font-semibold mt-1 ${delta.value >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+            {delta.value >= 0 ? "▲" : "▼"} {Math.abs(delta.value).toFixed(0)}% vs anterior
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── Formatters ───────────────────────────────────────────────────────────────
 
 function fmtR(v: number | null | undefined) {
@@ -409,6 +437,15 @@ export function MetaMetricsTable({ clients, allClients }: Props) {
   if (totals.linkClicks > 0) totals.cpc = totals.spend / totals.linkClicks;
   if (totals.leadsFromAds > 0) totals.costPerResult = totals.spend / totals.leadsFromAds;
 
+  // Extra derived KPIs
+  const costPerConv = totals.conversations > 0 && totals.spend > 0 ? totals.spend / totals.conversations : null;
+  const cpcLink     = totals.linkClicks > 0 && totals.spend > 0 ? totals.spend / totals.linkClicks : null;
+  const ctrLink     = totals.impressions > 0 && totals.linkClicks > 0 ? (totals.linkClicks / totals.impressions) * 100 : null;
+  const frequency   = totals.reach > 0 && totals.impressions > 0 ? totals.impressions / totals.reach : null;
+  const spendDelta  = pctChange(totals.spend, prevTotals.spend);
+  const convDelta   = pctChange(totals.conversations, prevTotals.conversations);
+  const hasKpis     = totals.count > 0;
+
   // Previous period (same duration immediately before dateFrom)
   const daysInRange = Math.round((new Date(dateTo).getTime() - new Date(dateFrom).getTime()) / 86400000) + 1;
   const prevTo   = new Date(new Date(dateFrom).getTime() - 86400000).toISOString().split("T")[0];
@@ -483,6 +520,39 @@ export function MetaMetricsTable({ clients, allClients }: Props) {
           <ColumnFilter selected={visibleCols} onChange={handleColChange} />
         </div>
       </div>
+
+      {/* ── KPI Cards (Meta Ads Manager style) ──────────────────────────── */}
+      {hasKpis && (
+        <div className="space-y-3">
+          {/* Row 1: principais */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+            <KpiCard label="Investimento"       value={fmtR(totals.spend)}          icon={<IcoDollar />} delta={spendDelta != null ? { value: spendDelta } : null} />
+            <KpiCard label="Conversas"          value={fmtN(totals.conversations)}  icon={<IcoChat />}   delta={convDelta  != null ? { value: convDelta  } : null} />
+            <KpiCard label="Custo por Conversa" value={costPerConv != null ? fmtR(costPerConv) : "—"} icon={<IcoChat />} />
+            <KpiCard label="Impressões"         value={fmtN(totals.impressions)}    icon={<IcoEye />} />
+            <KpiCard label="Alcance"            value={fmtN(totals.reach)}          icon={<IcoEye />} />
+          </div>
+          {/* Row 2: cliques */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+            <KpiCard label="Cliques (todos)"       value={fmtN(totals.linkClicks)}                             icon={<IcoTrend />} />
+            <KpiCard label="Cliques no link"       value={fmtN(totals.linkClicks)}                             icon={<IcoLink />} />
+            <KpiCard label="CTR (todos)"           value={totals.ctr  != null ? fmtPct(totals.ctr)  : "—"}    icon={<IcoTrend />} />
+            <KpiCard label="CTR (cliques no link)" value={ctrLink     != null ? fmtPct(ctrLink)     : "—"}    icon={<IcoTrend />} />
+            <KpiCard label="CPM Médio"             value={totals.cpm  != null ? fmtR(totals.cpm)   : "—"}    icon={<IcoTarget />} />
+          </div>
+          {/* Row 3: custo */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+            <KpiCard label="CPC Médio"             value={totals.cpc  != null ? fmtR(totals.cpc)   : "—"}     icon={<IcoTarget />} />
+            <KpiCard label="CPC Médio (no link)"   value={cpcLink     != null ? fmtR(cpcLink)      : "—"}     icon={<IcoLink />} />
+            <KpiCard label="Frequência"            value={frequency   != null ? frequency.toFixed(2) : "—"}   icon={<IcoBars />} />
+            <KpiCard label="Resultados"            value={fmtN(totals.leadsFromAds)}                           icon={<IcoTarget />} />
+            <KpiCard label="Custo por Resultado"   value={totals.costPerResult != null ? fmtR(totals.costPerResult) : "—"} icon={<IcoDollar />} />
+          </div>
+        </div>
+      )}
+
+      {/* ── Divisor ─────────────────────────────────────────────────────── */}
+      {hasKpis && <div className="h-px bg-[#1e1e1e]" />}
 
       {/* Table */}
       {filteredClients.length === 0 ? (
