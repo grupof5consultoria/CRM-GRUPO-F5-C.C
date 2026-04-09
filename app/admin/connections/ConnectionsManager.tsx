@@ -101,67 +101,136 @@ function GoogleForm({ client, onClose }: { client: Client; onClose: () => void }
 }
 
 function WhatsAppForm({ client, onClose }: { client: Client; onClose: () => void }) {
-  const [form, setForm] = useState({ phoneNumber: "", phoneNumberId: "", accessToken: "", wabaId: "", displayName: "" });
-  const [saving, setSaving] = useState(false);
-  const [result, setResult] = useState<{ error?: string; success?: string } | null>(null);
-  function set(k: string, v: string) { setForm(f => ({ ...f, [k]: v })); }
-  async function handleSubmit(e: React.FormEvent) {
+  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [phoneNumberId, setPhoneNumberId] = useState("");
+  const [code, setCode] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSendCode(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.phoneNumber || !form.phoneNumberId || !form.accessToken) { setResult({ error: "Preencha todos os campos obrigatórios." }); return; }
-    setSaving(true); setResult(null);
-    const res = await fetch("/api/admin/whatsapp/connect", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ clientId: client.id, ...form }) });
+    if (!phoneNumber) { setError("Número obrigatório."); return; }
+    setLoading(true); setError(null);
+    const res = await fetch("/api/admin/whatsapp/add-number", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phoneNumber, displayName }),
+    });
     const data = await res.json();
-    setSaving(false);
-    if (data.error) { setResult({ error: data.error }); return; }
-    setResult({ success: `${data.account.phoneNumber} conectado!` });
-    setTimeout(() => { onClose(); window.location.reload(); }, 1200);
+    setLoading(false);
+    if (data.error) { setError(data.error); return; }
+    setPhoneNumberId(data.phoneNumberId);
+    setStep(2);
   }
+
+  async function handleConfirmCode(e: React.FormEvent) {
+    e.preventDefault();
+    if (!code) { setError("Digite o código."); return; }
+    setLoading(true); setError(null);
+    const res = await fetch("/api/admin/whatsapp/confirm-code", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ clientId: client.id, phoneNumber, displayName, phoneNumberId, code }),
+    });
+    const data = await res.json();
+    setLoading(false);
+    if (data.error) { setError(data.error); return; }
+    setStep(3);
+    setTimeout(() => { onClose(); window.location.reload(); }, 2000);
+  }
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-3">
-      <div className="bg-[#0d0d0d] border border-[#2a2a2a] rounded-xl px-3 py-2.5 text-xs text-gray-600 space-y-0.5">
-        <p className="text-gray-500 font-semibold mb-1">Como obter os dados:</p>
-        <p>1. <span className="text-gray-400">developers.facebook.com</span> → Seu App → WhatsApp → Phone Numbers</p>
-        <p>2. Copie o <span className="text-gray-400">Phone Number ID</span> e gere um token permanente</p>
+    <div className="space-y-4">
+      {/* Steps indicator */}
+      <div className="flex items-center gap-2">
+        {[1, 2, 3].map((s) => (
+          <div key={s} className="flex items-center gap-2">
+            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-all ${
+              step === s ? "bg-emerald-500 text-white" :
+              step > s  ? "bg-emerald-500/20 text-emerald-400" :
+              "bg-[#1a1a1a] text-gray-600"
+            }`}>{step > s ? "✓" : s}</div>
+            {s < 3 && <div className={`h-px w-8 ${step > s ? "bg-emerald-500/40" : "bg-[#2a2a2a]"}`} />}
+          </div>
+        ))}
+        <span className="text-xs text-gray-600 ml-1">
+          {step === 1 ? "Dados do número" : step === 2 ? "Confirmar SMS" : "Conectado!"}
+        </span>
       </div>
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="text-xs text-gray-500 mb-1 block">Número *</label>
-          <input value={form.phoneNumber} onChange={e => set("phoneNumber", e.target.value)} placeholder="+5511999999999"
-            className="w-full bg-[#0d0d0d] border border-[#2a2a2a] rounded-xl px-3 py-2 text-sm text-white placeholder-gray-700 focus:outline-none focus:border-emerald-500/50" required />
+
+      {/* Step 1 — Phone number */}
+      {step === 1 && (
+        <form onSubmit={handleSendCode} className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs text-gray-500 mb-1 block">Número da doutora *</label>
+              <input value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)}
+                placeholder="+5511999999999" autoFocus
+                className="w-full bg-[#0d0d0d] border border-[#2a2a2a] rounded-xl px-3 py-2 text-sm text-white placeholder-gray-700 focus:outline-none focus:border-emerald-500/50" required />
+            </div>
+            <div>
+              <label className="text-xs text-gray-500 mb-1 block">Nome de exibição</label>
+              <input value={displayName} onChange={e => setDisplayName(e.target.value)}
+                placeholder="Dra. Ana Silva"
+                className="w-full bg-[#0d0d0d] border border-[#2a2a2a] rounded-xl px-3 py-2 text-sm text-white placeholder-gray-700 focus:outline-none focus:border-emerald-500/50" />
+            </div>
+          </div>
+          <p className="text-xs text-gray-600">A Meta vai enviar um SMS com código para esse número.</p>
+          {error && <p className="text-xs text-red-400 bg-red-500/10 rounded-lg px-3 py-2">{error}</p>}
+          <div className="flex gap-2">
+            <button type="submit" disabled={loading}
+              className="flex-1 py-2.5 rounded-xl text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 transition-colors">
+              {loading ? "Enviando SMS..." : "Enviar código SMS →"}
+            </button>
+            <button type="button" onClick={onClose} className="px-4 py-2 rounded-xl text-xs text-gray-600 hover:text-gray-300 border border-[#2a2a2a]">
+              Cancelar
+            </button>
+          </div>
+        </form>
+      )}
+
+      {/* Step 2 — SMS code */}
+      {step === 2 && (
+        <form onSubmit={handleConfirmCode} className="space-y-3">
+          <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl px-4 py-3">
+            <p className="text-xs text-emerald-400 font-semibold">SMS enviado para {phoneNumber}</p>
+            <p className="text-xs text-gray-600 mt-0.5">Peça o código de verificação para a doutora e digite abaixo.</p>
+          </div>
+          <div>
+            <label className="text-xs text-gray-500 mb-1 block">Código recebido por SMS *</label>
+            <input value={code} onChange={e => setCode(e.target.value)}
+              placeholder="123456" maxLength={6} autoFocus
+              className="w-full bg-[#0d0d0d] border border-[#2a2a2a] rounded-xl px-3 py-2 text-2xl font-bold text-white text-center placeholder-gray-700 tracking-widest focus:outline-none focus:border-emerald-500/50" required />
+          </div>
+          {error && <p className="text-xs text-red-400 bg-red-500/10 rounded-lg px-3 py-2">{error}</p>}
+          <div className="flex gap-2">
+            <button type="submit" disabled={loading}
+              className="flex-1 py-2.5 rounded-xl text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 transition-colors">
+              {loading ? "Verificando..." : "Confirmar e Conectar →"}
+            </button>
+            <button type="button" onClick={() => { setStep(1); setError(null); }}
+              className="px-4 py-2 rounded-xl text-xs text-gray-600 hover:text-gray-300 border border-[#2a2a2a]">
+              Voltar
+            </button>
+          </div>
+        </form>
+      )}
+
+      {/* Step 3 — Success */}
+      {step === 3 && (
+        <div className="text-center py-4">
+          <div className="w-12 h-12 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto mb-3">
+            <svg className="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <p className="text-sm font-bold text-white">WhatsApp conectado!</p>
+          <p className="text-xs text-gray-600 mt-1">{phoneNumber} está ativo e rastreando conversas.</p>
         </div>
-        <div>
-          <label className="text-xs text-gray-500 mb-1 block">Nome</label>
-          <input value={form.displayName} onChange={e => set("displayName", e.target.value)} placeholder="Dra. Ana"
-            className="w-full bg-[#0d0d0d] border border-[#2a2a2a] rounded-xl px-3 py-2 text-sm text-white placeholder-gray-700 focus:outline-none focus:border-emerald-500/50" />
-        </div>
-        <div>
-          <label className="text-xs text-gray-500 mb-1 block">Phone Number ID *</label>
-          <input value={form.phoneNumberId} onChange={e => set("phoneNumberId", e.target.value)} placeholder="12345678901234"
-            className="w-full bg-[#0d0d0d] border border-[#2a2a2a] rounded-xl px-3 py-2 text-xs text-white placeholder-gray-700 focus:outline-none focus:border-emerald-500/50 font-mono" required />
-        </div>
-        <div>
-          <label className="text-xs text-gray-500 mb-1 block">WABA ID</label>
-          <input value={form.wabaId} onChange={e => set("wabaId", e.target.value)} placeholder="Opcional"
-            className="w-full bg-[#0d0d0d] border border-[#2a2a2a] rounded-xl px-3 py-2 text-xs text-white placeholder-gray-700 focus:outline-none focus:border-emerald-500/50 font-mono" />
-        </div>
-      </div>
-      <div>
-        <label className="text-xs text-gray-500 mb-1 block">Access Token *</label>
-        <input value={form.accessToken} onChange={e => set("accessToken", e.target.value)} type="password" placeholder="EAAxxxxxxx..."
-          className="w-full bg-[#0d0d0d] border border-[#2a2a2a] rounded-xl px-3 py-2 text-sm text-white placeholder-gray-700 focus:outline-none focus:border-emerald-500/50 font-mono" required />
-      </div>
-      {result?.error && <p className="text-xs text-red-400 bg-red-500/10 rounded-lg px-3 py-2">{result.error}</p>}
-      {result?.success && <p className="text-xs text-emerald-400 bg-emerald-500/10 rounded-lg px-3 py-2">{result.success}</p>}
-      <div className="flex gap-2 pt-1">
-        <button type="submit" disabled={saving}
-          className="flex-1 py-2 rounded-xl text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 transition-colors">
-          {saving ? "Verificando..." : "Verificar e Conectar"}
-        </button>
-        <button type="button" onClick={onClose} className="px-4 py-2 rounded-xl text-xs text-gray-600 hover:text-gray-300 transition-colors border border-[#2a2a2a] hover:border-[#3a3a3a]">
-          Cancelar
-        </button>
-      </div>
-    </form>
+      )}
+    </div>
   );
 }
 
