@@ -297,12 +297,12 @@ export function CampaignInsights({ clientId, clientName, dateFrom, dateTo }: Pro
                               </div>
                             </td>
                             <td /><td /><td />
-                            <Td><span className="text-amber-400/70 text-xs">{fmtR(adsetSpend)}</span></Td>
-                            <Td><span className="text-gray-500 text-xs">{adsetCPM > 0 ? fmtR(adsetCPM) : "—"}</span></Td>
-                            <Td><span className="text-gray-500 text-xs">{adsetCTR > 0 ? fmtPct(adsetCTR) : "—"}</span></Td>
-                            <Td><span className="text-gray-500 text-xs">{fmtN(adsetImp)}</span></Td>
+                            <Td><span className="text-amber-400/70">{fmtR(adsetSpend)}</span></Td>
+                            <Td><span className="text-gray-500">{adsetCPM > 0 ? fmtR(adsetCPM) : "—"}</span></Td>
+                            <Td><span className="text-gray-500">{adsetCTR > 0 ? fmtPct(adsetCTR) : "—"}</span></Td>
+                            <Td><span className="text-gray-500">{fmtN(adsetImp)}</span></Td>
                             <Td><span className="text-blue-400/80 text-xs font-semibold">{adsetConv > 0 ? fmtN(adsetConv) : "—"}</span></Td>
-                            <Td><span className="text-blue-300/70 text-xs">{adsetCPC > 0 ? fmtR(adsetCPC) : "—"}</span></Td>
+                            <Td><span className="text-blue-300/70">{adsetCPC > 0 ? fmtR(adsetCPC) : "—"}</span></Td>
                           </tr>
 
                           {/* ── Ad rows ────────────────────────────────── */}
@@ -320,12 +320,12 @@ export function CampaignInsights({ clientId, clientName, dateFrom, dateTo }: Pro
                                 </div>
                               </td>
                               <td /><td /><td />
-                              <Td><span className="text-amber-400/60 text-xs">{fmtR(ad.spend)}</span></Td>
-                              <Td><span className="text-gray-600 text-xs">{ad.cpm > 0 ? fmtR(ad.cpm) : "—"}</span></Td>
-                              <Td><span className="text-gray-600 text-xs">{ad.ctr > 0 ? fmtPct(ad.ctr) : "—"}</span></Td>
-                              <Td><span className="text-gray-600 text-xs">{fmtN(ad.impressions)}</span></Td>
-                              <Td>{ad.conversations > 0 ? <span className="text-blue-400/80 text-xs font-semibold">{fmtN(ad.conversations)}</span> : <span className="text-gray-700 text-xs">—</span>}</Td>
-                              <Td>{ad.costPerConversation > 0 ? <span className="text-blue-300/70 text-xs">{fmtR(ad.costPerConversation)}</span> : <span className="text-gray-700 text-xs">—</span>}</Td>
+                              <Td><span className="text-amber-400/60">{fmtR(ad.spend)}</span></Td>
+                              <Td><span className="text-gray-600">{ad.cpm > 0 ? fmtR(ad.cpm) : "—"}</span></Td>
+                              <Td><span className="text-gray-600">{ad.ctr > 0 ? fmtPct(ad.ctr) : "—"}</span></Td>
+                              <Td><span className="text-gray-600">{fmtN(ad.impressions)}</span></Td>
+                              <Td>{ad.conversations > 0 ? <span className="text-blue-400/80 text-xs font-semibold">{fmtN(ad.conversations)}</span> : <span className="text-gray-700">—</span>}</Td>
+                              <Td>{ad.costPerConversation > 0 ? <span className="text-blue-300/70">{fmtR(ad.costPerConversation)}</span> : <span className="text-gray-700">—</span>}</Td>
                             </tr>
                           ))}
                         </>
