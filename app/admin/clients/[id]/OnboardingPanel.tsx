@@ -92,6 +92,7 @@ export function OnboardingPanel({ clientId, clientName: _clientName, clientNiche
   const [aiError, setAiError]           = useState("");
   const [nicheInput, setNicheInput]     = useState(clientNiche ?? "");
   const [initializing, setInitializing] = useState(false);
+  const [initError, setInitError]       = useState("");
   const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
 
   const load = useCallback(async () => {
@@ -112,13 +113,21 @@ export function OnboardingPanel({ clientId, clientName: _clientName, clientNiche
 
   const initOnboarding = async (force = false) => {
     setInitializing(true);
+    setInitError("");
     try {
-      await fetch("/api/onboarding/init", {
+      const res = await fetch("/api/onboarding/init", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ clientId, force }),
       });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        setInitError(err.error ?? `Erro ${res.status}`);
+        return;
+      }
       await load();
+    } catch (e) {
+      setInitError("Falha na conexão. Tente novamente.");
     } finally {
       setInitializing(false);
     }
@@ -205,7 +214,7 @@ export function OnboardingPanel({ clientId, clientName: _clientName, clientNiche
           <p className="text-xs text-gray-600 mt-1">Clique abaixo para criar as 16 etapas</p>
         </div>
         <button
-          onClick={initOnboarding}
+          onClick={() => initOnboarding(false)}
           disabled={initializing}
           className="flex items-center gap-2 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white text-sm px-5 py-2.5 rounded-xl font-medium transition-colors"
         >
@@ -215,6 +224,7 @@ export function OnboardingPanel({ clientId, clientName: _clientName, clientNiche
           }
           Iniciar Onboarding
         </button>
+        {initError && <p className="text-xs text-red-400">{initError}</p>}
       </div>
     );
   }
