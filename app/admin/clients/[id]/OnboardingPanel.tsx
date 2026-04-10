@@ -28,14 +28,50 @@ interface Props {
   clientNiche?: string;
 }
 
-// ─── Status config ────────────────────────────────────────────────────────────
+// ─── Field label map ──────────────────────────────────────────────────────────
 
+const FIELD_LABELS: Record<string, string> = {
+  // Etapa 1
+  cnpj:             "CNPJ da Empresa",
+  endereco_empresa: "Endereço da Empresa",
+  socio_nome:       "Nome Completo do Sócio ADM",
+  socio_endereco:   "Endereço do Sócio ADM (com CEP)",
+  socio_cpf:        "CPF do Sócio ADM",
+  socio_email:      "Email do Sócio ADM",
+  resp_nome:        "Nome Completo — Resp. Financeiro",
+  resp_telefone:    "Telefone WhatsApp (DDD) — Resp. Financeiro",
+  resp_email:       "Email — Resp. Financeiro",
+  // Etapa 2
+  linkContrato:     "Link do Contrato",
+  dataEnvio:        "Data de Envio",
+  observacoes:      "Observações",
+  // Etapas 6 e 13
+  dataReuniao:      "Data da Reunião",
+  linkReuniao:      "Link da Reunião (Meet/Zoom)",
+  // Etapa 8
+  linkDrive:        "Link da Pasta no Google Drive",
+  // Etapa 9
+  loginGoogle:      "Login Google",
+  senhaGoogle:      "Senha Google",
+  loginFacebook:    "Login Facebook",
+  senhaFacebook:    "Senha Facebook",
+  loginInstagram:   "Login Instagram",
+  senhaInstagram:   "Senha Instagram",
+  // Etapa 16
+  linkFormulario:   "Link do Formulário",
+};
+
+// Campos que são senhas (mostrar input type=password)
+const PASSWORD_FIELDS = new Set(["senhaGoogle", "senhaFacebook", "senhaInstagram"]);
+// Campos de data
+const DATE_FIELDS = new Set(["dataEnvio", "dataReuniao"]);
+
+// Status config
 const STATUS_LABELS: Record<string, string> = {
   pending:     "Pendente",
   in_progress: "Em andamento",
   done:        "Concluído",
 };
-
 const STATUS_COLORS: Record<string, string> = {
   pending:     "bg-gray-700 text-gray-300",
   in_progress: "bg-blue-900/60 text-blue-300",
@@ -45,17 +81,18 @@ const STATUS_COLORS: Record<string, string> = {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function OnboardingPanel({ clientId, clientName: _clientName, clientNiche }: Props) {
-  const [tasks, setTasks]           = useState<OnboardingTask[]>([]);
-  const [progress, setProgress]     = useState(0);
-  const [done, setDone]             = useState(0);
-  const [total, setTotal]           = useState(0);
-  const [loading, setLoading]       = useState(true);
-  const [expanded, setExpanded]     = useState<Set<string>>(new Set());
-  const [saving, setSaving]         = useState<Set<string>>(new Set());
-  const [aiLoading, setAiLoading]   = useState(false);
-  const [aiError, setAiError]       = useState("");
-  const [nicheInput, setNicheInput] = useState(clientNiche ?? "");
+  const [tasks, setTasks]               = useState<OnboardingTask[]>([]);
+  const [progress, setProgress]         = useState(0);
+  const [done, setDone]                 = useState(0);
+  const [total, setTotal]               = useState(0);
+  const [loading, setLoading]           = useState(true);
+  const [expanded, setExpanded]         = useState<Set<string>>(new Set());
+  const [saving, setSaving]             = useState<Set<string>>(new Set());
+  const [aiLoading, setAiLoading]       = useState(false);
+  const [aiError, setAiError]           = useState("");
+  const [nicheInput, setNicheInput]     = useState(clientNiche ?? "");
   const [initializing, setInitializing] = useState(false);
+  const [showPasswords, setShowPasswords] = useState<Set<string>>(new Set());
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -87,13 +124,11 @@ export function OnboardingPanel({ clientId, clientName: _clientName, clientNiche
     }
   };
 
-  const toggleExpand = (id: string) => {
-    setExpanded(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
-      return next;
-    });
-  };
+  const toggleExpand = (id: string) =>
+    setExpanded(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+
+  const togglePassword = (key: string) =>
+    setShowPasswords(prev => { const n = new Set(prev); n.has(key) ? n.delete(key) : n.add(key); return n; });
 
   const patchTask = async (
     task: OnboardingTask,
@@ -115,19 +150,17 @@ export function OnboardingPanel({ clientId, clientName: _clientName, clientNiche
         return next;
       });
     } finally {
-      setSaving(prev => { const next = new Set(prev); next.delete(task.id); return next; });
+      setSaving(prev => { const n = new Set(prev); n.delete(task.id); return n; });
     }
   };
 
   const toggleChecklist = (task: OnboardingTask, itemId: string) => {
     const items = task.data?.checklistItems ?? [];
-    const updated = items.map(i => i.id === itemId ? { ...i, checked: !i.checked } : i);
-    patchTask(task, { data: { ...task.data, checklistItems: updated } });
+    patchTask(task, { data: { ...task.data, checklistItems: items.map(i => i.id === itemId ? { ...i, checked: !i.checked } : i) } });
   };
 
-  const updateField = (task: OnboardingTask, key: string, value: string) => {
+  const updateField = (task: OnboardingTask, key: string, value: string) =>
     patchTask(task, { data: { ...task.data, fields: { ...task.data?.fields, [key]: value } } });
-  };
 
   const generateStrategy = async (task: OnboardingTask) => {
     if (!nicheInput.trim()) { setAiError("Informe o nicho do cliente"); return; }
@@ -151,7 +184,7 @@ export function OnboardingPanel({ clientId, clientName: _clientName, clientNiche
     }
   };
 
-  // ── Render: loading ──────────────────────────────────────────────────────────
+  // ── Loading ──────────────────────────────────────────────────────────────────
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16">
@@ -160,7 +193,7 @@ export function OnboardingPanel({ clientId, clientName: _clientName, clientNiche
     );
   }
 
-  // ── Render: empty (no tasks yet) ─────────────────────────────────────────────
+  // ── Empty ────────────────────────────────────────────────────────────────────
   if (tasks.length === 0) {
     return (
       <div className="text-center py-12 flex flex-col items-center gap-4">
@@ -169,7 +202,7 @@ export function OnboardingPanel({ clientId, clientName: _clientName, clientNiche
         </svg>
         <div>
           <p className="text-sm text-gray-400 font-medium">Onboarding não iniciado</p>
-          <p className="text-xs text-gray-600 mt-1">Clique abaixo para criar as 18 etapas</p>
+          <p className="text-xs text-gray-600 mt-1">Clique abaixo para criar as 16 etapas</p>
         </div>
         <button
           onClick={initOnboarding}
@@ -186,10 +219,10 @@ export function OnboardingPanel({ clientId, clientName: _clientName, clientNiche
     );
   }
 
-  // ── Render: tasks ────────────────────────────────────────────────────────────
+  // ── Tasks ────────────────────────────────────────────────────────────────────
   return (
     <div className="space-y-4">
-      {/* Progress bar */}
+      {/* Barra de progresso */}
       <div className="bg-[#111111] border border-[#262626] rounded-2xl p-5">
         <div className="flex items-center justify-between mb-3">
           <div>
@@ -206,7 +239,7 @@ export function OnboardingPanel({ clientId, clientName: _clientName, clientNiche
         </div>
       </div>
 
-      {/* Steps */}
+      {/* Etapas */}
       <div className="space-y-2">
         {tasks.map((task) => {
           const isExpanded  = expanded.has(task.id);
@@ -224,7 +257,7 @@ export function OnboardingPanel({ clientId, clientName: _clientName, clientNiche
                                                "border-[#262626] bg-[#1a1a1a]"
               }`}
             >
-              {/* Header */}
+              {/* Cabeçalho da etapa */}
               <button
                 onClick={() => toggleExpand(task.id)}
                 className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-white/[0.02] transition-colors"
@@ -257,11 +290,11 @@ export function OnboardingPanel({ clientId, clientName: _clientName, clientNiche
                 </div>
               </button>
 
-              {/* Body */}
+              {/* Corpo expandido */}
               {isExpanded && (
-                <div className="px-4 pb-4 space-y-4 border-t border-[#262626]">
-                  {/* Actions row */}
-                  <div className="flex flex-wrap gap-2 pt-3">
+                <div className="px-4 pb-5 space-y-5 border-t border-[#262626]">
+                  {/* Status + Responsável */}
+                  <div className="flex flex-wrap gap-2 pt-4">
                     <select
                       value={task.status}
                       disabled={isSaving}
@@ -289,11 +322,98 @@ export function OnboardingPanel({ clientId, clientName: _clientName, clientNiche
                         Concluído em {new Date(task.completedAt).toLocaleDateString("pt-BR")}
                       </span>
                     )}
-
                     {isSaving && <div className="w-4 h-4 border-2 border-violet-500 border-t-transparent rounded-full animate-spin self-center" />}
                   </div>
 
-                  {/* Checklist */}
+                  {/* ── Campos de texto (todos os steps com fields, exceto step 13 que tem IA) ── */}
+                  {Object.keys(fields).length > 0 && task.stepNumber !== 13 && (
+                    <div className="space-y-3">
+                      {/* Etapa 9: separar em grupos Google / Facebook / Instagram */}
+                      {task.stepNumber === 9 ? (
+                        <div className="space-y-4">
+                          {[
+                            { label: "Google",    login: "loginGoogle",    senha: "senhaGoogle" },
+                            { label: "Facebook",  login: "loginFacebook",  senha: "senhaFacebook" },
+                            { label: "Instagram", login: "loginInstagram", senha: "senhaInstagram" },
+                          ].map(platform => (
+                            <div key={platform.label} className="bg-[#111] border border-[#2a2a2a] rounded-xl p-4 space-y-3">
+                              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">{platform.label}</p>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                  <label className="text-xs text-gray-500 mb-1 block">Login / Email</label>
+                                  <input
+                                    type="text"
+                                    defaultValue={fields[platform.login] ?? ""}
+                                    onBlur={e => { if (e.target.value !== (fields[platform.login] ?? "")) updateField(task, platform.login, e.target.value); }}
+                                    className="w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2 text-sm text-gray-300 focus:outline-none focus:border-violet-500"
+                                    placeholder="email@exemplo.com"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="text-xs text-gray-500 mb-1 block">Senha</label>
+                                  <div className="relative">
+                                    <input
+                                      type={showPasswords.has(platform.senha) ? "text" : "password"}
+                                      defaultValue={fields[platform.senha] ?? ""}
+                                      onBlur={e => { if (e.target.value !== (fields[platform.senha] ?? "")) updateField(task, platform.senha, e.target.value); }}
+                                      className="w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2 pr-10 text-sm text-gray-300 focus:outline-none focus:border-violet-500"
+                                      placeholder="••••••••"
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={() => togglePassword(platform.senha)}
+                                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-400"
+                                    >
+                                      {showPasswords.has(platform.senha)
+                                        ? <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/></svg>
+                                        : <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                      }
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        /* Campos genéricos para outras etapas */
+                        Object.entries(fields).filter(([k]) => k !== "estrategiaIA").map(([key, val]) => (
+                          <div key={key}>
+                            <label className="text-xs text-gray-500 mb-1 block">{FIELD_LABELS[key] ?? key}</label>
+                            {key === "observacoes" ? (
+                              <textarea
+                                defaultValue={val}
+                                rows={3}
+                                onBlur={e => { if (e.target.value !== val) updateField(task, key, e.target.value); }}
+                                className="w-full bg-[#111] border border-[#333] rounded-lg px-3 py-2 text-sm text-gray-300 focus:outline-none focus:border-violet-500 resize-none"
+                              />
+                            ) : PASSWORD_FIELDS.has(key) ? (
+                              <div className="relative">
+                                <input
+                                  type={showPasswords.has(key) ? "text" : "password"}
+                                  defaultValue={val}
+                                  onBlur={e => { if (e.target.value !== val) updateField(task, key, e.target.value); }}
+                                  className="w-full bg-[#111] border border-[#333] rounded-lg px-3 py-2 pr-10 text-sm text-gray-300 focus:outline-none focus:border-violet-500"
+                                />
+                                <button type="button" onClick={() => togglePassword(key)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-400">
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                </button>
+                              </div>
+                            ) : (
+                              <input
+                                type={DATE_FIELDS.has(key) ? "date" : "text"}
+                                defaultValue={val}
+                                onBlur={e => { if (e.target.value !== val) updateField(task, key, e.target.value); }}
+                                className="w-full bg-[#111] border border-[#333] rounded-lg px-3 py-2 text-sm text-gray-300 focus:outline-none focus:border-violet-500 [color-scheme:dark]"
+                              />
+                            )}
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
+
+                  {/* ── Checklist ─────────────────────────────────────────────── */}
                   {checklist.length > 0 && (
                     <div className="space-y-2">
                       <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Checklist</p>
@@ -313,32 +433,8 @@ export function OnboardingPanel({ clientId, clientName: _clientName, clientNiche
                     </div>
                   )}
 
-                  {/* Extra fields (steps other than 14) */}
-                  {task.stepNumber !== 14 && Object.keys(fields).length > 0 && (
-                    <div className="space-y-2">
-                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Campos</p>
-                      {Object.entries(fields).map(([key, val]) => (
-                        <div key={key}>
-                          <label className="text-xs text-gray-500 mb-1 block">
-                            {key === "linkContrato"    ? "Link do Contrato" :
-                             key === "dataEnvio"       ? "Data de Envio" :
-                             key === "dataReuniao"     ? "Data da Reunião" :
-                             key === "linkReuniao"     ? "Link da Reunião (Meet/Zoom)" :
-                             key === "linkFormulario"  ? "Link do Formulário" : key}
-                          </label>
-                          <input
-                            type={key.startsWith("data") ? "date" : "text"}
-                            defaultValue={val}
-                            onBlur={e => { if (e.target.value !== val) updateField(task, key, e.target.value); }}
-                            className="w-full bg-[#111] border border-[#333] rounded-lg px-3 py-2 text-sm text-gray-300 focus:outline-none focus:border-violet-500 [color-scheme:dark]"
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Step 14 — AI Strategy */}
-                  {task.stepNumber === 14 && (
+                  {/* ── Etapa 13: Elaborador de estratégia com IA ─────────────── */}
+                  {task.stepNumber === 13 && (
                     <div className="space-y-3">
                       <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-2">
                         <svg className="w-3.5 h-3.5 text-violet-400" fill="currentColor" viewBox="0 0 20 20">
@@ -347,11 +443,10 @@ export function OnboardingPanel({ clientId, clientName: _clientName, clientNiche
                         Elaborador de Estratégia com IA
                       </p>
 
+                      {/* Campos de data/link da reunião */}
                       {["dataReuniao", "linkReuniao"].map(key => (
                         <div key={key}>
-                          <label className="text-xs text-gray-500 mb-1 block">
-                            {key === "dataReuniao" ? "Data da Reunião" : "Link da Reunião (Meet/Zoom)"}
-                          </label>
+                          <label className="text-xs text-gray-500 mb-1 block">{FIELD_LABELS[key]}</label>
                           <input
                             type={key === "dataReuniao" ? "date" : "text"}
                             defaultValue={fields[key] ?? ""}
@@ -361,6 +456,7 @@ export function OnboardingPanel({ clientId, clientName: _clientName, clientNiche
                         </div>
                       ))}
 
+                      {/* Nicho + botão IA */}
                       <div>
                         <label className="text-xs text-gray-500 mb-1 block">Nicho do cliente</label>
                         <div className="flex gap-2">
@@ -386,6 +482,7 @@ export function OnboardingPanel({ clientId, clientName: _clientName, clientNiche
                         {aiError && <p className="text-xs text-red-400 mt-1">{aiError}</p>}
                       </div>
 
+                      {/* Resultado da IA */}
                       {task.data?.estrategiaIA && (
                         <div className="bg-violet-950/30 border border-violet-800/40 rounded-xl p-4">
                           <p className="text-xs font-semibold text-violet-300 mb-2 flex items-center gap-1.5">
