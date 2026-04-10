@@ -86,13 +86,13 @@ export function OnboardingPanel({ clientId, clientName: _clientName, clientNiche
   const [done, setDone]                 = useState(0);
   const [total, setTotal]               = useState(0);
   const [loading, setLoading]           = useState(true);
-  const [expanded, setExpanded]         = useState<Set<string>>(new Set());
-  const [saving, setSaving]             = useState<Set<string>>(new Set());
+  const [expanded, setExpanded]         = useState<Record<string, boolean>>({});
+  const [saving, setSaving]             = useState<Record<string, boolean>>({});
   const [aiLoading, setAiLoading]       = useState(false);
   const [aiError, setAiError]           = useState("");
   const [nicheInput, setNicheInput]     = useState(clientNiche ?? "");
   const [initializing, setInitializing] = useState(false);
-  const [showPasswords, setShowPasswords] = useState<Set<string>>(new Set());
+  const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -125,16 +125,16 @@ export function OnboardingPanel({ clientId, clientName: _clientName, clientNiche
   };
 
   const toggleExpand = (id: string) =>
-    setExpanded(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+    setExpanded(prev => ({ ...prev, [id]: !prev[id] }));
 
   const togglePassword = (key: string) =>
-    setShowPasswords(prev => { const n = new Set(prev); n.has(key) ? n.delete(key) : n.add(key); return n; });
+    setShowPasswords(prev => ({ ...prev, [key]: !prev[key] }));
 
   const patchTask = async (
     task: OnboardingTask,
     updates: Partial<Pick<OnboardingTask, "status" | "assignedTo"> & { data: TaskData }>
   ) => {
-    setSaving(prev => new Set(prev).add(task.id));
+    setSaving(prev => ({ ...prev, [task.id]: true }));
     try {
       const res = await fetch(`/api/onboarding/task/${task.id}`, {
         method: "PATCH",
@@ -150,7 +150,7 @@ export function OnboardingPanel({ clientId, clientName: _clientName, clientNiche
         return next;
       });
     } finally {
-      setSaving(prev => { const n = new Set(prev); n.delete(task.id); return n; });
+      setSaving(prev => ({ ...prev, [task.id]: false }));
     }
   };
 
@@ -259,8 +259,8 @@ export function OnboardingPanel({ clientId, clientName: _clientName, clientNiche
       {/* Etapas */}
       <div className="space-y-2">
         {tasks.map((task) => {
-          const isExpanded  = expanded.has(task.id);
-          const isSaving    = saving.has(task.id);
+          const isExpanded  = !!expanded[task.id];
+          const isSaving    = !!saving[task.id];
           const checklist   = task.data?.checklistItems ?? [];
           const fields      = task.data?.fields ?? {};
           const checkedCount = checklist.filter(i => i.checked).length;
@@ -370,7 +370,7 @@ export function OnboardingPanel({ clientId, clientName: _clientName, clientNiche
                                   <label className="text-xs text-gray-500 mb-1 block">Senha</label>
                                   <div className="relative">
                                     <input
-                                      type={showPasswords.has(platform.senha) ? "text" : "password"}
+                                      type={showPasswords[platform.senha] ? "text" : "password"}
                                       defaultValue={fields[platform.senha] ?? ""}
                                       onBlur={e => { if (e.target.value !== (fields[platform.senha] ?? "")) updateField(task, platform.senha, e.target.value); }}
                                       className="w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2 pr-10 text-sm text-gray-300 focus:outline-none focus:border-violet-500"
@@ -381,7 +381,7 @@ export function OnboardingPanel({ clientId, clientName: _clientName, clientNiche
                                       onClick={() => togglePassword(platform.senha)}
                                       className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-400"
                                     >
-                                      {showPasswords.has(platform.senha)
+                                      {showPasswords[platform.senha]
                                         ? <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/></svg>
                                         : <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                                       }
@@ -407,7 +407,7 @@ export function OnboardingPanel({ clientId, clientName: _clientName, clientNiche
                             ) : PASSWORD_FIELDS.has(key) ? (
                               <div className="relative">
                                 <input
-                                  type={showPasswords.has(key) ? "text" : "password"}
+                                  type={showPasswords[key] ? "text" : "password"}
                                   defaultValue={val}
                                   onBlur={e => { if (e.target.value !== val) updateField(task, key, e.target.value); }}
                                   className="w-full bg-[#111] border border-[#333] rounded-lg px-3 py-2 pr-10 text-sm text-gray-300 focus:outline-none focus:border-violet-500"
