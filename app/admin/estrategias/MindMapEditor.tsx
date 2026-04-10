@@ -693,27 +693,43 @@ export function MindMapEditor({ initialNodes, clientName, month, onSave, onClose
             const a = nodeMap.get(conn.from);
             const b = nodeMap.get(conn.to);
             if (!a || !b) return null;
-            // Convert world → screen
-            const ax = panX + (a.x + a.w / 2) * zoom;
-            const ay = panY + (a.y + a.h / 2) * zoom;
-            const bx = panX + (b.x + b.w / 2) * zoom;
-            const by = panY + (b.y + b.h / 2) * zoom;
-            const qx = (ax + bx) / 2;
-            const qy = (ay + by) / 2 - 48;
-            const mx = (ax + bx) / 2;
-            const my = (ay + by) / 2;
+
+            // Pick the closest ports (left/right edge, vertical center)
+            const useARightPort = (a.x + a.w / 2) <= (b.x + b.w / 2);
+            const portAx = useARightPort ? a.x + a.w : a.x;
+            const portAy = a.y + a.h / 2;
+            const portBx = useARightPort ? b.x : b.x + b.w;
+            const portBy = b.y + b.h / 2;
+
+            // World → screen
+            const sx = panX + portAx * zoom;
+            const sy = panY + portAy * zoom;
+            const tx = panX + portBx * zoom;
+            const ty = panY + portBy * zoom;
+
+            // Smooth cubic bezier — tension proportional to distance, never over-arched
+            const hdist = Math.abs(tx - sx);
+            const vdist = Math.abs(ty - sy);
+            const tension = Math.max(30, (hdist * 0.45 + vdist * 0.1));
+            const sign = tx >= sx ? 1 : -1;
+            const cx1 = sx + sign * tension;
+            const cx2 = tx - sign * tension;
+            const d = `M${sx},${sy} C${cx1},${sy} ${cx2},${ty} ${tx},${ty}`;
+
+            const mx = (sx + tx) / 2;
+            const my = (sy + ty) / 2;
+
             return (
               <g key={conn.id}>
-                <path d={`M${ax},${ay} Q${qx},${qy} ${bx},${by}`}
-                  fill="none" stroke="#f59e0b" strokeWidth={2.5}
+                <path d={d} fill="none" stroke="#f59e0b" strokeWidth={2.5}
                   strokeDasharray="10 5" strokeLinecap="round"
                 />
-                {/* Delete button */}
-                <circle cx={mx} cy={my - 14} r={10} fill="#1c1c1c" stroke="#f59e0b" strokeWidth={1.5}
+                {/* Delete button at midpoint */}
+                <circle cx={mx} cy={my} r={10} fill="#1c1c1c" stroke="#f59e0b" strokeWidth={1.5}
                   style={{ pointerEvents: "auto", cursor: "pointer" }}
                   onClick={() => { setConnections(prev => prev.filter(c => c.id !== conn.id)); setDirty(true); }}
                 />
-                <text x={mx} y={my - 10} textAnchor="middle" fill="#f59e0b" fontSize="13" fontWeight="bold"
+                <text x={mx} y={my + 4} textAnchor="middle" fill="#f59e0b" fontSize="13" fontWeight="bold"
                   style={{ pointerEvents: "none" }}
                 >×</text>
               </g>
@@ -721,13 +737,23 @@ export function MindMapEditor({ initialNodes, clientName, month, onSave, onClose
           })}
 
           {/* Live drag preview */}
-          {drawingConn && (
-            <path
-              d={`M${panX + drawingConn.x1 * zoom},${panY + drawingConn.y1 * zoom} C${panX + (drawingConn.x1 + drawingConn.x2) / 2 * zoom},${panY + drawingConn.y1 * zoom} ${panX + (drawingConn.x1 + drawingConn.x2) / 2 * zoom},${panY + drawingConn.y2 * zoom} ${panX + drawingConn.x2 * zoom},${panY + drawingConn.y2 * zoom}`}
-              fill="none" stroke="#f59e0b" strokeWidth={2.5}
-              strokeDasharray="6 3" strokeLinecap="round"
-            />
-          )}
+          {drawingConn && (() => {
+            const sx = panX + drawingConn.x1 * zoom;
+            const sy = panY + drawingConn.y1 * zoom;
+            const tx = panX + drawingConn.x2 * zoom;
+            const ty = panY + drawingConn.y2 * zoom;
+            const hdist = Math.abs(tx - sx);
+            const vdist = Math.abs(ty - sy);
+            const tension = Math.max(30, hdist * 0.45 + vdist * 0.1);
+            const sign = tx >= sx ? 1 : -1;
+            return (
+              <path
+                d={`M${sx},${sy} C${sx + sign * tension},${sy} ${tx - sign * tension},${ty} ${tx},${ty}`}
+                fill="none" stroke="#f59e0b" strokeWidth={2.5}
+                strokeDasharray="6 3" strokeLinecap="round"
+              />
+            );
+          })()}
         </svg>
 
         {/* ── Note popover (screen-space, above canvas) ── */}
