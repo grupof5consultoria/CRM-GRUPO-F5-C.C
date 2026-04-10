@@ -151,6 +151,7 @@ export default async function ContractDetailPage({ params }: PageProps) {
                 contractId={contract.id}
                 currentStatus={contract.status}
                 signedToken={contract.signedToken}
+                distratoToken={contract.distratoToken}
               />
             </div>
 

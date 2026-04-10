@@ -91,6 +91,26 @@ export default async function PortalContractsPage() {
                   </div>
                 </div>
               )}
+
+              {/* Distrato pending CTA */}
+              {c.status === "pending_cancellation" && c.distratoToken && !c.distratoSignedAt && (
+                <div className="mt-4 pt-4 border-t border-[#262626]">
+                  <div className="flex items-center gap-3 bg-red-500/10 border border-red-500/30 rounded-xl p-4">
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-red-400">Distrato pendente</p>
+                      <p className="text-xs text-red-300/70 mt-0.5">Um Termo de Distrato foi gerado e aguarda a sua assinatura.</p>
+                    </div>
+                    <Link href={`/portal/assinar/distrato/${c.distratoToken}`}>
+                      <button className="flex items-center gap-2 bg-red-600 hover:bg-red-500 text-white text-sm font-bold rounded-xl px-4 py-2 transition-colors whitespace-nowrap">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                        </svg>
+                        Ver e assinar distrato
+                      </button>
+                    </Link>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>

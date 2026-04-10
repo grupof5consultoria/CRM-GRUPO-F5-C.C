@@ -50,6 +50,7 @@ enum ContractStatus {
   paused
   cancelled
   finished
+  pending_cancellation
 }
 
 enum ClientStatus {
@@ -301,6 +302,13 @@ model Contract {
   signedByName     String?
   signedByCpf      String?
   signedIp         String?
+
+  // Distrato (termination agreement)
+  distratoToken        String?   @unique @default(cuid())
+  distratoSignedAt     DateTime?
+  distratoSignedByName String?
+  distratoSignedByCpf  String?
+  distratoSignedIp     String?
 
   events  ContractEvent[]
   charges Charge[]

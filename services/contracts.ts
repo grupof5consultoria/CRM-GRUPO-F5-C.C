@@ -184,6 +184,81 @@ export async function getAcceptedProposalsWithoutContract() {
   });
 }
 
+export async function renewContract(contractId: string, additionalMonths: number) {
+  const contract = await prisma.contract.findUnique({ where: { id: contractId } });
+  if (!contract) throw new Error("Contrato não encontrado");
+
+  const currentMeses = contract.meses ?? 0;
+  const newMeses = currentMeses + additionalMonths;
+
+  // Extend endDate based on current endDate or signedAt or now
+  const baseDate = contract.endDate ?? contract.signedAt ?? new Date();
+  const newEndDate = new Date(baseDate);
+  newEndDate.setMonth(newEndDate.getMonth() + additionalMonths);
+
+  await prisma.contract.update({
+    where: { id: contractId },
+    data: { meses: newMeses, endDate: newEndDate },
+  });
+
+  await prisma.contractEvent.create({
+    data: {
+      contractId,
+      type: "renewed",
+      description: `Contrato renovado por mais ${additionalMonths} meses. Nova vigência: ${newMeses} meses total. Novo término: ${newEndDate.toLocaleDateString("pt-BR")}.`,
+    },
+  });
+}
+
+export async function requestCancellation(contractId: string) {
+  await prisma.contract.update({
+    where: { id: contractId },
+    data: { status: "pending_cancellation" },
+  });
+
+  await prisma.contractEvent.create({
+    data: {
+      contractId,
+      type: "cancellation_requested",
+      description: "Cancelamento solicitado. Distrato gerado e enviado ao portal do cliente para assinatura.",
+    },
+  });
+}
+
+export async function getContractByDistratoToken(token: string) {
+  return prisma.contract.findUnique({
+    where: { distratoToken: token },
+    include: { client: { select: { id: true, name: true } } },
+  });
+}
+
+export async function signDistrato(token: string, signedByName: string, signedByCpf: string, ip: string) {
+  const contract = await prisma.contract.findUnique({ where: { distratoToken: token } });
+  if (!contract) throw new Error("Distrato não encontrado");
+  if (contract.status !== "pending_cancellation") throw new Error("Distrato não está aguardando assinatura");
+
+  await prisma.contract.update({
+    where: { distratoToken: token },
+    data: {
+      status: "cancelled",
+      distratoSignedAt: new Date(),
+      distratoSignedByName: signedByName,
+      distratoSignedByCpf: signedByCpf,
+      distratoSignedIp: ip,
+    },
+  });
+
+  await prisma.contractEvent.create({
+    data: {
+      contractId: contract.id,
+      type: "distrato_signed",
+      description: `Distrato assinado digitalmente por ${signedByName} (CPF: ${signedByCpf}) — IP: ${ip}`,
+    },
+  });
+
+  return contract;
+}
+
 export const CONTRACT_STATUS_LABELS: Record<ContractStatus, string> = {
   draft: "Rascunho",
   pending_signature: "Aguardando Assinatura",
@@ -191,6 +266,7 @@ export const CONTRACT_STATUS_LABELS: Record<ContractStatus, string> = {
   paused: "Pausado",
   cancelled: "Cancelado",
   finished: "Finalizado",
+  pending_cancellation: "Distrato Pendente",
 };
 
 export const CONTRACT_STATUS_VARIANTS: Record<ContractStatus, "default" | "success" | "warning" | "danger" | "info" | "gray"> = {
@@ -200,4 +276,5 @@ export const CONTRACT_STATUS_VARIANTS: Record<ContractStatus, "default" | "succe
   paused: "info",
   cancelled: "danger",
   finished: "default",
+  pending_cancellation: "danger",
 };

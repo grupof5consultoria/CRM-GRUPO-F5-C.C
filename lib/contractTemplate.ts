@@ -83,7 +83,7 @@ ${v.servicos.map(s => `• ${s};`).join("\n")}
 
 4.1 O contrato poderá ser rescindido por qualquer das partes, mediante notificação com antecedência de 15 (quinze) dias.
 
-4.2 Caso o CONTRATANTE deseje rescindir o contrato antes do prazo final, incidirá multa de 50% sobre o valor restante do contrato.
+4.2 Caso o CONTRATANTE deseje rescindir o contrato antes do prazo final, incidirá multa de 30% sobre o valor restante do contrato.
 
 4.3 Em caso de inadimplência superior a 30 dias, os serviços serão automaticamente suspensos.
 
@@ -150,4 +150,69 @@ A CONTRATADA compromete-se a manter absoluto sigilo sobre todas as informações
 10 — DO FORO
 
 Fica eleito o foro da Comarca de São Paulo/SP para dirimir quaisquer dúvidas ou controvérsias oriundas do presente contrato.`;
+}
+
+// ─── Distrato Template ────────────────────────────────────────────────────────
+
+export interface DistratoVars {
+  nomeContratante: string;
+  cpfContratante: string;
+  plano: string;
+  valorMensal: number;
+  mesesTotal: number;
+  mesesDecorridos: number;
+  mesesRestantes: number;
+  valorMulta: number;
+  dataAssinatura: string;
+  dataDistrato: string;
+}
+
+export function renderDistrato(v: DistratoVars): string {
+  const valorContrato = v.valorMensal * v.mesesTotal;
+  const valorRestante = v.valorMensal * v.mesesRestantes;
+  return `TERMO DE DISTRATO — RESCISÃO CONTRATUAL
+
+As partes abaixo identificadas, de comum acordo, celebram o presente Termo de Distrato relativo ao Contrato de Prestação de Serviços de Marketing Digital, modalidade TRÁFEGO PAGO - ${v.plano}, firmado entre as partes.
+
+CONTRATADA: GRUPO F5 - CONSULTORIA DE MARKETING EMPRESARIAL, CNPJ nº 44.106.618/0001-06, com sede na Rua Maria Luísa Reis Monteiro dos Santos, nº 174, São Paulo/SP.
+
+CONTRATANTE: ${v.nomeContratante}, inscrito(a) no CPF sob o nº ${v.cpfContratante}.
+
+
+CLÁUSULAS
+
+1 — DO OBJETO
+
+1.1 As partes acordam a rescisão amigável do Contrato de Prestação de Serviços firmado em ${v.dataAssinatura}, referente ao plano ${v.plano}, com vigência total de ${v.mesesTotal} (${MESES_EXTENSO[v.mesesTotal] ?? v.mesesTotal}) meses.
+
+1.2 A rescisão se tornará efetiva na data de assinatura deste instrumento, ${v.dataDistrato}.
+
+
+2 — DA MULTA RESCISÓRIA
+
+2.1 Conforme cláusula 4.2 do contrato original, a rescisão antecipada por iniciativa do CONTRATANTE implica multa de 30% (trinta por cento) sobre o valor restante do contrato.
+
+2.2 Detalhamento:
+  • Valor mensal: ${fmtBRL(v.valorMensal)}
+  • Valor total do contrato: ${fmtBRL(valorContrato)}
+  • Meses decorridos: ${v.mesesDecorridos}
+  • Meses restantes: ${v.mesesRestantes}
+  • Valor restante: ${fmtBRL(valorRestante)}
+  • Multa rescisória (30%): ${fmtBRL(v.valorMulta)}
+
+2.3 O CONTRATANTE se compromete a efetuar o pagamento da multa rescisória no valor de ${fmtBRL(v.valorMulta)}, mediante chave PIX nº 502.786.368-37 (CPF), no prazo de 10 (dez) dias úteis a partir da assinatura deste distrato.
+
+
+3 — DAS DISPOSIÇÕES GERAIS
+
+3.1 Com a assinatura deste Termo de Distrato, ambas as partes declaram quitadas todas as obrigações decorrentes do contrato, ressalvado o pagamento da multa prevista na cláusula 2 e eventuais cobranças em aberto.
+
+3.2 O CONTRATANTE, caso deseje manter o site entregue durante a vigência do contrato, deverá observar o disposto na cláusula 2.5 do contrato original, realizando o pagamento de R$ 1.500,00 (mil e quinhentos reais) para transferência da titularidade.
+
+3.3 As partes renunciam expressamente ao direito de pleitear qualquer indenização ou ressarcimento decorrente do contrato ora rescindido, exceto pelos valores expressamente previstos neste instrumento.
+
+
+4 — DO FORO
+
+Fica eleito o foro da Comarca de São Paulo/SP para dirimir quaisquer dúvidas ou controvérsias oriundas do presente instrumento.`;
 }

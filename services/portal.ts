@@ -44,6 +44,8 @@ export async function getPortalContracts(clientId: string) {
       notes: true,
       signedAt: true,
       signedToken: true,
+      distratoToken: true,
+      distratoSignedAt: true,
       createdAt: true,
     },
     orderBy: { createdAt: "desc" },

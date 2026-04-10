@@ -53,6 +53,7 @@ export const CONTRACT_STATUS_LABELS: Record<ContractStatus, string> = {
   paused: "Pausado",
   cancelled: "Cancelado",
   finished: "Finalizado",
+  pending_cancellation: "Distrato Pendente",
 };
 
 export const CONTRACT_STATUS_VARIANTS: Record<ContractStatus, "default" | "success" | "warning" | "danger" | "info" | "gray"> = {
@@ -62,6 +63,7 @@ export const CONTRACT_STATUS_VARIANTS: Record<ContractStatus, "default" | "succe
   paused: "info",
   cancelled: "danger",
   finished: "default",
+  pending_cancellation: "danger",
 };
 
 export const CLIENT_STATUS_LABELS: Record<ClientStatus, string> = {
