@@ -11,16 +11,12 @@ export interface MindNode {
   note?: string;
 }
 
-interface Connection {
-  id: string;
-  from: string;
-  to: string;
-}
+interface Connection { id: string; from: string; to: string; }
 
-// What we persist: the tree root plus two hidden fields
 interface StoredRoot extends MindNode {
   _connections?: Connection[];
   _positions?: Record<string, { x: number; y: number }>;
+  _sizes?: Record<string, { w: number; h: number }>;
 }
 
 // ─── Palette ──────────────────────────────────────────────────────────────────
@@ -35,7 +31,7 @@ const PALETTE = [
 const H_GAP = 130;
 const V_GAP = 22;
 
-function nodeSize(text: string, lvl: number) {
+function defSize(text: string, lvl: number) {
   const w = Math.min(240, Math.max(lvl === 0 ? 180 : 100, text.length * 8.2 + 40));
   return { w, h: lvl === 0 ? 52 : 38 };
 }
@@ -47,36 +43,32 @@ interface LN {
   note?: string;
 }
 
-function stHeight(n: MindNode, lvl: number): number {
-  if (!n.children.length) return nodeSize(n.text, lvl).h + V_GAP;
-  return n.children.reduce((s, c) => s + stHeight(c, lvl + 1), 0);
+function stH(n: MindNode, lvl: number): number {
+  if (!n.children.length) return defSize(n.text, lvl).h + V_GAP;
+  return n.children.reduce((s, c) => s + stH(c, lvl + 1), 0);
 }
 
-function place(
-  n: MindNode, ax: number, topY: number,
-  dir: 1 | -1, lvl: number, color: string, pid: string | null,
-  out: LN[]
-) {
-  const { w, h } = nodeSize(n.text, lvl);
-  const sh = stHeight(n, lvl);
+function place(n: MindNode, ax: number, topY: number, dir: 1 | -1, lvl: number, color: string, pid: string | null, out: LN[]) {
+  const { w, h } = defSize(n.text, lvl);
+  const sh = stH(n, lvl);
   out.push({ id: n.id, text: n.text, x: dir === 1 ? ax : ax - w, y: topY + (sh - h) / 2, w, h, lvl, color, dir, pid, note: n.note });
   if (!n.children.length) return;
   const nx = dir === 1 ? ax + w + H_GAP : ax - w - H_GAP;
   let cy = topY;
-  for (const c of n.children) { place(c, nx, cy, dir, lvl + 1, color, n.id, out); cy += stHeight(c, lvl + 1); }
+  for (const c of n.children) { place(c, nx, cy, dir, lvl + 1, color, n.id, out); cy += stH(c, lvl + 1); }
 }
 
 function computeLayout(root: MindNode): LN[] {
   const out: LN[] = [];
-  const { w: rw, h: rh } = nodeSize(root.text, 0);
+  const { w: rw, h: rh } = defSize(root.text, 0);
   out.push({ id: root.id, text: root.text, x: -rw / 2, y: -rh / 2, w: rw, h: rh, lvl: 0, color: "#7c3aed", dir: 1, pid: null, note: root.note });
   if (!root.children.length) return out;
   const right = root.children.filter((_, i) => i % 2 === 0);
   const left  = root.children.filter((_, i) => i % 2 !== 0);
-  let ry = -right.reduce((s, c) => s + stHeight(c, 1), 0) / 2;
-  right.forEach((c, i) => { const sh = stHeight(c, 1); place(c, rw / 2 + H_GAP, ry, 1, 1, PALETTE[i % PALETTE.length], root.id, out); ry += sh; });
-  let ly = -left.reduce((s, c) => s + stHeight(c, 1), 0) / 2;
-  left.forEach((c, i) => { const sh = stHeight(c, 1); place(c, -rw / 2 - H_GAP, ly, -1, 1, PALETTE[(i + 4) % PALETTE.length], root.id, out); ly += sh; });
+  let ry = -right.reduce((s, c) => s + stH(c, 1), 0) / 2;
+  right.forEach((c, i) => { const sh = stH(c, 1); place(c, rw / 2 + H_GAP, ry, 1, 1, PALETTE[i % PALETTE.length], root.id, out); ry += sh; });
+  let ly = -left.reduce((s, c) => s + stH(c, 1), 0) / 2;
+  left.forEach((c, i) => { const sh = stH(c, 1); place(c, -rw / 2 - H_GAP, ly, -1, 1, PALETTE[(i + 4) % PALETTE.length], root.id, out); ly += sh; });
   return out;
 }
 
@@ -118,13 +110,16 @@ interface Props {
 export function MindMapEditor({ initialNodes, clientName, month, onSave, onClose }: Props) {
   const stored = initialNodes as StoredRoot;
 
-  // Parse stored data — strip hidden fields from tree
   const [tree, setTree] = useState<MindNode>(() => {
-    const { _connections: _c, _positions: _p, ...treeOnly } = stored;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { _connections, _positions, _sizes, ...treeOnly } = stored;
     return treeOnly as MindNode;
   });
   const [positions, setPositions] = useState<Record<string, { x: number; y: number }>>(
     () => stored._positions ?? {}
+  );
+  const [sizes, setSizes] = useState<Record<string, { w: number; h: number }>>(
+    () => stored._sizes ?? {}
   );
   const [connections, setConnections] = useState<Connection[]>(
     () => stored._connections ?? []
@@ -135,8 +130,9 @@ export function MindMapEditor({ initialNodes, clientName, month, onSave, onClose
   const [editTxt, setEditTxt]   = useState("");
   const [noteNode, setNoteNode] = useState<string | null>(null);
   const [noteDraft, setNoteDraft] = useState("");
-  const [connectMode, setConnectMode] = useState(false);
-  const [connectSrc, setConnectSrc]   = useState<string | null>(null);
+
+  // Drawing a new manual connection (follows mouse)
+  const [drawingConn, setDrawingConn] = useState<{ x1: number; y1: number; x2: number; y2: number } | null>(null);
 
   const [panX, setPanX]   = useState(0);
   const [panY, setPanY]   = useState(0);
@@ -148,23 +144,33 @@ export function MindMapEditor({ initialNodes, clientName, month, onSave, onClose
   const inputRef = useRef<HTMLInputElement>(null);
   const noteRef  = useRef<HTMLTextAreaElement>(null);
 
-  // Pan drag state
+  // Drag refs (avoid stale closure issues with useCallback)
   const panDragging = useRef(false);
   const panLast     = useRef({ x: 0, y: 0 });
+  const nodeDrag    = useRef<{ id: string; ox: number; oy: number; sx: number; sy: number } | null>(null);
+  const resizeDrag  = useRef<{ id: string; origW: number; origH: number; sx: number; sy: number } | null>(null);
+  const connDragRef = useRef<{ fromId: string; x1: number; y1: number } | null>(null);
+  const hasDragged  = useRef(false);
 
-  // Node drag state
-  const nodeDrag = useRef<{ id: string; ox: number; oy: number; sx: number; sy: number } | null>(null);
-  const hasDragged = useRef(false);
+  // Live state ref for stable callbacks
+  const stateRef = useRef({ panX: 0, panY: 0, zoom: 1, nodes: [] as LN[] });
 
-  // Layout: auto-positions merged with manual overrides
+  // Layout: compute positions, then apply manual overrides
   const baseNodes = useMemo(() => computeLayout(tree), [tree]);
-  const nodes: LN[] = useMemo(() => baseNodes.map(n => {
-    const ov = positions[n.id];
-    return ov ? { ...n, x: ov.x, y: ov.y } : n;
-  }), [baseNodes, positions]);
+  const nodes: LN[] = useMemo(() => baseNodes.map(n => ({
+    ...n,
+    x: positions[n.id]?.x ?? n.x,
+    y: positions[n.id]?.y ?? n.y,
+    w: sizes[n.id]?.w ?? n.w,
+    h: sizes[n.id]?.h ?? n.h,
+  })), [baseNodes, positions, sizes]);
   const nodeMap = useMemo(() => new Map(nodes.map(n => [n.id, n])), [nodes]);
 
-  // Center canvas on mount
+  // Keep stateRef in sync (runs every render, before event handlers fire)
+  stateRef.current = { panX, panY, zoom, nodes };
+
+  // ── Effects ──────────────────────────────────────────────────────────────────
+
   useEffect(() => {
     const el = wrapRef.current;
     if (!el) return;
@@ -175,17 +181,14 @@ export function MindMapEditor({ initialNodes, clientName, month, onSave, onClose
   useEffect(() => { if (editId) inputRef.current?.focus(); }, [editId]);
   useEffect(() => { if (noteNode) noteRef.current?.focus(); }, [noteNode]);
 
-  // Keyboard shortcuts
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (noteNode || editId) return;
       if (!sel) return;
       if (e.key === "Tab") {
         e.preventDefault();
-        const newTree = addChild(tree, sel);
-        setTree(newTree);
-        setDirty(true);
-        const orig = findNode(newTree, sel);
+        const nt = addChild(tree, sel); setTree(nt); setDirty(true);
+        const orig = findNode(nt, sel);
         if (orig?.children.length) {
           const last = orig.children[orig.children.length - 1];
           setSel(last.id); setEditId(last.id); setEditTxt(last.text);
@@ -196,19 +199,20 @@ export function MindMapEditor({ initialNodes, clientName, month, onSave, onClose
         setTree(prev => removeNode(prev, sel));
         setConnections(prev => prev.filter(c => c.from !== sel && c.to !== sel));
         setPositions(prev => { const n = { ...prev }; delete n[sel]; return n; });
+        setSizes(prev => { const n = { ...prev }; delete n[sel]; return n; });
         setSel(null); setDirty(true);
       }
       if (e.key === "F2" || e.key === "Enter") {
-        const n = findNode(tree, sel);
-        if (n) { setEditId(sel); setEditTxt(n.text); }
+        const nd = findNode(tree, sel);
+        if (nd) { setEditId(sel); setEditTxt(nd.text); }
       }
-      if (e.key === "Escape") { setSel(null); setConnectMode(false); setConnectSrc(null); }
+      if (e.key === "Escape") setSel(null);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [sel, editId, tree, noteNode]);
 
-  // ── Mouse handlers ─────────────────────────────────────────────────────────
+  // ── Mouse handlers ────────────────────────────────────────────────────────────
 
   const onCanvasMouseDown = useCallback((e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest(".mind-node")) return;
@@ -216,15 +220,32 @@ export function MindMapEditor({ initialNodes, clientName, month, onSave, onClose
     panLast.current = { x: e.clientX, y: e.clientY };
   }, []);
 
+  // Node body drag (move node)
   const onNodeMouseDown = useCallback((e: React.MouseEvent, id: string, nx: number, ny: number) => {
-    if ((e.target as HTMLElement).closest("button")) return;
-    if (connectMode) return;
+    if ((e.target as HTMLElement).closest(".mm-port,.mm-resize,button")) return;
     e.stopPropagation();
     hasDragged.current = false;
     nodeDrag.current = { id, ox: nx, oy: ny, sx: e.clientX, sy: e.clientY };
-  }, [connectMode]);
+  }, []);
+
+  // Start drawing a connection (drag from port dot)
+  const startConnDrag = useCallback((fromId: string, x1: number, y1: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    hasDragged.current = false;
+    connDragRef.current = { fromId, x1, y1 };
+    setDrawingConn({ x1, y1, x2: x1, y2: y1 });
+  }, []);
+
+  // Start resizing
+  const startResizeDrag = useCallback((id: string, origW: number, origH: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    hasDragged.current = false;
+    resizeDrag.current = { id, origW, origH, sx: e.clientX, sy: e.clientY };
+  }, []);
 
   const onMouseMove = useCallback((e: React.MouseEvent) => {
+    const { panX: px, panY: py, zoom: z } = stateRef.current;
+
     if (panDragging.current) {
       const dx = e.clientX - panLast.current.x;
       const dy = e.clientY - panLast.current.y;
@@ -234,17 +255,54 @@ export function MindMapEditor({ initialNodes, clientName, month, onSave, onClose
     }
     if (nodeDrag.current) {
       const { id, ox, oy, sx, sy } = nodeDrag.current;
-      const dx = (e.clientX - sx) / zoom;
-      const dy = (e.clientY - sy) / zoom;
-      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) hasDragged.current = true;
+      const dx = (e.clientX - sx) / z;
+      const dy = (e.clientY - sy) / z;
+      if (Math.abs(e.clientX - sx) > 3 || Math.abs(e.clientY - sy) > 3) hasDragged.current = true;
       setPositions(prev => ({ ...prev, [id]: { x: ox + dx, y: oy + dy } }));
     }
-  }, [zoom]);
+    if (resizeDrag.current) {
+      const { id, origW, origH, sx, sy } = resizeDrag.current;
+      const dw = (e.clientX - sx) / z;
+      const dh = (e.clientY - sy) / z;
+      hasDragged.current = true;
+      setSizes(prev => ({ ...prev, [id]: { w: Math.max(80, origW + dw), h: Math.max(28, origH + dh) } }));
+    }
+    if (connDragRef.current) {
+      hasDragged.current = true;
+      const wx = (e.clientX - px) / z;
+      const wy = (e.clientY - py) / z;
+      setDrawingConn(prev => prev ? { ...prev, x2: wx, y2: wy } : null);
+    }
+  }, []);
 
-  const onMouseUp = useCallback(() => {
-    if (nodeDrag.current && hasDragged.current) setDirty(true);
-    nodeDrag.current = null;
+  const onMouseUp = useCallback((e: React.MouseEvent) => {
+    const { panX: px, panY: py, zoom: z, nodes: ns } = stateRef.current;
+
+    // Finish drawing connection
+    if (connDragRef.current) {
+      const wx = (e.clientX - px) / z;
+      const wy = (e.clientY - py) / z;
+      const fromId = connDragRef.current.fromId;
+      const target = ns.find(n => wx >= n.x && wx <= n.x + n.w && wy >= n.y && wy <= n.y + n.h);
+      if (target && target.id !== fromId) {
+        setConnections(prev => {
+          const exists = prev.some(c =>
+            (c.from === fromId && c.to === target.id) ||
+            (c.from === target.id && c.to === fromId)
+          );
+          return exists ? prev : [...prev, { id: uid(), from: fromId, to: target.id }];
+        });
+        setDirty(true);
+      }
+      connDragRef.current = null;
+      setDrawingConn(null);
+    }
+
+    if ((nodeDrag.current || resizeDrag.current) && hasDragged.current) setDirty(true);
+    nodeDrag.current   = null;
+    resizeDrag.current = null;
     panDragging.current = false;
+    hasDragged.current  = false;
   }, []);
 
   const onWheel = useCallback((e: React.WheelEvent) => {
@@ -254,33 +312,7 @@ export function MindMapEditor({ initialNodes, clientName, month, onSave, onClose
     }
   }, []);
 
-  const handleNodeClick = (e: React.MouseEvent, nodeId: string) => {
-    e.stopPropagation();
-    if (hasDragged.current) { hasDragged.current = false; return; }
-    if (editId && editId !== nodeId) commitEdit();
-
-    if (connectMode) {
-      if (!connectSrc) {
-        setConnectSrc(nodeId);
-      } else if (connectSrc !== nodeId) {
-        const exists = connections.some(c =>
-          (c.from === connectSrc && c.to === nodeId) ||
-          (c.from === nodeId && c.to === connectSrc)
-        );
-        if (!exists) {
-          setConnections(prev => [...prev, { id: uid(), from: connectSrc, to: nodeId }]);
-          setDirty(true);
-        }
-        setConnectSrc(null);
-        setConnectMode(false);
-      }
-      return;
-    }
-
-    setSel(nodeId);
-  };
-
-  // ── Edit / note / save ─────────────────────────────────────────────────────
+  // ── Commit helpers ────────────────────────────────────────────────────────────
 
   const commitEdit = () => {
     if (editId && editTxt.trim()) {
@@ -304,6 +336,7 @@ export function MindMapEditor({ initialNodes, clientName, month, onSave, onClose
       ...tree,
       ...(connections.length > 0 ? { _connections: connections } : {}),
       ...(Object.keys(positions).length > 0 ? { _positions: positions } : {}),
+      ...(Object.keys(sizes).length > 0 ? { _sizes: sizes } : {}),
     };
     await onSave(payload as MindNode);
     setSaving(false);
@@ -323,7 +356,7 @@ export function MindMapEditor({ initialNodes, clientName, month, onSave, onClose
     return new Date(+y, +mo - 1, 1).toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
   };
 
-  // ── Render ─────────────────────────────────────────────────────────────────
+  // ── Render ────────────────────────────────────────────────────────────────────
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-[#0d0d0d]">
@@ -341,35 +374,14 @@ export function MindMapEditor({ initialNodes, clientName, month, onSave, onClose
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Connect mode */}
-          <button
-            onClick={() => { setConnectMode(c => !c); setConnectSrc(null); }}
-            title="Desenhar conexão entre nós"
-            className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl border transition-all font-medium ${
-              connectMode
-                ? "bg-amber-500 border-amber-400 text-black"
-                : "bg-[#1a1a1a] border-[#262626] text-gray-400 hover:text-gray-200 hover:border-[#333]"
-            }`}
-          >
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
-            </svg>
-            {connectMode
-              ? (connectSrc ? "→ clique no destino" : "← clique na origem")
-              : "Conectar"}
-          </button>
-
-          {/* Zoom controls */}
           <div className="flex items-center gap-0 bg-[#1a1a1a] border border-[#262626] rounded-xl overflow-hidden">
             <button onClick={() => setZoom(z => Math.max(0.2, z - 0.1))} className="px-3 py-1.5 text-gray-400 hover:bg-[#262626] hover:text-gray-200 transition-colors text-sm">−</button>
             <span className="px-2 text-xs text-gray-500 min-w-[46px] text-center">{Math.round(zoom * 100)}%</span>
             <button onClick={() => setZoom(z => Math.min(3, z + 0.1))} className="px-3 py-1.5 text-gray-400 hover:bg-[#262626] hover:text-gray-200 transition-colors text-sm">+</button>
           </div>
-
           <button onClick={resetView} title="Centralizar" className="w-8 h-8 flex items-center justify-center rounded-xl bg-[#1a1a1a] border border-[#262626] text-gray-500 hover:text-gray-300 hover:border-[#333] transition-colors">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
           </button>
-
           {dirty ? (
             <button onClick={handleSave} disabled={saving} className="flex items-center gap-1.5 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white text-xs px-4 py-2 rounded-xl font-semibold transition-colors">
               {saving && <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"/>}
@@ -384,7 +396,7 @@ export function MindMapEditor({ initialNodes, clientName, month, onSave, onClose
       {/* ── Canvas ── */}
       <div
         ref={wrapRef}
-        className={`flex-1 overflow-hidden relative select-none ${connectMode ? "cursor-crosshair" : "cursor-grab active:cursor-grabbing"}`}
+        className={`flex-1 overflow-hidden relative select-none ${drawingConn ? "cursor-crosshair" : "cursor-grab active:cursor-grabbing"}`}
         style={{ background: "radial-gradient(circle at 50% 50%, #141414 0%, #0d0d0d 100%)" }}
         onMouseDown={onCanvasMouseDown}
         onMouseMove={onMouseMove}
@@ -395,129 +407,117 @@ export function MindMapEditor({ initialNodes, clientName, month, onSave, onClose
           if (!(e.target as HTMLElement).closest(".mind-node")) {
             setSel(null);
             if (editId) commitEdit();
-            if (connectMode) { setConnectMode(false); setConnectSrc(null); }
           }
         }}
       >
         {/* Dot grid */}
         <svg className="absolute inset-0 w-full h-full pointer-events-none">
           <defs>
-            <pattern id="dots" x="0" y="0" width="24" height="24" patternUnits="userSpaceOnUse">
+            <pattern id="mm-dots" x="0" y="0" width="24" height="24" patternUnits="userSpaceOnUse">
               <circle cx="1" cy="1" r="0.8" fill="#2a2a2a"/>
             </pattern>
           </defs>
-          <rect width="100%" height="100%" fill="url(#dots)"/>
+          <rect width="100%" height="100%" fill="url(#mm-dots)"/>
         </svg>
 
-        {/* Transform layer */}
+        {/* ── Transform layer ── */}
         <div
           className="absolute"
           style={{ left: 0, top: 0, transform: `translate(${panX}px,${panY}px) scale(${zoom})`, transformOrigin: "0 0" }}
         >
-          {/* SVG: tree connections + manual connections */}
+          {/* SVG: all connection lines */}
           <svg className="absolute pointer-events-none" style={{ overflow: "visible", left: 0, top: 0, width: 0, height: 0 }}>
 
-            {/* Tree parent→child curves */}
+            {/* Tree parent→child bezier curves */}
             {nodes.filter(n => n.pid !== null).map(n => {
-              const parent = nodeMap.get(n.pid!);
-              if (!parent) return null;
-              const sx = parent.dir === 1 ? parent.x + parent.w : parent.x;
-              const sy = parent.y + parent.h / 2;
+              const p = nodeMap.get(n.pid!);
+              if (!p) return null;
+              const sx = p.dir === 1 ? p.x + p.w : p.x;
+              const sy = p.y + p.h / 2;
               const tx = n.dir === 1 ? n.x : n.x + n.w;
               const ty = n.y + n.h / 2;
               const cx = (sx + tx) / 2;
               return (
-                <path
-                  key={n.id + "-c"}
+                <path key={n.id + "-c"}
                   d={`M${sx},${sy} C${cx},${sy} ${cx},${ty} ${tx},${ty}`}
-                  fill="none"
-                  stroke={n.color}
-                  strokeWidth={parent.lvl === 0 ? 2.5 : 2}
-                  strokeOpacity={0.75}
-                  strokeLinecap="round"
+                  fill="none" stroke={n.color}
+                  strokeWidth={p.lvl === 0 ? 2.5 : 2}
+                  strokeOpacity={0.75} strokeLinecap="round"
                 />
               );
             })}
 
-            {/* Manual connections (dashed amber) */}
+            {/* Manual connections (dashed amber) — each has a × to delete */}
             {connections.map(conn => {
               const a = nodeMap.get(conn.from);
               const b = nodeMap.get(conn.to);
               if (!a || !b) return null;
-              const sx = a.x + a.w / 2;
-              const sy = a.y + a.h / 2;
-              const tx = b.x + b.w / 2;
-              const ty = b.y + b.h / 2;
-              const mx = (sx + tx) / 2;
-              const my = (sy + ty) / 2 - 50;
-              const bx = (sx + tx) / 2;
-              const by = (sy + ty) / 2;
+              const sx = a.x + a.w / 2, sy = a.y + a.h / 2;
+              const tx = b.x + b.w / 2, ty = b.y + b.h / 2;
+              const qx = (sx + tx) / 2, qy = (sy + ty) / 2 - 48;
+              const mx = (sx + tx) / 2, my = (sy + ty) / 2;
               return (
                 <g key={conn.id}>
-                  <path
-                    d={`M${sx},${sy} Q${mx},${my} ${tx},${ty}`}
-                    fill="none"
-                    stroke="#f59e0b"
-                    strokeWidth={2}
-                    strokeDasharray="7 4"
-                    strokeOpacity={0.85}
-                    strokeLinecap="round"
+                  <path d={`M${sx},${sy} Q${qx},${qy} ${tx},${ty}`}
+                    fill="none" stroke="#f59e0b" strokeWidth={2}
+                    strokeDasharray="8 4" strokeOpacity={0.85} strokeLinecap="round"
                   />
-                  {/* ×  delete button at midpoint */}
-                  <circle
-                    cx={bx} cy={by - 10}
-                    r={9}
-                    fill="#1a1a1a"
-                    stroke="#444"
-                    strokeWidth={1}
-                    className="pointer-events-auto"
-                    style={{ cursor: "pointer" }}
+                  {/* Delete button on midpoint */}
+                  <circle cx={mx} cy={my - 12} r={9} fill="#1a1a1a" stroke="#444"
+                    className="pointer-events-auto" style={{ cursor: "pointer" }}
                     onClick={() => { setConnections(prev => prev.filter(c => c.id !== conn.id)); setDirty(true); }}
                   />
-                  <text x={bx} y={by - 6} textAnchor="middle" fill="#888" fontSize="11" className="pointer-events-none">×</text>
+                  <text x={mx} y={my - 8} textAnchor="middle" fill="#888" fontSize="12" className="pointer-events-none">×</text>
                 </g>
               );
             })}
+
+            {/* Live preview while dragging a new connection */}
+            {drawingConn && (
+              <path
+                d={`M${drawingConn.x1},${drawingConn.y1} C${(drawingConn.x1 + drawingConn.x2) / 2},${drawingConn.y1} ${(drawingConn.x1 + drawingConn.x2) / 2},${drawingConn.y2} ${drawingConn.x2},${drawingConn.y2}`}
+                fill="none" stroke="#f59e0b" strokeWidth={2.5}
+                strokeDasharray="6 3" strokeOpacity={0.9} strokeLinecap="round"
+              />
+            )}
           </svg>
 
-          {/* Nodes */}
+          {/* ── Nodes ── */}
           {nodes.map(n => {
-            const isRoot    = n.lvl === 0;
-            const isSel     = sel === n.id;
-            const isEdit    = editId === n.id;
-            const isConnSrc = connectSrc === n.id;
-            const hex       = n.color;
-            const hasNote   = !!n.note;
+            const isRoot  = n.lvl === 0;
+            const isSel   = sel === n.id;
+            const isEdit  = editId === n.id;
+            const hex     = n.color;
+            const hasNote = !!n.note;
 
             return (
               <div
                 key={n.id}
                 className="mind-node absolute group"
-                style={{
-                  left: n.x, top: n.y, width: n.w, height: n.h,
-                  cursor: connectMode ? "pointer" : "grab",
-                  zIndex: isSel ? 10 : 1,
-                }}
+                style={{ left: n.x, top: n.y, width: n.w, height: n.h, zIndex: isSel ? 10 : 1 }}
                 onMouseDown={e => onNodeMouseDown(e, n.id, n.x, n.y)}
-                onClick={e => handleNodeClick(e, n.id)}
+                onClick={e => {
+                  e.stopPropagation();
+                  if (hasDragged.current) return;
+                  if (editId && editId !== n.id) commitEdit();
+                  setSel(n.id);
+                }}
                 onDoubleClick={e => {
                   e.stopPropagation();
-                  if (connectMode || hasDragged.current) return;
+                  if (hasDragged.current) return;
                   setSel(n.id); setEditId(n.id); setEditTxt(n.text);
                 }}
               >
+                {/* ── Main box ── */}
                 <div
                   className="w-full h-full rounded-2xl flex items-center justify-center px-3 transition-all duration-100 relative"
                   style={{
                     background: isRoot ? hex : `${hex}22`,
-                    border: `2px solid ${isConnSrc ? "#f59e0b" : isSel ? "#fff" : hex}`,
-                    boxShadow: isConnSrc
-                      ? `0 0 0 3px #f59e0b66, 0 4px 20px #f59e0b33`
-                      : isSel
+                    border: `2px solid ${isSel ? "#fff" : hex}`,
+                    boxShadow: isSel
                       ? `0 0 0 3px ${hex}55, 0 4px 20px ${hex}33`
-                      : isRoot
-                      ? `0 4px 16px ${hex}44`
-                      : `0 2px 8px ${hex}22`,
+                      : isRoot ? `0 4px 16px ${hex}44` : `0 2px 8px ${hex}22`,
+                    cursor: isEdit ? "text" : "grab",
                   }}
                 >
                   {isEdit ? (
@@ -537,98 +537,130 @@ export function MindMapEditor({ initialNodes, clientName, month, onSave, onClose
                     />
                   ) : (
                     <span
-                      className="text-sm font-semibold text-center leading-tight truncate"
-                      style={{ color: isRoot ? "#fff" : hex, maxWidth: "100%" }}
+                      className="text-sm font-semibold text-center leading-tight"
+                      style={{ color: isRoot ? "#fff" : hex, maxWidth: "100%", wordBreak: "break-word" }}
                     >
                       {n.text}
                     </span>
                   )}
+                </div>
 
-                  {/* Note indicator dot */}
-                  {hasNote && !isEdit && (
+                {/* ── Note indicator dot ── */}
+                {hasNote && !isEdit && (
+                  <div
+                    className="absolute -top-1.5 -left-1.5 w-4 h-4 rounded-full bg-yellow-500 flex items-center justify-center shadow pointer-events-none"
+                    title={n.note}
+                  >
+                    <svg className="w-2.5 h-2.5 text-black" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z"/>
+                    </svg>
+                  </div>
+                )}
+
+                {/* ── Connection ports (left / right edges) ── */}
+                {!isEdit && (
+                  <>
+                    {/* RIGHT port */}
                     <div
-                      className="absolute -top-1.5 -left-1.5 w-4 h-4 rounded-full bg-yellow-500 flex items-center justify-center shadow"
-                      title={n.note}
+                      className={`mm-port absolute w-4 h-4 rounded-full border-2 border-[#0d0d0d] cursor-crosshair z-20 transition-transform hover:scale-125 ${isSel ? "flex" : "hidden group-hover:flex"} items-center justify-center`}
+                      style={{ right: -8, top: "50%", transform: "translateY(-50%)", background: hex }}
+                      onMouseDown={e => startConnDrag(n.id, n.x + n.w, n.y + n.h / 2, e)}
+                      title="Arraste para conectar"
+                    />
+                    {/* LEFT port */}
+                    <div
+                      className={`mm-port absolute w-4 h-4 rounded-full border-2 border-[#0d0d0d] cursor-crosshair z-20 transition-transform hover:scale-125 ${isSel ? "flex" : "hidden group-hover:flex"} items-center justify-center`}
+                      style={{ left: -8, top: "50%", transform: "translateY(-50%)", background: hex }}
+                      onMouseDown={e => startConnDrag(n.id, n.x, n.y + n.h / 2, e)}
+                      title="Arraste para conectar"
+                    />
+                  </>
+                )}
+
+                {/* ── Resize handle (bottom-right corner) ── */}
+                {!isEdit && (
+                  <div
+                    className={`mm-resize absolute w-5 h-5 z-20 cursor-se-resize ${isSel ? "flex" : "hidden group-hover:flex"} items-end justify-end`}
+                    style={{ right: -6, bottom: -6 }}
+                    onMouseDown={e => startResizeDrag(n.id, n.w, n.h, e)}
+                    title="Redimensionar"
+                  >
+                    <svg className="w-4 h-4" viewBox="0 0 14 14" fill="none">
+                      <rect x="1" y="1" width="12" height="12" rx="3" fill="#222" stroke="#555" strokeWidth="1"/>
+                      <path d="M5 9l4-4M7 9l2-2" stroke="#aaa" strokeWidth="1.3" strokeLinecap="round"/>
+                    </svg>
+                  </div>
+                )}
+
+                {/* ── Action buttons (add / comment / delete) ── */}
+                {!isEdit && (
+                  <div className={`absolute left-0 items-center gap-1 ${isSel ? "flex" : "hidden group-hover:flex"}`} style={{ top: -30 }}>
+                    {/* Add child */}
+                    <button
+                      onClick={e => {
+                        e.stopPropagation();
+                        const nt = addChild(tree, n.id); setTree(nt); setDirty(true);
+                        const orig = findNode(nt, n.id);
+                        if (orig?.children.length) {
+                          const last = orig.children[orig.children.length - 1];
+                          setSel(last.id); setEditId(last.id); setEditTxt(last.text);
+                        }
+                      }}
+                      title="Adicionar filho (Tab)"
+                      className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-lg hover:scale-110 transition-transform"
+                      style={{ background: hex }}
+                    >+</button>
+                    {/* Comment */}
+                    <button
+                      onClick={e => {
+                        e.stopPropagation();
+                        setNoteNode(n.id);
+                        setNoteDraft(findNode(tree, n.id)?.note ?? "");
+                      }}
+                      title="Comentário"
+                      className={`w-5 h-5 rounded-full flex items-center justify-center shadow transition-colors ${hasNote ? "bg-yellow-500" : "bg-yellow-500/60 hover:bg-yellow-500"}`}
                     >
-                      <svg className="w-2.5 h-2.5 text-black" fill="currentColor" viewBox="0 0 20 20">
+                      <svg className="w-3 h-3 text-black" fill="currentColor" viewBox="0 0 20 20">
                         <path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z"/>
                       </svg>
-                    </div>
-                  )}
-
-                  {/* Action buttons — visible on hover or when selected */}
-                  {!isEdit && !connectMode && (
-                    <div className={`absolute -right-2 -top-2 items-center gap-1 ${isSel ? "flex" : "hidden group-hover:flex"}`}>
-                      {/* Add child */}
+                    </button>
+                    {/* Delete */}
+                    {n.lvl > 0 && (
                       <button
                         onClick={e => {
                           e.stopPropagation();
-                          const nt = addChild(tree, n.id);
-                          setTree(nt); setDirty(true);
-                          const orig = findNode(nt, n.id);
-                          if (orig?.children.length) {
-                            const last = orig.children[orig.children.length - 1];
-                            setSel(last.id); setEditId(last.id); setEditTxt(last.text);
-                          }
+                          setTree(prev => removeNode(prev, n.id));
+                          setConnections(prev => prev.filter(c => c.from !== n.id && c.to !== n.id));
+                          setPositions(prev => { const np = { ...prev }; delete np[n.id]; return np; });
+                          setSizes(prev => { const np = { ...prev }; delete np[n.id]; return np; });
+                          setSel(null); setDirty(true);
                         }}
-                        title="Adicionar filho (Tab)"
-                        className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-lg hover:scale-110 transition-transform"
-                        style={{ background: hex }}
-                      >+</button>
-                      {/* Comment */}
-                      <button
-                        onClick={e => {
-                          e.stopPropagation();
-                          setNoteNode(n.id);
-                          setNoteDraft(findNode(tree, n.id)?.note ?? "");
-                        }}
-                        title="Comentário"
-                        className={`w-5 h-5 rounded-full flex items-center justify-center text-xs shadow transition-colors ${
-                          hasNote ? "bg-yellow-500 text-black" : "bg-yellow-500/60 hover:bg-yellow-500 text-black"
-                        }`}
-                      >
-                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z"/>
-                        </svg>
-                      </button>
-                      {/* Delete */}
-                      {n.lvl > 0 && (
-                        <button
-                          onClick={e => {
-                            e.stopPropagation();
-                            setTree(prev => removeNode(prev, n.id));
-                            setConnections(prev => prev.filter(c => c.from !== n.id && c.to !== n.id));
-                            setPositions(prev => { const np = { ...prev }; delete np[n.id]; return np; });
-                            setSel(null); setDirty(true);
-                          }}
-                          title="Remover (Del)"
-                          className="w-5 h-5 rounded-full bg-[#333] hover:bg-red-600 flex items-center justify-center text-gray-400 hover:text-white text-xs font-bold shadow transition-colors"
-                        >×</button>
-                      )}
-                    </div>
-                  )}
-                </div>
+                        title="Remover (Del)"
+                        className="w-5 h-5 rounded-full bg-[#333] hover:bg-red-600 flex items-center justify-center text-gray-400 hover:text-white text-xs font-bold shadow transition-colors"
+                      >×</button>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })}
         </div>
 
-        {/* ── Note popover — positioned relative to its node in screen space ── */}
+        {/* ── Note popover (screen-space, above canvas) ── */}
         {noteNode && (() => {
           const n = nodeMap.get(noteNode);
           if (!n) return null;
           const sx = panX + n.x * zoom + (n.w * zoom) / 2;
-          const sy = panY + (n.y + n.h) * zoom + 10;
+          const sy = panY + (n.y + n.h) * zoom + 12;
+          const maxY = (wrapRef.current?.clientHeight ?? 600) - 210;
           return (
             <div
-              className="absolute z-20 bg-[#1a1a1a] border border-yellow-500/40 rounded-2xl p-4 shadow-2xl w-72"
-              style={{ left: Math.max(8, sx - 144), top: Math.min(sy, (wrapRef.current?.clientHeight ?? 600) - 200) }}
+              className="absolute z-30 bg-[#1a1a1a] border border-yellow-500/40 rounded-2xl p-4 shadow-2xl w-72"
+              style={{ left: Math.max(8, Math.min(sx - 144, (wrapRef.current?.clientWidth ?? 800) - 296)), top: Math.min(sy, maxY) }}
               onClick={e => e.stopPropagation()}
             >
               <p className="text-xs text-yellow-400 font-semibold mb-2 flex items-center gap-1.5">
-                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z"/>
-                </svg>
+                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z"/></svg>
                 Comentário — {findNode(tree, noteNode)?.text}
               </p>
               <textarea
@@ -640,14 +672,8 @@ export function MindMapEditor({ initialNodes, clientName, month, onSave, onClose
                 className="w-full bg-[#111] border border-[#333] rounded-xl px-3 py-2 text-xs text-gray-200 outline-none resize-none focus:border-yellow-500/60 transition-colors placeholder-gray-600"
               />
               <div className="flex justify-end gap-2 mt-2">
-                <button
-                  onClick={() => setNoteNode(null)}
-                  className="text-xs text-gray-500 hover:text-gray-300 px-3 py-1.5 rounded-lg hover:bg-[#262626] transition-colors"
-                >Cancelar</button>
-                <button
-                  onClick={commitNote}
-                  className="text-xs bg-yellow-500 hover:bg-yellow-400 text-black font-semibold px-3 py-1.5 rounded-lg transition-colors"
-                >Salvar</button>
+                <button onClick={() => setNoteNode(null)} className="text-xs text-gray-500 hover:text-gray-300 px-3 py-1.5 rounded-lg hover:bg-[#262626] transition-colors">Cancelar</button>
+                <button onClick={commitNote} className="text-xs bg-yellow-500 hover:bg-yellow-400 text-black font-semibold px-3 py-1.5 rounded-lg transition-colors">Salvar</button>
               </div>
             </div>
           );
@@ -663,9 +689,9 @@ export function MindMapEditor({ initialNodes, clientName, month, onSave, onClose
           <span className="text-[11px] text-gray-500">·</span>
           <span className="text-[11px] text-gray-600">2× clique = editar</span>
           <span className="text-[11px] text-gray-500">·</span>
-          <span className="text-[11px] text-gray-600">Tab = filho</span>
+          <span className="text-[11px] text-amber-600/80">○ porta = conectar</span>
           <span className="text-[11px] text-gray-500">·</span>
-          <span className="text-[11px] text-yellow-600/70">💬 hover = comentário</span>
+          <span className="text-[11px] text-gray-600">⤡ canto = redimensionar</span>
         </div>
       </div>
     </div>
