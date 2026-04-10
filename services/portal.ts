@@ -80,6 +80,7 @@ export async function getPortalCharges(clientId: string) {
       dueDate: true,
       paidAt: true,
       paymentLink: true,
+      isRecurring: true,
       contract: { select: { id: true, title: true } },
     },
     orderBy: { dueDate: "desc" },

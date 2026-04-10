@@ -23,9 +23,26 @@ const MONTHS_PT = [
   "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
 ];
 
-function getPeriod(dueDate: Date) {
-  const d = new Date(dueDate);
-  return { key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`, label: `${MONTHS_PT[d.getMonth()]} ${d.getFullYear()}` };
+function periodFromDate(d: Date) {
+  return {
+    key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`,
+    label: `${MONTHS_PT[d.getMonth()]} ${d.getFullYear()}`,
+  };
+}
+
+// Billing period rule:
+// - pending recurring → current month (the charge is for NOW, dueDate may have been set to contract end by mistake)
+// - paid → month of paidAt
+// - everything else → month of dueDate
+function getChargePeriod(charge: {
+  status: string;
+  isRecurring: boolean;
+  dueDate: Date;
+  paidAt?: Date | null;
+}, now: Date) {
+  if (charge.status === "pending" && charge.isRecurring) return periodFromDate(now);
+  if (charge.status === "paid" && charge.paidAt) return periodFromDate(new Date(charge.paidAt));
+  return periodFromDate(new Date(charge.dueDate));
 }
 
 interface PageProps {
@@ -44,10 +61,10 @@ export default async function BillingPage({ searchParams }: PageProps) {
   const totalPaid    = charges.filter((c) => c.status === "paid").reduce((s, c) => s + Number(c.value), 0);
   const overdueCount = charges.filter((c) => c.status === "pending" && new Date(c.dueDate) < now).length;
 
-  // Group charges by month (descending)
+  // Group charges by billing period (descending)
   const grouped = new Map<string, { label: string; charges: typeof charges }>();
   for (const charge of charges) {
-    const { key, label } = getPeriod(charge.dueDate);
+    const { key, label } = getChargePeriod(charge, now);
     if (!grouped.has(key)) grouped.set(key, { label, charges: [] });
     grouped.get(key)!.charges.push(charge);
   }

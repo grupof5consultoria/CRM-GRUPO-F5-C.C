@@ -10,9 +10,32 @@ const MONTHS_PT = [
   "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
 ];
 
-function getPeriodLabel(dueDate: Date | string) {
-  const d = new Date(dueDate);
+function getPeriodLabel(d: Date) {
   return `${MONTHS_PT[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+// Billing period rule (same as admin):
+// - pending recurring → current month
+// - paid → month of paidAt
+// - everything else → month of dueDate
+function getChargePeriod(c: {
+  status: string;
+  isRecurring: boolean;
+  dueDate: Date | string;
+  paidAt?: Date | null;
+}, now: Date): { key: string; label: string } {
+  let d: Date;
+  if (c.status === "pending" && c.isRecurring) {
+    d = now;
+  } else if (c.status === "paid" && c.paidAt) {
+    d = new Date(c.paidAt);
+  } else {
+    d = new Date(c.dueDate);
+  }
+  return {
+    key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`,
+    label: getPeriodLabel(d),
+  };
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -33,26 +56,19 @@ export default async function PortalBillingPage() {
   const totalPending = charges.filter((c) => c.status === "pending").reduce((s, c) => s + Number(c.value), 0);
   const totalPaid    = charges.filter((c) => c.status === "paid").reduce((s, c) => s + Number(c.value), 0);
 
-  // Separate current month charges from history
   const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-  const isCurrentMonth = (d: Date | string) => {
-    const dd = new Date(d);
-    return `${dd.getFullYear()}-${String(dd.getMonth() + 1).padStart(2, "0")}` === currentMonthKey;
-  };
 
-  const currentCharges = charges.filter(c => isCurrentMonth(c.dueDate));
-  const historyCharges = charges.filter(c => !isCurrentMonth(c.dueDate));
-
-  // Group history by month (descending)
-  const grouped = new Map<string, { label: string; charges: typeof historyCharges }>();
-  for (const c of historyCharges) {
-    const d = new Date(c.dueDate);
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-    const label = getPeriodLabel(c.dueDate);
+  // Group all charges by billing period (using the corrected period logic)
+  const grouped = new Map<string, { label: string; charges: typeof charges }>();
+  for (const c of charges) {
+    const { key, label } = getChargePeriod(c, now);
     if (!grouped.has(key)) grouped.set(key, { label, charges: [] });
     grouped.get(key)!.charges.push(c);
   }
-  const sortedHistory = Array.from(grouped.entries()).sort((a, b) => b[0].localeCompare(a[0]));
+  const sortedGroups = Array.from(grouped.entries()).sort((a, b) => b[0].localeCompare(a[0]));
+
+  const currentCharges = grouped.get(currentMonthKey)?.charges ?? [];
+  const sortedHistory = sortedGroups.filter(([k]) => k !== currentMonthKey);
 
   return (
     <main className="flex-1 p-4 md:p-6 bg-[#111111] min-h-screen space-y-6">
@@ -137,7 +153,7 @@ export default async function PortalBillingPage() {
 function ChargeCard({ c, now }: { c: ReturnType<typeof Array.prototype.filter>[0]; now: Date }) {
   const isOverdue = c.status === "pending" && new Date(c.dueDate) < now;
   const isPaid    = c.status === "paid";
-  const period    = getPeriodLabel(c.dueDate);
+  const { label: period } = getChargePeriod(c, now);
   const dueDay    = new Date(c.dueDate).getDate();
 
   const cardBorder = isPaid

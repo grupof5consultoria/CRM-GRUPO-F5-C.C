@@ -17,7 +17,17 @@ const PAYMENT_OPTIONS = [
   { value: "cash", label: "💵 Dinheiro" },
 ];
 
-export function NewChargeForm({ clients }: { clients: Client[] }) {
+// Default dueDate = today (YYYY-MM-DD)
+function todayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+export function NewChargeForm({ clients, defaultClientId, defaultContractId }: {
+  clients: Client[];
+  defaultClientId?: string;
+  defaultContractId?: string;
+}) {
   const [state, formAction, isPending] = useActionState(createChargeAction, initialState);
   const [isRecurring, setIsRecurring] = useState(false);
   const clientOptions = clients.map((c) => ({ value: c.id, label: c.name }));
@@ -25,22 +35,40 @@ export function NewChargeForm({ clients }: { clients: Client[] }) {
   return (
     <form action={formAction} className="space-y-3">
       {state.error && (
-        <div className="rounded-xl bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 px-3 py-2 text-sm text-red-700 dark:text-red-400">{state.error}</div>
+        <div className="rounded-xl bg-red-950 border border-red-800 px-3 py-2 text-sm text-red-400">{state.error}</div>
       )}
 
-      <Select label="Cliente *" name="clientId" options={clientOptions} placeholder="Selecione..." />
-      <Input label="Descrição *" name="description" required placeholder="Ex: Mensalidade Novembro/2025" />
+      {/* Hidden fields */}
+      {defaultContractId && <input type="hidden" name="contractId" value={defaultContractId} />}
+
+      <Select
+        label="Cliente *"
+        name="clientId"
+        options={clientOptions}
+        placeholder="Selecione..."
+        defaultValue={defaultClientId}
+      />
+      <Input label="Descrição *" name="description" required placeholder="Ex: Mensalidade Abril/2025" />
       <Input label="Valor (R$) *" name="value" type="number" step="0.01" min="0.01" required placeholder="0,00" />
-      <Input label="Vencimento *" name="dueDate" type="date" required />
+      <Input
+        label="Vencimento *"
+        name="dueDate"
+        type="date"
+        required
+        defaultValue={todayStr()}
+      />
+      <p className="text-[11px] text-gray-600 -mt-1">
+        Use a data do mês vigente (ex: 10/04/2025 para cobrança de Abril).
+      </p>
 
       {/* Forma de pagamento */}
       <div>
-        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Forma de Pagamento</p>
+        <p className="text-sm font-medium text-gray-300 mb-2">Forma de Pagamento</p>
         <div className="grid grid-cols-3 gap-1.5">
           {PAYMENT_OPTIONS.map((opt) => (
             <label key={opt.value} className="cursor-pointer">
               <input type="radio" name="paymentMethod" value={opt.value} defaultChecked={opt.value === "pix"} className="sr-only peer" />
-              <div className="text-center text-xs px-2 py-2 rounded-xl border border-gray-200 dark:border-gray-700 peer-checked:border-indigo-500 peer-checked:bg-indigo-50 dark:peer-checked:bg-indigo-950 peer-checked:text-indigo-700 dark:peer-checked:text-indigo-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-gray-600 dark:text-gray-400 font-medium">
+              <div className="text-center text-xs px-2 py-2 rounded-xl border border-[#333] peer-checked:border-violet-500 peer-checked:bg-violet-950 peer-checked:text-violet-300 hover:bg-[#222] transition-colors text-gray-500 font-medium">
                 {opt.label}
               </div>
             </label>
@@ -49,30 +77,32 @@ export function NewChargeForm({ clients }: { clients: Client[] }) {
       </div>
 
       {/* Recorrência */}
-      <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-3 space-y-2">
+      <div className="border border-[#333] rounded-xl p-3 space-y-2">
         <label className="flex items-center gap-2 cursor-pointer">
           <input
             type="checkbox"
             checked={isRecurring}
             onChange={(e) => setIsRecurring(e.target.checked)}
-            className="w-4 h-4 rounded accent-indigo-600"
+            className="w-4 h-4 rounded accent-violet-600"
           />
           <input type="hidden" name="isRecurring" value={isRecurring ? "true" : "false"} />
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">🔄 Cobrança Recorrente</span>
+          <span className="text-sm font-medium text-gray-300">🔄 Cobrança Recorrente (mensal)</span>
         </label>
 
         {isRecurring && (
           <div>
-            <label className="text-xs text-gray-500 dark:text-gray-400">Dia do vencimento todo mês</label>
+            <label className="text-xs text-gray-500">Dia do vencimento todo mês</label>
             <input
               type="number"
               name="recurrenceDay"
               min={1}
               max={31}
               placeholder="Ex: 10"
-              className="mt-1 block w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="mt-1 block w-full rounded-xl border border-[#333] bg-[#111] text-gray-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
             />
-            <p className="text-xs text-gray-400 mt-1">Os próximos vencimentos serão gerados automaticamente nesse dia.</p>
+            <p className="text-xs text-gray-600 mt-1">
+              Quando marcar como pago, a próxima cobrança é gerada automaticamente.
+            </p>
           </div>
         )}
       </div>
