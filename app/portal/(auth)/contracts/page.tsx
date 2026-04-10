@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth";
 import { getPortalContracts } from "@/services/portal";
 import { Badge } from "@/components/ui/Badge";
 import { CONTRACT_STATUS_LABELS, CONTRACT_STATUS_VARIANTS } from "@/services/contracts";
+import Link from "next/link";
 
 export const metadata = { title: "Contratos | Portal do Cliente" };
 
@@ -23,9 +24,13 @@ export default async function PortalContractsPage() {
       ) : (
         <div className="space-y-4">
           {contracts.map((c) => (
-            <div key={c.id} className="bg-[#1a1a1a] rounded-2xl border border-[#262626] p-6">
+            <div key={c.id} className={`bg-[#1a1a1a] rounded-2xl border p-6 transition-all ${
+              c.status === "pending_signature"
+                ? "border-amber-500/40 shadow-lg shadow-amber-900/10"
+                : "border-[#262626]"
+            }`}>
               <div className="flex items-start justify-between gap-4">
-                <div>
+                <div className="flex-1 min-w-0">
                   <h2 className="text-base font-semibold text-white">{c.title}</h2>
                   <div className="flex items-center gap-3 mt-1 text-xs text-gray-500 flex-wrap">
                     {c.startDate && (
@@ -53,9 +58,23 @@ export default async function PortalContractsPage() {
                 </div>
               </div>
 
-              {c.notes && (
+              {/* Pending signature CTA */}
+              {c.status === "pending_signature" && c.signedToken && (
                 <div className="mt-4 pt-4 border-t border-[#262626]">
-                  <p className="text-sm text-gray-500 whitespace-pre-line">{c.notes}</p>
+                  <div className="flex items-center gap-3 bg-amber-500/10 border border-amber-500/30 rounded-xl p-4">
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-amber-400">Assinatura pendente</p>
+                      <p className="text-xs text-amber-300/70 mt-0.5">Este contrato aguarda a sua assinatura digital.</p>
+                    </div>
+                    <Link href={`/portal/assinar/${c.signedToken}`}>
+                      <button className="flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-black text-sm font-bold rounded-xl px-4 py-2 transition-colors whitespace-nowrap">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                        </svg>
+                        Assinar agora
+                      </button>
+                    </Link>
+                  </div>
                 </div>
               )}
             </div>

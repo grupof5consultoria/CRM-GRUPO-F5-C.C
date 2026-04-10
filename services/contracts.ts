@@ -28,6 +28,13 @@ export async function getContractById(id: string) {
   });
 }
 
+export async function getContractByToken(token: string) {
+  return prisma.contract.findUnique({
+    where: { signedToken: token },
+    include: { client: { select: { id: true, name: true } } },
+  });
+}
+
 export async function createContract(data: {
   title: string;
   clientId: string;
@@ -37,6 +44,16 @@ export async function createContract(data: {
   value?: string;
   notes?: string;
   creatorId: string;
+  // F5 template vars
+  meses?: number;
+  plano?: string;
+  diaVencimento?: number;
+  publicoAlvo?: string;
+  nomeContratante?: string;
+  cpfContratante?: string;
+  enderecoContratante?: string;
+  cidadeEstadoCep?: string;
+  valorMensalExtenso?: string;
 }) {
   const contract = await prisma.contract.create({
     data: {
@@ -48,6 +65,15 @@ export async function createContract(data: {
       value: data.value ? parseFloat(data.value) : null,
       notes: data.notes || null,
       creatorId: data.creatorId,
+      meses: data.meses ?? null,
+      plano: data.plano || null,
+      diaVencimento: data.diaVencimento ?? null,
+      publicoAlvo: data.publicoAlvo || null,
+      nomeContratante: data.nomeContratante || null,
+      cpfContratante: data.cpfContratante || null,
+      enderecoContratante: data.enderecoContratante || null,
+      cidadeEstadoCep: data.cidadeEstadoCep || null,
+      valorMensalExtenso: data.valorMensalExtenso || null,
     },
   });
 
@@ -73,10 +99,52 @@ export async function updateContractStatus(contractId: string, status: ContractS
   });
 }
 
+export async function signContract(token: string, signedByName: string, signedByCpf: string, ip: string) {
+  const contract = await prisma.contract.findUnique({ where: { signedToken: token } });
+  if (!contract) throw new Error("Contrato não encontrado");
+  if (contract.status !== "pending_signature") throw new Error("Contrato não está aguardando assinatura");
+
+  await prisma.contract.update({
+    where: { signedToken: token },
+    data: {
+      status: "active",
+      signedAt: new Date(),
+      signedByName,
+      signedByCpf,
+      signedIp: ip,
+    },
+  });
+
+  await prisma.contractEvent.create({
+    data: {
+      contractId: contract.id,
+      type: "signed",
+      description: `Contrato assinado digitalmente por ${signedByName} (CPF: ${signedByCpf}) — IP: ${ip}`,
+    },
+  });
+
+  return contract;
+}
+
+export async function sendContractForSignature(contractId: string) {
+  await prisma.contract.update({
+    where: { id: contractId },
+    data: { status: "pending_signature" },
+  });
+
+  await prisma.contractEvent.create({
+    data: {
+      contractId,
+      type: "status_changed",
+      description: "Contrato enviado para assinatura digital.",
+    },
+  });
+}
+
 export async function getClientsForSelect() {
   return prisma.client.findMany({
     where: { status: "active" },
-    select: { id: true, name: true },
+    select: { id: true, name: true, document: true },
     orderBy: { name: "asc" },
   });
 }

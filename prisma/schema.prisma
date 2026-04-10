@@ -284,6 +284,23 @@ model Contract {
   createdAt  DateTime       @default(now())
   updatedAt  DateTime       @updatedAt
 
+  // Template variables (F5 contract)
+  meses               Int?
+  plano               String?    // "START", "SCALE", etc.
+  diaVencimento       Int?
+  publicoAlvo         String?
+  nomeContratante     String?
+  cpfContratante      String?
+  enderecoContratante String?
+  cidadeEstadoCep     String?
+  valorMensalExtenso  String?
+
+  // Digital signature
+  signedToken      String    @unique @default(cuid())
+  signedByName     String?
+  signedByCpf      String?
+  signedIp         String?
+
   events  ContractEvent[]
   charges Charge[]
 

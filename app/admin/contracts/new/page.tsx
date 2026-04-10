@@ -1,27 +1,24 @@
 import { Topbar } from "@/components/layout/Topbar";
-import { getClientsForSelect, getAcceptedProposalsWithoutContract } from "@/services/contracts";
+import { getClientsForSelect } from "@/services/contracts";
 import { NewContractForm } from "./NewContractForm";
 import Link from "next/link";
 
 export const metadata = { title: "Novo Contrato | Gestão Interna" };
 
 export default async function NewContractPage() {
-  const [clients, proposals] = await Promise.all([
-    getClientsForSelect(),
-    getAcceptedProposalsWithoutContract(),
-  ]);
+  const clients = await getClientsForSelect();
 
   return (
     <>
       <Topbar title="Novo Contrato" />
-      <main className="flex-1 p-6 max-w-2xl">
-        <div className="mb-4">
-          <Link href="/admin/contracts" className="text-sm text-blue-600 hover:underline">
-            ← Voltar
+      <main className="flex-1 p-6">
+        <div className="mb-6">
+          <Link href="/admin/contracts" className="text-sm text-gray-500 hover:text-gray-300 transition-colors">
+            ← Voltar aos Contratos
           </Link>
         </div>
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-          <NewContractForm clients={clients} proposals={proposals} />
+        <div className="bg-[#1a1a1a] rounded-2xl border border-[#262626] p-6">
+          <NewContractForm clients={clients} />
         </div>
       </main>
     </>

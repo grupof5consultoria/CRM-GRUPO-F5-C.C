@@ -2,9 +2,8 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Topbar } from "@/components/layout/Topbar";
 import { Badge } from "@/components/ui/Badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { getContractById, CONTRACT_STATUS_LABELS, CONTRACT_STATUS_VARIANTS } from "@/services/contracts";
-import { CHARGE_STATUS_LABELS, CHARGE_STATUS_VARIANTS } from "@/services/billing";
+import { renderContract, ContractVars } from "@/lib/contractTemplate";
 import { ContractStatusActions } from "./ContractStatusActions";
 
 interface PageProps {
@@ -16,146 +15,180 @@ export default async function ContractDetailPage({ params }: PageProps) {
   const contract = await getContractById(id);
   if (!contract) notFound();
 
+  // Build rendered contract if template vars exist
+  const hasVars = contract.nomeContratante && contract.cpfContratante && contract.meses;
+  let renderedText: string | null = null;
+  if (hasVars) {
+    const vars: ContractVars = {
+      plano: contract.plano ?? "START",
+      nomeContratante: contract.nomeContratante!,
+      enderecoContratante: contract.enderecoContratante ?? "",
+      cidadeEstadoCep: contract.cidadeEstadoCep ?? "",
+      cpfContratante: contract.cpfContratante!,
+      meses: contract.meses!,
+      valorMensal: Number(contract.value ?? 0),
+      valorMensalExtenso: contract.valorMensalExtenso ?? "",
+      diaVencimento: contract.diaVencimento ?? 10,
+      publicoAlvo: contract.publicoAlvo ?? "",
+    };
+    renderedText = renderContract(vars);
+  }
+
   return (
     <>
-      <Topbar title="Detalhe do Contrato" />
+      <Topbar title="Contrato" />
       <main className="flex-1 p-6">
-        <div className="mb-4">
-          <Link href="/admin/contracts" className="text-sm text-blue-600 hover:underline">
-            ← Voltar aos Contratos
+        <div className="mb-5">
+          <Link href="/admin/contracts" className="text-sm text-gray-500 hover:text-gray-300 transition-colors">
+            ← Contratos
           </Link>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6">
-            {/* Cabeçalho */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <CardTitle>{contract.title}</CardTitle>
-                    <p className="text-sm text-gray-500 mt-1">
-                      Cliente: <Link href={`/admin/clients/${contract.client.id}`} className="text-blue-600 hover:underline">{contract.client.name}</Link>
-                    </p>
-                    {contract.proposal && (
-                      <p className="text-sm text-gray-500">
-                        Proposta: <Link href={`/admin/proposals/${contract.proposal.id}`} className="text-blue-600 hover:underline">{contract.proposal.title}</Link>
-                      </p>
-                    )}
-                  </div>
-                  <Badge variant={CONTRACT_STATUS_VARIANTS[contract.status]}>
-                    {CONTRACT_STATUS_LABELS[contract.status]}
-                  </Badge>
-                </div>
-              </CardHeader>
-              {contract.notes && (
-                <CardContent>
-                  <p className="text-sm text-gray-600 whitespace-pre-line">{contract.notes}</p>
-                </CardContent>
-              )}
-            </Card>
-
-            {/* Cobranças vinculadas */}
-            {contract.charges.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle>Cobranças</CardTitle>
-                    <Link href={`/admin/billing?contractId=${contract.id}`} className="text-xs text-blue-600 hover:underline">
-                      Ver todas
+          {/* ── Contract text ── */}
+          <div className="lg:col-span-2 space-y-4">
+            {/* Header */}
+            <div className="bg-[#1a1a1a] rounded-2xl border border-[#262626] p-5">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h1 className="text-base font-bold text-white">{contract.title}</h1>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Cliente:{" "}
+                    <Link href={`/admin/clients/${contract.client.id}`} className="text-violet-400 hover:underline">
+                      {contract.client.name}
                     </Link>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  {contract.charges.map((charge) => (
-                    <div key={charge.id} className="flex items-center justify-between text-sm py-1">
-                      <span className="text-gray-700">{charge.description}</span>
-                      <div className="flex items-center gap-3">
-                        <span className="text-gray-500">
-                          {new Date(charge.dueDate).toLocaleDateString("pt-BR")}
-                        </span>
-                        <span className="font-medium">
-                          R$ {Number(charge.value).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                        </span>
-                        <Badge variant={CHARGE_STATUS_VARIANTS[charge.status]}>
-                          {CHARGE_STATUS_LABELS[charge.status]}
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
+                  </p>
+                  {contract.nomeContratante && (
+                    <p className="text-xs text-gray-600 mt-0.5">CPF: {contract.cpfContratante}</p>
+                  )}
+                </div>
+                <Badge variant={CONTRACT_STATUS_VARIANTS[contract.status]}>
+                  {CONTRACT_STATUS_LABELS[contract.status]}
+                </Badge>
+              </div>
+
+              {/* Signature info */}
+              {contract.signedAt && (
+                <div className="mt-4 pt-4 border-t border-[#222] bg-emerald-500/5 rounded-xl p-3">
+                  <p className="text-xs font-semibold text-emerald-400 mb-1">Assinado digitalmente</p>
+                  <p className="text-xs text-gray-400">
+                    Por: <span className="text-white">{contract.signedByName}</span> — CPF: {contract.signedByCpf}
+                  </p>
+                  <p className="text-xs text-gray-600">
+                    Em {new Date(contract.signedAt).toLocaleString("pt-BR")} — IP: {contract.signedIp}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Contract text */}
+            {renderedText ? (
+              <div className="bg-[#111] rounded-2xl border border-[#1e1e1e] overflow-hidden">
+                <div className="px-5 py-3 border-b border-[#1e1e1e] flex items-center gap-2">
+                  <svg className="w-4 h-4 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <span className="text-xs font-medium text-gray-400">Texto do Contrato</span>
+                </div>
+                <div className="p-6">
+                  <pre className="text-xs text-gray-300 whitespace-pre-wrap font-sans leading-relaxed">
+                    {renderedText}
+                  </pre>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-[#1a1a1a] rounded-2xl border border-dashed border-[#333] p-8 text-center">
+                <p className="text-sm text-gray-600">Este contrato não tem template F5 associado.</p>
+                <p className="text-xs text-gray-700 mt-1">Crie um novo contrato para usar o template com assinatura digital.</p>
+              </div>
             )}
 
-            {/* Histórico */}
+            {/* History */}
             {contract.events.length > 0 && (
-              <Card>
-                <CardHeader><CardTitle>Histórico</CardTitle></CardHeader>
-                <CardContent className="space-y-2">
+              <div className="bg-[#1a1a1a] rounded-2xl border border-[#262626] overflow-hidden">
+                <div className="px-5 py-3 border-b border-[#222]">
+                  <p className="text-sm font-semibold text-gray-300">Histórico</p>
+                </div>
+                <div className="p-4 space-y-2">
                   {contract.events.map((ev) => (
                     <div key={ev.id} className="flex gap-3 text-sm">
-                      <span className="text-gray-400 text-xs mt-0.5 flex-shrink-0 w-36">
+                      <span className="text-gray-600 text-xs mt-0.5 flex-shrink-0 w-36">
                         {new Date(ev.createdAt).toLocaleString("pt-BR")}
                       </span>
-                      <span className="text-gray-700">{ev.description}</span>
+                      <span className="text-gray-400 text-xs">{ev.description}</span>
                     </div>
                   ))}
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             )}
           </div>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            <Card>
-              <CardHeader><CardTitle>Ações</CardTitle></CardHeader>
-              <CardContent>
-                <ContractStatusActions contractId={contract.id} currentStatus={contract.status} />
-              </CardContent>
-            </Card>
+          {/* ── Sidebar ── */}
+          <div className="space-y-5">
+            {/* Actions */}
+            <div className="bg-[#1a1a1a] rounded-2xl border border-[#262626] p-5">
+              <p className="text-sm font-semibold text-gray-200 mb-4">Ações</p>
+              <ContractStatusActions
+                contractId={contract.id}
+                currentStatus={contract.status}
+                signedToken={contract.signedToken}
+              />
+            </div>
 
-            <Card>
-              <CardHeader><CardTitle>Detalhes</CardTitle></CardHeader>
-              <CardContent className="space-y-3 text-sm">
-                {contract.value && (
-                  <div>
-                    <p className="text-gray-500">Valor</p>
-                    <p className="text-xl font-bold text-gray-900">
-                      R$ {Number(contract.value).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                    </p>
-                  </div>
-                )}
-                {contract.startDate && (
-                  <div>
-                    <p className="text-gray-500">Início</p>
-                    <p className="font-medium">{new Date(contract.startDate).toLocaleDateString("pt-BR")}</p>
-                  </div>
-                )}
-                {contract.endDate && (
-                  <div>
-                    <p className="text-gray-500">Término</p>
-                    <p className="font-medium">{new Date(contract.endDate).toLocaleDateString("pt-BR")}</p>
-                  </div>
-                )}
-                {contract.signedAt && (
-                  <div>
-                    <p className="text-gray-500">Assinado em</p>
-                    <p className="font-medium text-green-700">{new Date(contract.signedAt).toLocaleDateString("pt-BR")}</p>
-                  </div>
-                )}
+            {/* Details */}
+            <div className="bg-[#1a1a1a] rounded-2xl border border-[#262626] p-5 space-y-4">
+              <p className="text-sm font-semibold text-gray-200">Detalhes</p>
+
+              {contract.value && (
                 <div>
-                  <p className="text-gray-500">Criado por</p>
-                  <p className="font-medium">{contract.creator.name}</p>
+                  <p className="text-xs text-gray-500">Valor mensal</p>
+                  <p className="text-xl font-bold text-white">
+                    R$ {Number(contract.value).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                  </p>
                 </div>
-                <div className="pt-2">
-                  <Link href={`/admin/billing?contractId=${contract.id}`}>
-                    <button className="w-full text-center text-sm text-blue-600 hover:underline border border-blue-200 rounded-lg px-3 py-2 hover:bg-blue-50 transition-colors">
-                      + Criar Cobrança
-                    </button>
-                  </Link>
+              )}
+
+              {contract.meses && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-xs text-gray-500">Duração</p>
+                    <p className="text-sm font-semibold text-white">{contract.meses} meses</p>
+                  </div>
+                  {contract.diaVencimento && (
+                    <div>
+                      <p className="text-xs text-gray-500">Vencimento</p>
+                      <p className="text-sm font-semibold text-white">Dia {contract.diaVencimento}</p>
+                    </div>
+                  )}
                 </div>
-              </CardContent>
-            </Card>
+              )}
+
+              {contract.plano && (
+                <div>
+                  <p className="text-xs text-gray-500">Plano</p>
+                  <p className="text-sm font-semibold text-violet-400">{contract.plano}</p>
+                </div>
+              )}
+
+              {contract.startDate && (
+                <div>
+                  <p className="text-xs text-gray-500">Início</p>
+                  <p className="text-sm font-medium text-white">{new Date(contract.startDate).toLocaleDateString("pt-BR")}</p>
+                </div>
+              )}
+
+              <div>
+                <p className="text-xs text-gray-500">Criado por</p>
+                <p className="text-sm text-gray-300">{contract.creator.name}</p>
+              </div>
+            </div>
+
+            {/* Charges link */}
+            <Link href={`/admin/billing?contractId=${contract.id}`}>
+              <div className="bg-[#1a1a1a] rounded-2xl border border-dashed border-[#333] hover:border-violet-600/40 p-4 text-center transition-colors cursor-pointer">
+                <p className="text-xs text-gray-600 hover:text-violet-400 transition-colors">+ Criar Cobrança</p>
+              </div>
+            </Link>
           </div>
         </div>
       </main>
