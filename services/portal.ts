@@ -75,7 +75,6 @@ export async function getPortalCharges(clientId: string) {
     select: {
       id: true,
       description: true,
-      value: true,
       status: true,
       dueDate: true,
       paidAt: true,

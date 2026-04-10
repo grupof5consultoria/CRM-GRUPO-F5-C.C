@@ -53,8 +53,6 @@ export default async function PortalBillingPage() {
   const charges = await getPortalCharges(session.clientId);
   const now = new Date();
 
-  const totalPending = charges.filter((c) => c.status === "pending").reduce((s, c) => s + Number(c.value), 0);
-  const totalPaid    = charges.filter((c) => c.status === "paid").reduce((s, c) => s + Number(c.value), 0);
 
   const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
@@ -88,22 +86,6 @@ export default async function PortalBillingPage() {
             <p className="text-base font-bold text-white tracking-widest">502.786.368-37</p>
             <p className="text-xs text-gray-500 mt-0.5">Banco Itaú · Bruno Alves Nascimento</p>
           </div>
-        </div>
-      </div>
-
-      {/* Resumo */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="bg-[#1a1a1a] rounded-2xl border border-[#262626] p-5">
-          <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Pendente</p>
-          <p className={`text-xl font-bold mt-1 ${totalPending > 0 ? "text-amber-400" : "text-gray-600"}`}>
-            R$ {totalPending.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-          </p>
-        </div>
-        <div className="bg-[#1a1a1a] rounded-2xl border border-[#262626] p-5">
-          <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Total Pago</p>
-          <p className="text-xl font-bold text-emerald-400 mt-1">
-            R$ {totalPaid.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-          </p>
         </div>
       </div>
 
@@ -198,11 +180,8 @@ function ChargeCard({ c, now }: { c: ReturnType<typeof Array.prototype.filter>[0
           </div>
         </div>
 
-        <div className="flex flex-col items-end gap-2 flex-shrink-0">
-          <span className="font-bold text-white text-base">
-            R$ {Number(c.value).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-          </span>
-          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${
+        <div className="flex-shrink-0">
+          <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${
             isPaid
               ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/30"
               : isOverdue
