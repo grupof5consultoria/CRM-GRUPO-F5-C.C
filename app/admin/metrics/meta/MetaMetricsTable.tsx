@@ -388,7 +388,7 @@ const selectCls = "bg-[#1a1a1a] border border-[#262626] rounded-xl px-3 py-2 tex
 export function MetaMetricsTable({ clients, allClients }: Props) {
   const [dateFrom, setDateFrom] = useState(firstOfMonth);
   const [dateTo, setDateTo]     = useState(today);
-  const [selectedClientId, setSelectedClientId] = useState("all");
+  const [selectedClientId, setSelectedClientId] = useState("");
   const [visibleCols, setVisibleCols] = useState<ColKey[]>(DEFAULT_COLS);
   const [activePreset, setActivePreset] = useState<string | null>(null);
 
@@ -464,7 +464,7 @@ export function MetaMetricsTable({ clients, allClients }: Props) {
   const hasKpis     = totals.count > 0;
 
   // Daily trend data for chart (single client only)
-  const trendEntries = selectedClientId !== "all" && filteredClients.length === 1
+  const trendEntries = selectedClientId !== "" && selectedClientId !== "all" && filteredClients.length === 1
     ? filteredClients[0].metricEntries.filter(e =>
         e.platform === "meta" && e.date >= dateFrom && e.date <= dateTo
       ).sort((a, b) => a.date.localeCompare(b.date))
@@ -484,6 +484,7 @@ export function MetaMetricsTable({ clients, allClients }: Props) {
 
         {/* Client selector */}
         <select value={selectedClientId} onChange={e => setSelectedClientId(e.target.value)} className={`${selectCls} min-w-[180px]`}>
+          <option value="">Selecione um cliente</option>
           <option value="all">Todos os clientes</option>
           {allClients.map(c => {
             const has = clients.some(mc => mc.id === c.id);
@@ -502,7 +503,7 @@ export function MetaMetricsTable({ clients, allClients }: Props) {
         />
 
         {/* PDF button — single client only */}
-        {selectedClientId !== "all" && (
+        {selectedClientId !== "" && selectedClientId !== "all" && (
           <a
             href={`/admin/reports/${selectedClientId}?period=${dateToPeriod(dateFrom)}`}
             target="_blank"
@@ -556,7 +557,14 @@ export function MetaMetricsTable({ clients, allClients }: Props) {
       {hasKpis && <div className="h-px bg-[#1e1e1e]" />}
 
       {/* Table */}
-      {filteredClients.length === 0 ? (
+      {selectedClientId === "" ? (
+        <div className="bg-[#1a1a1a] border border-[#262626] rounded-2xl p-16 text-center flex flex-col items-center gap-3">
+          <svg className="w-10 h-10 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          <p className="text-sm text-gray-500">Selecione um cliente para visualizar as métricas</p>
+        </div>
+      ) : filteredClients.length === 0 ? (
         <div className="bg-[#1a1a1a] border border-[#262626] rounded-2xl p-12 text-center">
           <p className="text-sm text-gray-600">Nenhum cliente com credenciais Meta Ads configuradas.</p>
         </div>
@@ -763,7 +771,7 @@ export function MetaMetricsTable({ clients, allClients }: Props) {
       })()}
 
       {/* Campaign insights + Goal — only when a single client is selected */}
-      {selectedClientId !== "all" && (() => {
+      {selectedClientId !== "" && selectedClientId !== "all" && (() => {
         const client = filteredClients.find(c => c.id === selectedClientId);
         if (!client) return null;
 
