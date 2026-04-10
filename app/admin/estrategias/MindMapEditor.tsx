@@ -88,6 +88,24 @@ function addChild(n: MindNode, pid: string): MindNode {
   if (n.id === pid) return { ...n, children: [...n.children, { id: uid(), text: "Novo tópico", children: [] }] };
   return { ...n, children: n.children.map(c => addChild(c, pid)) };
 }
+function addChildById(n: MindNode, pid: string, newId: string): MindNode {
+  if (n.id === pid) return { ...n, children: [...n.children, { id: newId, text: "Novo tópico", children: [] }] };
+  return { ...n, children: n.children.map(c => addChildById(c, pid, newId)) };
+}
+function addSibling(root: MindNode, id: string, where: "before" | "after"): { tree: MindNode; newId: string } {
+  const newId = uid();
+  function go(n: MindNode): MindNode {
+    const idx = n.children.findIndex(c => c.id === id);
+    if (idx !== -1) {
+      const sibling = { id: newId, text: "Novo tópico", children: [] };
+      const ch = [...n.children];
+      ch.splice(where === "before" ? idx : idx + 1, 0, sibling);
+      return { ...n, children: ch };
+    }
+    return { ...n, children: n.children.map(go) };
+  }
+  return { tree: go(root), newId };
+}
 function removeNode(n: MindNode, id: string): MindNode {
   return { ...n, children: n.children.filter(c => c.id !== id).map(c => removeNode(c, id)) };
 }
@@ -280,19 +298,32 @@ export function MindMapEditor({ initialNodes, clientName, month, onSave, onClose
 
     // Finish drawing connection
     if (connDragRef.current) {
-      const wx = (e.clientX - px) / z;
-      const wy = (e.clientY - py) / z;
-      const fromId = connDragRef.current.fromId;
-      const target = ns.find(n => wx >= n.x && wx <= n.x + n.w && wy >= n.y && wy <= n.y + n.h);
-      if (target && target.id !== fromId) {
-        setConnections(prev => {
-          const exists = prev.some(c =>
-            (c.from === fromId && c.to === target.id) ||
-            (c.from === target.id && c.to === fromId)
-          );
-          return exists ? prev : [...prev, { id: uid(), from: fromId, to: target.id }];
-        });
-        setDirty(true);
+      if (hasDragged.current) {
+        const wx = (e.clientX - px) / z;
+        const wy = (e.clientY - py) / z;
+        const fromId = connDragRef.current.fromId;
+        const target = ns.find(n => wx >= n.x && wx <= n.x + n.w && wy >= n.y && wy <= n.y + n.h);
+
+        if (target && target.id !== fromId) {
+          // Connect to existing node
+          setConnections(prev => {
+            const exists = prev.some(c =>
+              (c.from === fromId && c.to === target.id) ||
+              (c.from === target.id && c.to === fromId)
+            );
+            return exists ? prev : [...prev, { id: uid(), from: fromId, to: target.id }];
+          });
+          setDirty(true);
+        } else if (!target) {
+          // Drop on empty space → create new child node at drop position
+          const newId = uid();
+          setTree(prev => addChildById(prev, fromId, newId));
+          setPositions(prev => ({ ...prev, [newId]: { x: wx - 60, y: wy - 19 } }));
+          setSel(newId);
+          setEditId(newId);
+          setEditTxt("Novo tópico");
+          setDirty(true);
+        }
       }
       connDragRef.current = null;
       setDrawingConn(null);
@@ -592,7 +623,45 @@ export function MindMapEditor({ initialNodes, clientName, month, onSave, onClose
                   </div>
                 )}
 
-                {/* ── Action buttons (add / comment / delete) ── */}
+                {/* ── Add sibling ABOVE (top-center) ── */}
+                {n.lvl > 0 && !isEdit && (
+                  <div
+                    className={`absolute w-5 h-5 rounded-full bg-[#222] border border-[#555] cursor-pointer z-20 ${isSel ? "flex" : "hidden group-hover:flex"} items-center justify-center hover:bg-[#333] hover:border-violet-500 transition-colors`}
+                    style={{ left: "50%", top: -10, transform: "translateX(-50%)" }}
+                    onClick={e => {
+                      e.stopPropagation();
+                      const { tree: nt, newId } = addSibling(tree, n.id, "before");
+                      setTree(nt); setDirty(true);
+                      setSel(newId); setEditId(newId); setEditTxt("Novo tópico");
+                    }}
+                    title="Adicionar nó acima"
+                  >
+                    <svg className="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 15l7-7 7 7"/>
+                    </svg>
+                  </div>
+                )}
+
+                {/* ── Add sibling BELOW (bottom-center) ── */}
+                {n.lvl > 0 && !isEdit && (
+                  <div
+                    className={`absolute w-5 h-5 rounded-full bg-[#222] border border-[#555] cursor-pointer z-20 ${isSel ? "flex" : "hidden group-hover:flex"} items-center justify-center hover:bg-[#333] hover:border-violet-500 transition-colors`}
+                    style={{ left: "50%", bottom: -10, transform: "translateX(-50%)" }}
+                    onClick={e => {
+                      e.stopPropagation();
+                      const { tree: nt, newId } = addSibling(tree, n.id, "after");
+                      setTree(nt); setDirty(true);
+                      setSel(newId); setEditId(newId); setEditTxt("Novo tópico");
+                    }}
+                    title="Adicionar nó abaixo"
+                  >
+                    <svg className="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7"/>
+                    </svg>
+                  </div>
+                )}
+
+                {/* ── Action buttons (add child / comment / delete) ── */}
                 {!isEdit && (
                   <div className={`absolute left-0 items-center gap-1 ${isSel ? "flex" : "hidden group-hover:flex"}`} style={{ top: -30 }}>
                     {/* Add child */}
