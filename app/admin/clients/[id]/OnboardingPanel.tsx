@@ -50,6 +50,8 @@ const FIELD_LABELS: Record<string, string> = {
   linkReuniao:      "Link da Reunião (Meet/Zoom)",
   // Etapa 8
   linkDrive:        "Link da Pasta no Google Drive",
+  // Etapa 12
+  anotacoes:        "Anotações / Observações estratégicas",
   // Etapa 9
   loginGoogle:      "Login Google",
   senhaGoogle:      "Senha Google",
@@ -407,7 +409,7 @@ export function OnboardingPanel({ clientId, clientName: _clientName, clientNiche
                         Object.entries(fields).filter(([k]) => k !== "estrategiaIA").map(([key, val]) => (
                           <div key={key}>
                             <label className="text-xs text-gray-500 mb-1 block">{FIELD_LABELS[key] ?? key}</label>
-                            {key === "observacoes" ? (
+                            {(key === "observacoes" || key === "anotacoes") ? (
                               <textarea
                                 defaultValue={val}
                                 rows={3}
@@ -438,6 +440,21 @@ export function OnboardingPanel({ clientId, clientName: _clientName, clientNiche
                         ))
                       )}
                     </div>
+                  )}
+
+                  {/* ── Link para Estratégias (etapa 12) ─────────────────────── */}
+                  {task.stepNumber === 12 && (
+                    <a
+                      href={`/admin/estrategias?clientId=${clientId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 bg-violet-600/20 hover:bg-violet-600/30 border border-violet-700/40 text-violet-300 text-xs px-4 py-2 rounded-xl transition-colors"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                      </svg>
+                      Abrir Mapa Mental no módulo Estratégias
+                    </a>
                   )}
 
                   {/* ── Checklist ─────────────────────────────────────────────── */}

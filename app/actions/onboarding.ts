@@ -139,6 +139,9 @@ function getOnboardingTemplate(): StepTemplate[] {
     {
       num: 12,
       title: "Criação de planejamento estratégico / benchmarking",
+      fields: {
+        anotacoes: "",
+      },
       checklist: [
         { id: "conta_ads",    label: "Estudar conta de anúncios (se houver dados)",                                     checked: false },
         { id: "mapa_mental",  label: "Criar mapa mental — usar modelo MindMeister como base",                           checked: false },

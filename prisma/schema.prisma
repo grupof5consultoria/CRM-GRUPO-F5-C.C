@@ -342,6 +342,7 @@ model Client {
   whatsappAccounts  WhatsAppAccount[]
   whatsappCampaigns WhatsAppCampaign[]
   onboardingTasks   OnboardingTask[]
+  strategies        Strategy[]
 
   @@map("clients")
 }
@@ -646,4 +647,19 @@ model OnboardingTask {
   data        Json?     // checklist items and extra fields per step
 
   @@map("onboarding_tasks")
+}
+
+// ─── Estratégias ──────────────────────────────────────────────────────────────
+
+model Strategy {
+  id        String   @id @default(cuid())
+  clientId  String
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  month     String   // "2026-04" (YYYY-MM)
+  nodes     Json     // MindNode tree JSON
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([clientId, month])
+  @@map("strategies")
 }
