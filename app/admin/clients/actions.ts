@@ -8,6 +8,8 @@ import { ClientStatus, ClientHealth } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { createOnboardingForClient } from "@/app/actions/onboarding";
+import { createCharge } from "@/services/billing";
+import { createGatewayCharge } from "@/lib/gateway";
 
 export async function createClientAction(_prev: { error?: string }, formData: FormData) {
   const session = await requireInternalAuth();
@@ -16,6 +18,9 @@ export async function createClientAction(_prev: { error?: string }, formData: Fo
   if (!name?.trim()) return { error: "Nome obrigatório" };
 
   const monthlyValueRaw = formData.get("monthlyValue") as string;
+  const dueDayRaw = formData.get("dueDay") as string;
+  const dueDay = dueDayRaw ? parseInt(dueDayRaw) : 10;
+
   const client = await createClient({
     name,
     email: (formData.get("email") as string) || undefined,
@@ -28,6 +33,52 @@ export async function createClientAction(_prev: { error?: string }, formData: Fo
   });
 
   await createOnboardingForClient(client.id);
+
+  // Auto-generate first recurring charge if monthlyValue was provided
+  if (monthlyValueRaw && parseFloat(monthlyValueRaw.replace(",", ".")) > 0) {
+    const value = parseFloat(monthlyValueRaw.replace(",", "."));
+    const now = new Date();
+    const MONTHS_PT = [
+      "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+      "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
+    ];
+    const monthLabel = `${MONTHS_PT[now.getMonth()]}/${now.getFullYear()}`;
+    const description = `Mensalidade ${monthLabel}`;
+
+    // Due date = current month + dueDay
+    const dueDate = new Date(now.getFullYear(), now.getMonth(), dueDay);
+    // If the day has already passed this month, push to next month
+    if (dueDate < now) dueDate.setMonth(dueDate.getMonth() + 1);
+    const dueDateStr = dueDate.toISOString().split("T")[0];
+
+    const charge = await createCharge({
+      clientId: client.id,
+      description,
+      value: String(value),
+      dueDate: dueDateStr,
+      paymentMethod: "pix",
+      isRecurring: true,
+      recurrenceDay: dueDay,
+    });
+
+    // Try to send to payment gateway
+    const gatewayResult = await createGatewayCharge({
+      customerName: name,
+      customerEmail: (formData.get("email") as string) || undefined,
+      customerDocument: (formData.get("document") as string) || undefined,
+      description,
+      value,
+      dueDate: dueDateStr,
+      internalChargeId: charge.id,
+    });
+
+    if (gatewayResult) {
+      await prisma.charge.update({
+        where: { id: charge.id },
+        data: { externalId: gatewayResult.externalId, paymentLink: gatewayResult.paymentLink },
+      });
+    }
+  }
 
   redirect(`/admin/clients/${client.id}`);
 }
