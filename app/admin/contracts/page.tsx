@@ -113,7 +113,7 @@ export default async function ContractsPage() {
                     {/* Paperclip PDF */}
                     <TableTd>
                       {c.signedToken ? (
-                        <Link href={`/admin/contracts/${c.id}/print`} target="_blank" title="Ver contrato em PDF">
+                        <Link href={`/api/contracts/${c.id}/pdf`} target="_blank" title="Ver contrato em PDF">
                           <span className="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-violet-400 transition-colors group">
                             <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
