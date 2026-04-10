@@ -150,22 +150,27 @@ export function StrategiesClient({ clients }: { clients: Client[] }) {
             return (
               <div
                 key={client.id}
-                className={`bg-[#1a1a1a] border rounded-2xl p-5 flex flex-col gap-4 transition-all ${
-                  strategy ? "border-violet-800/40 hover:border-violet-600/60 cursor-pointer" : "border-[#262626] hover:border-[#333]"
+                className={`bg-[#1a1a1a] border rounded-2xl p-5 flex flex-col gap-4 transition-all duration-200 ${
+                  strategy
+                    ? "border-violet-800/40 hover:border-violet-500/60 hover:bg-[#1e1e1e] cursor-pointer hover:shadow-lg hover:shadow-violet-900/20"
+                    : "border-[#262626] hover:border-[#333]"
                 }`}
                 onClick={() => strategy && setActiveStrategy(strategy)}
               >
                 {/* Client name */}
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-violet-600/20 border border-violet-700/30 flex items-center justify-center flex-shrink-0">
-                    <span className="text-sm font-bold text-violet-400">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-600/30 to-violet-800/30 border border-violet-600/40 flex items-center justify-center flex-shrink-0">
+                    <span className="text-sm font-bold text-violet-300">
                       {client.name.charAt(0).toUpperCase()}
                     </span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-200 truncate">{client.name}</p>
+                    <p className="text-sm font-semibold text-gray-100 truncate">{client.name}</p>
                     <p className="text-xs text-gray-600 capitalize">{formatMonth(month)}</p>
                   </div>
+                  {strategy && (
+                    <div className="w-2 h-2 rounded-full bg-violet-500 flex-shrink-0" title="Mapa criado" />
+                  )}
                 </div>
 
                 {/* Strategy info or create button */}
@@ -208,12 +213,12 @@ export function StrategiesClient({ clients }: { clients: Client[] }) {
                       );
                     })()}
 
-                    <div className="flex items-center gap-1.5 text-xs text-violet-400">
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    {/* Edit map button */}
+                    <div className="w-full flex items-center justify-center gap-2 bg-violet-600/10 hover:bg-violet-600/20 border border-violet-700/40 hover:border-violet-500/60 text-violet-400 hover:text-violet-300 rounded-xl py-2.5 transition-all group">
+                      <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                       </svg>
-                      Clique para editar o mapa
+                      <span className="text-sm font-semibold">Editar Mapa Mental</span>
                     </div>
                   </div>
                 ) : (
