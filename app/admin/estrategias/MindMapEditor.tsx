@@ -462,10 +462,8 @@ export function MindMapEditor({ initialNodes, clientName, month, onSave, onClose
           className="absolute"
           style={{ left: 0, top: 0, transform: `translate(${panX}px,${panY}px) scale(${zoom})`, transformOrigin: "0 0" }}
         >
-          {/* SVG: all connection lines */}
+          {/* SVG: tree parent→child bezier curves only (world-space coords) */}
           <svg className="absolute pointer-events-none" style={{ overflow: "visible", left: 0, top: 0, width: 0, height: 0 }}>
-
-            {/* Tree parent→child bezier curves */}
             {nodes.filter(n => n.pid !== null).map(n => {
               const p = nodeMap.get(n.pid!);
               if (!p) return null;
@@ -483,40 +481,6 @@ export function MindMapEditor({ initialNodes, clientName, month, onSave, onClose
                 />
               );
             })}
-
-            {/* Manual connections (dashed amber) — each has a × to delete */}
-            {connections.map(conn => {
-              const a = nodeMap.get(conn.from);
-              const b = nodeMap.get(conn.to);
-              if (!a || !b) return null;
-              const sx = a.x + a.w / 2, sy = a.y + a.h / 2;
-              const tx = b.x + b.w / 2, ty = b.y + b.h / 2;
-              const qx = (sx + tx) / 2, qy = (sy + ty) / 2 - 48;
-              const mx = (sx + tx) / 2, my = (sy + ty) / 2;
-              return (
-                <g key={conn.id}>
-                  <path d={`M${sx},${sy} Q${qx},${qy} ${tx},${ty}`}
-                    fill="none" stroke="#f59e0b" strokeWidth={2}
-                    strokeDasharray="8 4" strokeOpacity={0.85} strokeLinecap="round"
-                  />
-                  {/* Delete button on midpoint */}
-                  <circle cx={mx} cy={my - 12} r={9} fill="#1a1a1a" stroke="#444"
-                    className="pointer-events-auto" style={{ cursor: "pointer" }}
-                    onClick={() => { setConnections(prev => prev.filter(c => c.id !== conn.id)); setDirty(true); }}
-                  />
-                  <text x={mx} y={my - 8} textAnchor="middle" fill="#888" fontSize="12" className="pointer-events-none">×</text>
-                </g>
-              );
-            })}
-
-            {/* Live preview while dragging a new connection */}
-            {drawingConn && (
-              <path
-                d={`M${drawingConn.x1},${drawingConn.y1} C${(drawingConn.x1 + drawingConn.x2) / 2},${drawingConn.y1} ${(drawingConn.x1 + drawingConn.x2) / 2},${drawingConn.y2} ${drawingConn.x2},${drawingConn.y2}`}
-                fill="none" stroke="#f59e0b" strokeWidth={2.5}
-                strokeDasharray="6 3" strokeOpacity={0.9} strokeLinecap="round"
-              />
-            )}
           </svg>
 
           {/* ── Nodes ── */}
@@ -720,6 +684,51 @@ export function MindMapEditor({ initialNodes, clientName, month, onSave, onClose
             );
           })}
         </div>
+
+        {/* ── Screen-space SVG: manual connections + drag preview ── */}
+        {/* Lives OUTSIDE the transform layer so it always has full canvas dimensions */}
+        <svg className="absolute inset-0 w-full h-full" style={{ pointerEvents: "none", zIndex: 4 }}>
+          {/* Persistent manual connections */}
+          {connections.map(conn => {
+            const a = nodeMap.get(conn.from);
+            const b = nodeMap.get(conn.to);
+            if (!a || !b) return null;
+            // Convert world → screen
+            const ax = panX + (a.x + a.w / 2) * zoom;
+            const ay = panY + (a.y + a.h / 2) * zoom;
+            const bx = panX + (b.x + b.w / 2) * zoom;
+            const by = panY + (b.y + b.h / 2) * zoom;
+            const qx = (ax + bx) / 2;
+            const qy = (ay + by) / 2 - 48;
+            const mx = (ax + bx) / 2;
+            const my = (ay + by) / 2;
+            return (
+              <g key={conn.id}>
+                <path d={`M${ax},${ay} Q${qx},${qy} ${bx},${by}`}
+                  fill="none" stroke="#f59e0b" strokeWidth={2.5}
+                  strokeDasharray="10 5" strokeLinecap="round"
+                />
+                {/* Delete button */}
+                <circle cx={mx} cy={my - 14} r={10} fill="#1c1c1c" stroke="#f59e0b" strokeWidth={1.5}
+                  style={{ pointerEvents: "auto", cursor: "pointer" }}
+                  onClick={() => { setConnections(prev => prev.filter(c => c.id !== conn.id)); setDirty(true); }}
+                />
+                <text x={mx} y={my - 10} textAnchor="middle" fill="#f59e0b" fontSize="13" fontWeight="bold"
+                  style={{ pointerEvents: "none" }}
+                >×</text>
+              </g>
+            );
+          })}
+
+          {/* Live drag preview */}
+          {drawingConn && (
+            <path
+              d={`M${panX + drawingConn.x1 * zoom},${panY + drawingConn.y1 * zoom} C${panX + (drawingConn.x1 + drawingConn.x2) / 2 * zoom},${panY + drawingConn.y1 * zoom} ${panX + (drawingConn.x1 + drawingConn.x2) / 2 * zoom},${panY + drawingConn.y2 * zoom} ${panX + drawingConn.x2 * zoom},${panY + drawingConn.y2 * zoom}`}
+              fill="none" stroke="#f59e0b" strokeWidth={2.5}
+              strokeDasharray="6 3" strokeLinecap="round"
+            />
+          )}
+        </svg>
 
         {/* ── Note popover (screen-space, above canvas) ── */}
         {noteNode && (() => {
