@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Topbar } from "@/components/layout/Topbar";
 import { Badge } from "@/components/ui/Badge";
 import { getContractById, CONTRACT_STATUS_LABELS, CONTRACT_STATUS_VARIANTS } from "@/services/contracts";
-import { renderContract, ContractVars } from "@/lib/contractTemplate";
+import { renderContract, ContractVars, DEFAULT_SERVICES } from "@/lib/contractTemplate";
 import { ContractStatusActions } from "./ContractStatusActions";
 
 interface PageProps {
@@ -28,6 +28,7 @@ export default async function ContractDetailPage({ params }: PageProps) {
       meses: contract.meses!,
       valorMensal: Number(contract.value ?? 0),
       valorMensalExtenso: contract.valorMensalExtenso ?? "",
+      servicos: contract.servicos.length > 0 ? contract.servicos : DEFAULT_SERVICES,
       diaVencimento: contract.diaVencimento ?? 10,
       publicoAlvo: contract.publicoAlvo ?? "",
     };

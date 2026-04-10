@@ -32,6 +32,7 @@ export async function createContractAction(_prev: { error?: string }, formData: 
     enderecoContratante: (formData.get("enderecoContratante") as string) || undefined,
     cidadeEstadoCep: (formData.get("cidadeEstadoCep") as string) || undefined,
     valorMensalExtenso: (formData.get("valorMensalExtenso") as string) || undefined,
+    servicos: formData.getAll("servicos") as string[],
   });
 
   redirect(`/admin/contracts/${contract.id}`);

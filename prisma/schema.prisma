@@ -294,6 +294,7 @@ model Contract {
   enderecoContratante String?
   cidadeEstadoCep     String?
   valorMensalExtenso  String?
+  servicos            String[]  // lista de serviços incluídos na cláusula 1.2
 
   // Digital signature
   signedToken      String    @unique @default(cuid())

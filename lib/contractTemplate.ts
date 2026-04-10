@@ -13,6 +13,17 @@ function fmtBRL(v: number) {
   return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2 });
 }
 
+export const DEFAULT_SERVICES = [
+  "Elaboração de campanhas",
+  "Gestão de tráfego pago (META ADS)",
+  "Criação de copywriting (textos persuasivos)",
+  "Elaboração de relatórios e análises de desempenho",
+  "Implementação de CRM (De acordo com o orçamento do cliente)",
+  "Análise de atendimento",
+  "Rastreamento e rastreamento de dados",
+  "Landing page",
+];
+
 export interface ContractVars {
   plano: string;
   nomeContratante: string;
@@ -20,10 +31,11 @@ export interface ContractVars {
   cidadeEstadoCep: string;
   cpfContratante: string;
   meses: number;
-  valorMensal: number;   // numeric (e.g. 1800)
-  valorMensalExtenso: string; // e.g. "Mil e oitocentos reais"
+  valorMensal: number;
+  valorMensalExtenso: string;
   diaVencimento: number;
   publicoAlvo: string;
+  servicos: string[];
 }
 
 export function renderContract(v: ContractVars): string {
@@ -42,14 +54,7 @@ De outro, ${v.nomeContratante}, domiciliado(a) neste Município e Comarca de Sã
 
 1.2 A CONTRATADA se compromete a prestar serviços de assessoria em marketing digital conforme descritos a seguir, com base no método denominado "MÉTODO F5 - ${v.plano}", compreendendo:
 
-• Elaboração de campanhas;
-• Gestão de tráfego pago (META ADS);
-• Criação de copywriting (textos persuasivos);
-• Elaboração de relatórios e análises de desempenho;
-• Implementação de CRM (De acordo com o orçamento do cliente);
-• Análise de atendimento;
-• Rastreamento e rastreamento de dados;
-• Landing page.
+${v.servicos.map(s => `• ${s};`).join("\n")}
 
 
 2 — VIGÊNCIA E RENOVAÇÃO DO CONTRATO

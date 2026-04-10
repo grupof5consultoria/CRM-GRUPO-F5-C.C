@@ -4,7 +4,7 @@ import { useActionState, useState } from "react";
 import { createContractAction } from "../actions";
 import { Button } from "@/components/ui/Button";
 import Link from "next/link";
-import { renderContract, ContractVars } from "@/lib/contractTemplate";
+import { renderContract, ContractVars, DEFAULT_SERVICES } from "@/lib/contractTemplate";
 
 interface Client { id: string; name: string; document: string | null }
 
@@ -12,7 +12,8 @@ const initialState = { error: undefined as string | undefined };
 
 function buildPreview(fields: {
   clientName: string; cpf: string; endereco: string; cidadeEstadoCep: string;
-  plano: string; meses: number; valor: number; valorExtenso: string; dia: number; publico: string;
+  plano: string; meses: number; valor: number; valorExtenso: string; dia: number;
+  publico: string; servicos: string[];
 }): string {
   const vars: ContractVars = {
     plano: fields.plano || "START",
@@ -25,6 +26,7 @@ function buildPreview(fields: {
     valorMensalExtenso: fields.valorExtenso || "{{VALOR POR EXTENSO}}",
     diaVencimento: fields.dia || 10,
     publicoAlvo: fields.publico || "{{PÚBLICO-ALVO}}",
+    servicos: fields.servicos.length > 0 ? fields.servicos : DEFAULT_SERVICES,
   };
   return renderContract(vars);
 }
@@ -44,6 +46,10 @@ export function NewContractForm({ clients }: { clients: Client[] }) {
   const [dia, setDia] = useState(10);
   const [publico, setPublico] = useState("");
 
+  // Serviços
+  const [servicos, setServicos] = useState<string[]>(DEFAULT_SERVICES);
+  const [novoServico, setNovoServico] = useState("");
+
   const selectedClient = clients.find(c => c.id === selectedClientId);
 
   function handleClientChange(e: React.ChangeEvent<HTMLSelectElement>) {
@@ -52,9 +58,25 @@ export function NewContractForm({ clients }: { clients: Client[] }) {
     if (c?.document) setCpf(c.document);
   }
 
+  function toggleServico(s: string) {
+    setServicos(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]);
+  }
+
+  function addServico() {
+    const trimmed = novoServico.trim();
+    if (trimmed && !servicos.includes(trimmed)) {
+      setServicos(prev => [...prev, trimmed]);
+    }
+    setNovoServico("");
+  }
+
+  function removeServico(s: string) {
+    setServicos(prev => prev.filter(x => x !== s));
+  }
+
   const previewText = buildPreview({
     clientName: selectedClient?.name ?? "",
-    cpf, endereco, cidadeEstadoCep, plano, meses, valor, valorExtenso, dia, publico,
+    cpf, endereco, cidadeEstadoCep, plano, meses, valor, valorExtenso, dia, publico, servicos,
   });
 
   return (
@@ -228,14 +250,74 @@ export function NewContractForm({ clients }: { clients: Client[] }) {
                 className="w-full rounded-xl border border-[#333] bg-[#1a1a1a] px-3 py-2.5 text-sm text-gray-100 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-violet-500"
               />
             </div>
-
-            {/* Título gerado automaticamente */}
-            <input
-              type="hidden"
-              name="title"
-              value={`Contrato ${plano} — ${selectedClient?.name ?? "Cliente"} (${new Date().toLocaleDateString("pt-BR", { month: "long", year: "numeric" })})`}
-            />
           </div>
+
+          {/* ── Serviços incluídos ── */}
+          <div className="border-t border-[#222] pt-5">
+            <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-1">
+              Serviços incluídos (Cláusula 1.2)
+            </h2>
+            <p className="text-xs text-gray-600 mb-4">Marque apenas os serviços que fazem parte deste contrato.</p>
+
+            <div className="space-y-2">
+              {DEFAULT_SERVICES.map(s => (
+                <label key={s} className="flex items-center gap-3 cursor-pointer group">
+                  <input
+                    type="checkbox"
+                    name="servicos"
+                    value={s}
+                    checked={servicos.includes(s)}
+                    onChange={() => toggleServico(s)}
+                    className="accent-violet-500 w-4 h-4 flex-shrink-0"
+                  />
+                  <span className={`text-sm transition-colors ${servicos.includes(s) ? "text-gray-200" : "text-gray-600 line-through"}`}>
+                    {s}
+                  </span>
+                </label>
+              ))}
+
+              {/* Custom services added by user */}
+              {servicos.filter(s => !DEFAULT_SERVICES.includes(s)).map(s => (
+                <div key={s} className="flex items-center gap-3">
+                  <input type="checkbox" name="servicos" value={s} checked readOnly className="accent-violet-500 w-4 h-4 flex-shrink-0" />
+                  <span className="text-sm text-violet-300 flex-1">{s}</span>
+                  <button
+                    type="button"
+                    onClick={() => removeServico(s)}
+                    className="text-gray-600 hover:text-red-400 transition-colors text-xs"
+                  >
+                    remover
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {/* Add custom service */}
+            <div className="flex gap-2 mt-4">
+              <input
+                type="text"
+                value={novoServico}
+                onChange={e => setNovoServico(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && (e.preventDefault(), addServico())}
+                placeholder="Adicionar serviço personalizado..."
+                className="flex-1 rounded-xl border border-dashed border-[#333] bg-[#111] px-3 py-2 text-sm text-gray-100 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
+              />
+              <button
+                type="button"
+                onClick={addServico}
+                className="px-3 py-2 rounded-xl border border-dashed border-[#333] hover:border-violet-600 text-gray-600 hover:text-violet-400 transition-colors text-sm"
+              >
+                + Adicionar
+              </button>
+            </div>
+          </div>
+
+          {/* Hidden title */}
+          <input
+            type="hidden"
+            name="title"
+            value={`Contrato ${plano} — ${selectedClient?.name ?? "Cliente"} (${new Date().toLocaleDateString("pt-BR", { month: "long", year: "numeric" })})`}
+          />
 
           <div className="flex gap-3 pt-2">
             <Button type="submit" loading={isPending}>Criar Contrato</Button>
@@ -256,7 +338,7 @@ export function NewContractForm({ clients }: { clients: Client[] }) {
 
         {/* ── Right: preview ── */}
         {showPreview && (
-          <div className="bg-[#111] border border-[#262626] rounded-2xl overflow-hidden flex flex-col">
+          <div className="bg-[#111] border border-[#262626] rounded-2xl overflow-hidden flex flex-col" style={{ maxHeight: "85vh", position: "sticky", top: "1rem" }}>
             <div className="px-4 py-3 border-b border-[#1e1e1e] flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-violet-500" />
               <span className="text-xs font-medium text-gray-400">Preview do Contrato</span>

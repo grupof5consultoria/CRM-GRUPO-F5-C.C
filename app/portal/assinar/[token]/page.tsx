@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { getContractByToken } from "@/services/contracts";
-import { renderContract, ContractVars } from "@/lib/contractTemplate";
+import { renderContract, ContractVars, DEFAULT_SERVICES } from "@/lib/contractTemplate";
 import { SignContractClient } from "./SignContractClient";
 
 interface PageProps {
@@ -54,6 +54,7 @@ export default async function SignContractPage({ params }: PageProps) {
     meses: contract.meses ?? 3,
     valorMensal: Number(contract.value ?? 0),
     valorMensalExtenso: contract.valorMensalExtenso ?? "",
+    servicos: contract.servicos.length > 0 ? contract.servicos : DEFAULT_SERVICES,
     diaVencimento: contract.diaVencimento ?? 10,
     publicoAlvo: contract.publicoAlvo ?? "",
   };

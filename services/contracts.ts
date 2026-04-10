@@ -54,6 +54,7 @@ export async function createContract(data: {
   enderecoContratante?: string;
   cidadeEstadoCep?: string;
   valorMensalExtenso?: string;
+  servicos?: string[];
 }) {
   const contract = await prisma.contract.create({
     data: {
@@ -74,6 +75,7 @@ export async function createContract(data: {
       enderecoContratante: data.enderecoContratante || null,
       cidadeEstadoCep: data.cidadeEstadoCep || null,
       valorMensalExtenso: data.valorMensalExtenso || null,
+      servicos: data.servicos ?? [],
     },
   });
 
