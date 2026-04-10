@@ -302,9 +302,15 @@ export function MindMapEditor({ initialNodes, clientName, month, onSave, onClose
         const wx = (e.clientX - px) / z;
         const wy = (e.clientY - py) / z;
         const fromId = connDragRef.current.fromId;
-        const target = ns.find(n => wx >= n.x && wx <= n.x + n.w && wy >= n.y && wy <= n.y + n.h);
+        // Use 16px padding so releasing over a port dot or sibling button still registers
+        const HIT = 16;
+        const target = ns.find(n =>
+          n.id !== fromId &&
+          wx >= n.x - HIT && wx <= n.x + n.w + HIT &&
+          wy >= n.y - HIT && wy <= n.y + n.h + HIT
+        );
 
-        if (target && target.id !== fromId) {
+        if (target) {
           // Connect to existing node
           setConnections(prev => {
             const exists = prev.some(c =>
