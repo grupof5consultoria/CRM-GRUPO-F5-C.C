@@ -7,6 +7,7 @@ import { createClient, updateClient, addClientContact, deleteClientContact, upda
 import { ClientStatus, ClientHealth } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { createOnboardingForClient } from "@/app/actions/onboarding";
 
 export async function createClientAction(_prev: { error?: string }, formData: FormData) {
   const session = await requireInternalAuth();
@@ -25,6 +26,8 @@ export async function createClientAction(_prev: { error?: string }, formData: Fo
     startDate: (formData.get("startDate") as string) || undefined,
     ownerId: (formData.get("ownerId") as string) || session.userId,
   });
+
+  await createOnboardingForClient(client.id);
 
   redirect(`/admin/clients/${client.id}`);
 }

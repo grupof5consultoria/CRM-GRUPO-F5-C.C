@@ -11,6 +11,7 @@ import { EditClientForm } from "./EditClientForm";
 import { AddContactForm } from "./AddContactForm";
 import { DeleteContactButton } from "./DeleteContactButton";
 import { ClientSidebar } from "./ClientSidebar";
+import { OnboardingPanel } from "./OnboardingPanel";
 import { headers } from "next/headers";
 // searchParams no longer used (meta connection moved to /admin/connections)
 
@@ -137,6 +138,8 @@ export default async function ClientDetailPage({ params }: PageProps) {
             )}
           </div>
 
+          </div>
+
           {/* Sidebar */}
           <div>
             <ClientSidebar
@@ -159,6 +162,19 @@ export default async function ClientDetailPage({ params }: PageProps) {
                 user: cu.user,
               }))}
             />
+          </div>
+        </div>
+
+        {/* Onboarding Panel */}
+        <div className="mt-6">
+          <div className="bg-[#1a1a1a] border border-[#262626] rounded-2xl overflow-hidden">
+            <div className="flex items-center gap-3 px-6 py-4 border-b border-[#262626]">
+              <span className="w-2 h-2 rounded-full bg-violet-400" />
+              <h2 className="text-sm font-semibold text-gray-200">Onboarding</h2>
+            </div>
+            <div className="p-6">
+              <OnboardingPanel clientId={client.id} clientName={client.name} />
+            </div>
           </div>
         </div>
       </main>

@@ -341,6 +341,7 @@ model Client {
   attendances       Attendance[]
   whatsappAccounts  WhatsAppAccount[]
   whatsappCampaigns WhatsAppCampaign[]
+  onboardingTasks   OnboardingTask[]
 
   @@map("clients")
 }
@@ -628,4 +629,21 @@ model WhatsAppConversation {
 
   @@index([accountId, date])
   @@map("whatsapp_conversations")
+}
+
+// ─── Onboarding ───────────────────────────────────────────────────────────────
+
+model OnboardingTask {
+  id          String    @id @default(cuid())
+  clientId    String
+  client      Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  stepNumber  Int
+  title       String
+  status      String    @default("pending")  // pending | in_progress | done
+  assignedTo  String?
+  createdAt   DateTime  @default(now())
+  completedAt DateTime?
+  data        Json?     // checklist items and extra fields per step
+
+  @@map("onboarding_tasks")
 }
