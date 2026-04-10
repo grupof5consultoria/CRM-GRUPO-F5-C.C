@@ -10,8 +10,13 @@ interface Strategy {
   clientId: string;
   month: string;
   nodes: MindNode;
-  client: { id: string; name: string };
+  client: { id: string; name: string; metaFaturamento: string | null };
   updatedAt: string;
+  faturamento: number;
+}
+
+function fmtBRL(v: number) {
+  return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0, maximumFractionDigits: 0 });
 }
 
 interface Client { id: string; name: string }
@@ -165,23 +170,50 @@ export function StrategiesClient({ clients }: { clients: Client[] }) {
 
                 {/* Strategy info or create button */}
                 {strategy ? (
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-gray-500">Nós no mapa</span>
-                      <span className="font-semibold text-violet-400">{countNodes(strategy.nodes)}</span>
-                    </div>
-                    <div className="w-full bg-[#262626] rounded-full h-1.5">
-                      <div
-                        className="h-1.5 rounded-full bg-gradient-to-r from-violet-600 to-violet-400"
-                        style={{ width: `${Math.min(countNodes(strategy.nodes) * 10, 100)}%` }}
-                      />
-                    </div>
+                  <div className="space-y-3">
+                    {/* META DE FATURAMENTO */}
+                    {(() => {
+                      const meta = strategy.client.metaFaturamento ? Number(strategy.client.metaFaturamento) : null;
+                      const fat  = strategy.faturamento ?? 0;
+                      const pct  = meta && meta > 0 ? Math.min(100, Math.round((fat / meta) * 100)) : null;
+
+                      return meta !== null ? (
+                        <div className="bg-[#111] border border-[#222] rounded-xl p-3 space-y-2">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-gray-500 font-medium flex items-center gap-1">
+                              <svg className="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                              </svg>
+                              META
+                            </span>
+                            <span className="text-emerald-400 font-bold">{fmtBRL(meta)}</span>
+                          </div>
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-gray-500">Faturado</span>
+                            <span className={`font-semibold ${fat >= meta ? "text-emerald-400" : "text-amber-400"}`}>{fmtBRL(fat)}</span>
+                          </div>
+                          <div className="w-full bg-[#222] rounded-full h-2 overflow-hidden">
+                            <div
+                              className={`h-2 rounded-full transition-all ${fat >= meta ? "bg-gradient-to-r from-emerald-600 to-emerald-400" : "bg-gradient-to-r from-amber-600 to-amber-400"}`}
+                              style={{ width: `${pct ?? 0}%` }}
+                            />
+                          </div>
+                          <p className="text-[10px] text-gray-600 text-right">{pct !== null ? `${pct}% da meta` : "—"}</p>
+                        </div>
+                      ) : (
+                        <div className="bg-[#111] border border-dashed border-[#2a2a2a] rounded-xl p-2.5 text-center">
+                          <p className="text-[11px] text-gray-600">Meta de faturamento não definida</p>
+                          <p className="text-[10px] text-gray-700">Configure no onboarding do cliente</p>
+                        </div>
+                      );
+                    })()}
+
                     <div className="flex items-center gap-1.5 text-xs text-violet-400">
                       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                       </svg>
-                      Clique para editar
+                      Clique para editar o mapa
                     </div>
                   </div>
                 ) : (

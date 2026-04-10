@@ -328,6 +328,7 @@ model Client {
 
   // Metas mensais
   metaConvGoal        Int?     // meta mensal de conversas WhatsApp
+  metaFaturamento     Decimal? @db.Decimal(12, 2) // meta mensal de faturamento
 
   contacts        ClientContact[]
   clientUsers     ClientUser[]

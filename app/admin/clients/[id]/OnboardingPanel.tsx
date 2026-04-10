@@ -96,20 +96,40 @@ export function OnboardingPanel({ clientId, clientName: _clientName, clientNiche
   const [initializing, setInitializing] = useState(false);
   const [initError, setInitError]       = useState("");
   const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
+  const [meta, setMeta]                   = useState<string>("");
+  const [metaSaving, setMetaSaving]       = useState(false);
+  const [metaSaved, setMetaSaved]         = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/onboarding/${clientId}`);
-      const json = await res.json();
+      const [onbRes, metaRes] = await Promise.all([
+        fetch(`/api/onboarding/${clientId}`),
+        fetch(`/api/clients/${clientId}/meta`),
+      ]);
+      const json = await onbRes.json();
+      const metaJson = await metaRes.json();
       setTasks(json.tasks ?? []);
       setProgress(json.progress ?? 0);
       setDone(json.done ?? 0);
       setTotal(json.total ?? 0);
+      setMeta(metaJson.metaFaturamento ?? "");
     } finally {
       setLoading(false);
     }
   }, [clientId]);
+
+  const saveMeta = async () => {
+    setMetaSaving(true);
+    await fetch(`/api/clients/${clientId}/meta`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ metaFaturamento: meta || null }),
+    });
+    setMetaSaving(false);
+    setMetaSaved(true);
+    setTimeout(() => setMetaSaved(false), 2000);
+  };
 
   useEffect(() => { load(); }, [load]);
 
@@ -234,6 +254,58 @@ export function OnboardingPanel({ clientId, clientName: _clientName, clientNiche
   // ── Tasks ────────────────────────────────────────────────────────────────────
   return (
     <div className="space-y-4">
+      {/* ── Meta de Faturamento ── */}
+      <div className="bg-[#111111] border border-[#262626] rounded-2xl p-5">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <p className="text-sm font-semibold text-gray-200 flex items-center gap-2">
+              <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              Meta de Faturamento Mensal
+            </p>
+            <p className="text-xs text-gray-600 mt-0.5">Quanto o cliente deseja faturar por mês</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-medium">R$</span>
+            <input
+              type="number"
+              min="0"
+              step="100"
+              value={meta}
+              onChange={e => { setMeta(e.target.value); setMetaSaved(false); }}
+              onKeyDown={e => { if (e.key === "Enter") saveMeta(); }}
+              placeholder="0"
+              className="w-full bg-[#1a1a1a] border border-[#333] rounded-xl pl-9 pr-4 py-2.5 text-sm text-gray-200 outline-none focus:border-emerald-600/60 transition-colors"
+            />
+          </div>
+          <button
+            onClick={saveMeta}
+            disabled={metaSaving}
+            className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+              metaSaved
+                ? "bg-emerald-700 text-emerald-200"
+                : "bg-emerald-600 hover:bg-emerald-500 text-white"
+            } disabled:opacity-50`}
+          >
+            {metaSaving
+              ? <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"/>
+              : metaSaved
+              ? <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>
+              : null
+            }
+            {metaSaved ? "Salvo!" : "Salvar"}
+          </button>
+        </div>
+        {meta && !metaSaving && (
+          <p className="text-xs text-emerald-500/70 mt-2">
+            Meta atual: {Number(meta).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} / mês
+          </p>
+        )}
+      </div>
+
       {/* Barra de progresso */}
       <div className="bg-[#111111] border border-[#262626] rounded-2xl p-5">
         <div className="flex items-center justify-between mb-3">
