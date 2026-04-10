@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/Badge";
 import { getContractById, CONTRACT_STATUS_LABELS, CONTRACT_STATUS_VARIANTS } from "@/services/contracts";
 import { renderContract, ContractVars, DEFAULT_SERVICES } from "@/lib/contractTemplate";
 import { ContractStatusActions } from "./ContractStatusActions";
+import { SignatureBlock } from "@/components/contract/SignatureBlock";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -95,6 +96,13 @@ export default async function ContractDetailPage({ params }: PageProps) {
                   <pre className="text-xs text-gray-300 whitespace-pre-wrap font-sans leading-relaxed">
                     {renderedText}
                   </pre>
+                  <SignatureBlock
+                    nomeContratante={contract.nomeContratante!}
+                    cpfContratante={contract.cpfContratante!}
+                    signedByName={contract.signedByName}
+                    signedByCpf={contract.signedByCpf}
+                    signedAt={contract.signedAt}
+                  />
                 </div>
               </div>
             ) : (

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { SignatureBlock } from "@/components/contract/SignatureBlock";
 
 interface Props {
   token: string;
@@ -102,6 +103,10 @@ export function SignContractClient({ token, contractText, nomeContratante, cpfCo
             <pre className="text-xs text-gray-300 whitespace-pre-wrap font-sans leading-relaxed">
               {contractText}
             </pre>
+            <SignatureBlock
+              nomeContratante={nomeContratante}
+              cpfContratante={cpfContratante}
+            />
           </div>
         </div>
 

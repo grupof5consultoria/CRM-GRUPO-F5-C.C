@@ -149,12 +149,5 @@ A CONTRATADA compromete-se a manter absoluto sigilo sobre todas as informações
 
 10 — DO FORO
 
-Fica eleito o foro da Comarca de São Paulo/SP para dirimir quaisquer dúvidas ou controvérsias oriundas do presente contrato.
-
-
-___________________________________          ___________________________________
-CONTRATADA                                   CONTRATANTE
-GRUPO F5 - CONSULTORIA DE                   ${v.nomeContratante}
-MARKETING EMPRESARIAL                        CPF: ${v.cpfContratante}
-CNPJ: 44.106.618/0001-06`;
+Fica eleito o foro da Comarca de São Paulo/SP para dirimir quaisquer dúvidas ou controvérsias oriundas do presente contrato.`;
 }
