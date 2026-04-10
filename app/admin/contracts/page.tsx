@@ -3,16 +3,31 @@ import { Topbar } from "@/components/layout/Topbar";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Table, TableHead, TableBody, TableRow, TableTh, TableTd, EmptyRow } from "@/components/ui/Table";
-import { getContracts, CONTRACT_STATUS_LABELS, CONTRACT_STATUS_VARIANTS } from "@/services/contracts";
+import { getContractsList, CONTRACT_STATUS_LABELS, CONTRACT_STATUS_VARIANTS } from "@/services/contracts";
 
 export const metadata = { title: "Contratos | Gestão Interna" };
 
-export default async function ContractsPage() {
-  const contracts = await getContracts();
+function computeDates(c: {
+  startDate: Date | null;
+  endDate: Date | null;
+  signedAt: Date | null;
+  meses: number | null;
+}) {
+  const inicio = c.startDate ?? c.signedAt ?? null;
+  let fim = c.endDate ?? null;
+  if (!fim && inicio && c.meses) {
+    fim = new Date(inicio);
+    fim.setMonth(fim.getMonth() + c.meses);
+  }
+  return { inicio, fim };
+}
 
-  const activeCount = contracts.filter(c => c.status === "active").length;
+export default async function ContractsPage() {
+  const contracts = await getContractsList();
+
+  const activeCount  = contracts.filter(c => c.status === "active").length;
   const pendingCount = contracts.filter(c => c.status === "pending_signature").length;
-  const totalValue = contracts.filter(c => c.status === "active").reduce((s, c) => s + Number(c.value ?? 0), 0);
+  const totalValue   = contracts.filter(c => c.status === "active").reduce((s, c) => s + Number(c.value ?? 0), 0);
 
   return (
     <>
@@ -52,7 +67,7 @@ export default async function ContractsPage() {
               <TableTh>Status</TableTh>
               <TableTh>Início</TableTh>
               <TableTh>Fim</TableTh>
-              <TableTh>Proposta</TableTh>
+              <TableTh>Contrato</TableTh>
               <TableTh></TableTh>
             </TableRow>
           </TableHead>
@@ -60,48 +75,65 @@ export default async function ContractsPage() {
             {contracts.length === 0 ? (
               <EmptyRow cols={8} message="Nenhum contrato criado ainda." />
             ) : (
-              contracts.map((c) => (
-                <TableRow key={c.id}>
-                  <TableTd>
-                    <span className="font-medium text-white">{c.title}</span>
-                  </TableTd>
-                  <TableTd><span className="text-gray-400">{c.client.name}</span></TableTd>
-                  <TableTd>
-                    {c.value ? (
-                      <span className="font-semibold text-white">
-                        R$ {Number(c.value).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                      </span>
-                    ) : <span className="text-gray-400">—</span>}
-                  </TableTd>
-                  <TableTd>
-                    <Badge variant={CONTRACT_STATUS_VARIANTS[c.status]}>
-                      {CONTRACT_STATUS_LABELS[c.status]}
-                    </Badge>
-                  </TableTd>
-                  <TableTd>
-                    <span className="text-gray-400">
-                      {c.startDate ? new Date(c.startDate).toLocaleDateString("pt-BR") : "—"}
-                    </span>
-                  </TableTd>
-                  <TableTd>
-                    <span className="text-gray-400">
-                      {c.endDate ? new Date(c.endDate).toLocaleDateString("pt-BR") : "—"}
-                    </span>
-                  </TableTd>
-                  <TableTd>
-                    {c.proposal ? (
-                      <Link href={`/admin/proposals/${c.proposal.id}`} className="text-violet-400 hover:underline text-xs">
-                        Ver proposta
+              contracts.map((c) => {
+                const { inicio, fim } = computeDates(c);
+                return (
+                  <TableRow key={c.id}>
+                    <TableTd>
+                      <span className="font-medium text-white">{c.title}</span>
+                    </TableTd>
+                    <TableTd>
+                      <Link href={`/admin/clients/${c.client.id}`} className="text-gray-400 hover:text-violet-400 transition-colors">
+                        {c.client.name}
                       </Link>
-                    ) : <span className="text-gray-400">—</span>}
-                  </TableTd>
-                  <TableTd>
-                    <Link href={`/admin/contracts/${c.id}`} className="text-violet-400 hover:underline text-xs font-medium">
-                      Ver
-                    </Link>
-                  </TableTd>
-                </TableRow>
-              ))
+                    </TableTd>
+                    <TableTd>
+                      {c.value ? (
+                        <span className="font-semibold text-white">
+                          R$ {Number(c.value).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                        </span>
+                      ) : <span className="text-gray-600">—</span>}
+                    </TableTd>
+                    <TableTd>
+                      <Badge variant={CONTRACT_STATUS_VARIANTS[c.status]}>
+                        {CONTRACT_STATUS_LABELS[c.status]}
+                      </Badge>
+                    </TableTd>
+                    <TableTd>
+                      <span className="text-gray-400 text-sm">
+                        {inicio ? new Date(inicio).toLocaleDateString("pt-BR") : <span className="text-gray-600">—</span>}
+                      </span>
+                    </TableTd>
+                    <TableTd>
+                      <span className="text-gray-400 text-sm">
+                        {fim ? new Date(fim).toLocaleDateString("pt-BR") : <span className="text-gray-600">—</span>}
+                      </span>
+                    </TableTd>
+
+                    {/* Paperclip PDF */}
+                    <TableTd>
+                      {c.signedToken ? (
+                        <Link href={`/admin/contracts/${c.id}/print`} target="_blank" title="Ver contrato em PDF">
+                          <span className="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-violet-400 transition-colors group">
+                            <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                            </svg>
+                            <span className="hidden sm:inline">PDF</span>
+                          </span>
+                        </Link>
+                      ) : (
+                        <span className="text-gray-700">—</span>
+                      )}
+                    </TableTd>
+
+                    <TableTd>
+                      <Link href={`/admin/contracts/${c.id}`} className="text-violet-400 hover:underline text-xs font-medium">
+                        Ver
+                      </Link>
+                    </TableTd>
+                  </TableRow>
+                );
+              })
             )}
           </TableBody>
         </Table>

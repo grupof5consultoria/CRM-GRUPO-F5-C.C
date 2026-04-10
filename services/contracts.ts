@@ -11,6 +11,25 @@ export async function getContracts() {
     orderBy: { updatedAt: "desc" },
   });
 }
+// Alias with full fields for the list page
+export async function getContractsList() {
+  return prisma.contract.findMany({
+    select: {
+      id: true,
+      title: true,
+      status: true,
+      value: true,
+      startDate: true,
+      endDate: true,
+      meses: true,
+      signedAt: true,
+      signedToken: true,
+      client: { select: { id: true, name: true } },
+      proposal: { select: { id: true, title: true } },
+    },
+    orderBy: { updatedAt: "desc" },
+  });
+}
 
 export async function getContractById(id: string) {
   return prisma.contract.findUnique({
