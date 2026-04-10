@@ -14,21 +14,20 @@ function getPeriodLabel(d: Date) {
   return `${MONTHS_PT[d.getMonth()]} ${d.getFullYear()}`;
 }
 
-// Billing period rule (same as admin):
-// - pending recurring → current month
-// - paid → month of paidAt
-// - everything else → month of dueDate
+// Billing period rule (v3):
+// - paid        → month of paidAt
+// - pending AND dueDate is in the past (overdue / wrong date) → current month
+// - everything else → actual dueDate month
 function getChargePeriod(c: {
   status: string;
-  isRecurring: boolean;
   dueDate: Date | string;
   paidAt?: Date | null;
 }, now: Date): { key: string; label: string } {
   let d: Date;
-  if (c.status === "pending" && c.isRecurring) {
-    d = now;
-  } else if (c.status === "paid" && c.paidAt) {
+  if (c.status === "paid" && c.paidAt) {
     d = new Date(c.paidAt);
+  } else if (c.status === "pending" && new Date(c.dueDate) < now) {
+    d = now;
   } else {
     d = new Date(c.dueDate);
   }
