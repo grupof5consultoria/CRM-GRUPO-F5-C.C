@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import Image from 'next/image'
 
 const WA_NUMBER = '5565999385035'
@@ -168,6 +168,106 @@ function WaIcon() {
   )
 }
 
+// ── Reviews Slider ────────────────────────────────────────────────────────────
+function StarIcon({ size = 'w-4 h-4' }: { size?: string }) {
+  return (
+    <svg className={size} viewBox="0 0 20 20" fill={gold}>
+      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+    </svg>
+  )
+}
+
+function GoogleIcon() {
+  return (
+    <svg className="w-4 h-4 opacity-40" viewBox="0 0 24 24" fill="none">
+      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+    </svg>
+  )
+}
+
+function ReviewsSlider() {
+  const [current, setCurrent] = useState(0)
+  const [paused, setPaused] = useState(false)
+  const total = reviews.length
+
+  const next = useCallback(() => setCurrent(c => (c + 1) % total), [total])
+  const prev = useCallback(() => setCurrent(c => (c - 1 + total) % total), [total])
+
+  useEffect(() => {
+    if (paused) return
+    const id = setInterval(next, 4500)
+    return () => clearInterval(id)
+  }, [next, paused])
+
+  return (
+    <div className="relative" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
+      {/* Slider window */}
+      <div className="overflow-hidden">
+        <div
+          className="flex transition-transform duration-700 ease-in-out"
+          style={{ transform: `translateX(-${current * 100}%)` }}
+        >
+          {reviews.map((r) => (
+            <div key={r.name} className="w-full flex-shrink-0 px-1 sm:px-4">
+              <div className="mx-auto max-w-2xl rounded-2xl p-7 sm:p-9 flex flex-col gap-5"
+                style={{ background: '#fff', border: `1px solid ${goldBorder}`, boxShadow: '0 4px 32px rgba(184,148,63,0.1)' }}
+              >
+                {/* Quote */}
+                <p className="text-base sm:text-lg leading-relaxed text-center" style={{ color: text }}>
+                  <span className="text-4xl leading-none font-serif" style={{ color: goldLight }}>&ldquo;</span>
+                  <br />
+                  {r.text}
+                </p>
+                {/* Author */}
+                <div className="flex items-center justify-center gap-3 pt-3" style={{ borderTop: `1px solid rgba(184,148,63,0.1)` }}>
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0"
+                    style={{ background: `linear-gradient(135deg, ${gold}, ${goldDark})` }}
+                  >{r.initials}</div>
+                  <div className="text-left">
+                    <p className="text-sm font-semibold" style={{ color: text }}>{r.name}</p>
+                    <p className="text-xs" style={{ color: textMuted }}>{r.time} · Google</p>
+                  </div>
+                  <div className="ml-2 flex gap-0.5">
+                    {[...Array(5)].map((_,i) => <StarIcon key={i} />)}
+                  </div>
+                  <GoogleIcon />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Prev / Next */}
+      <button onClick={prev} aria-label="Anterior"
+        className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 sm:-translate-x-5 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110"
+        style={{ background: '#fff', border: `1px solid ${goldBorder}`, color: goldDark, boxShadow: '0 2px 12px rgba(184,148,63,0.15)' }}
+      >‹</button>
+      <button onClick={next} aria-label="Próximo"
+        className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 sm:translate-x-5 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110"
+        style={{ background: '#fff', border: `1px solid ${goldBorder}`, color: goldDark, boxShadow: '0 2px 12px rgba(184,148,63,0.15)' }}
+      >›</button>
+
+      {/* Dots */}
+      <div className="flex justify-center gap-2 mt-7">
+        {reviews.map((_, i) => (
+          <button key={i} onClick={() => setCurrent(i)} aria-label={`Ir para avaliação ${i+1}`}
+            className="rounded-full transition-all duration-300"
+            style={{
+              width: i === current ? '24px' : '8px',
+              height: '8px',
+              background: i === current ? gold : `rgba(184,148,63,0.3)`,
+            }}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function LeticiaPage() {
   const [scrolled, setScrolled] = useState(false)
@@ -237,11 +337,12 @@ export default function LeticiaPage() {
           <div className="grid md:grid-cols-2 gap-10 md:gap-16 items-center">
             {/* Text */}
             <div>
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-medium uppercase tracking-widest mb-6"
+              <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-widest mb-6"
                 style={{ background: `rgba(184,148,63,0.12)`, border: `1px solid ${goldBorder}`, color: goldDark }}
               >
-                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                Atendimento com hora marcada
+                <span>Instituto Junqueira</span>
+                <span className="w-px h-3 rounded-full" style={{ background: goldBorder, opacity: 1 }} />
+                <span style={{ color: textMuted, fontWeight: 500 }}>Dra. Letícia Junqueira</span>
               </div>
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-[1.1] mb-5" style={{ color: text }}>
                 Seu sorriso merece{' '}
@@ -313,7 +414,7 @@ export default function LeticiaPage() {
         <div className="max-w-6xl mx-auto px-5 sm:px-6">
           <div className="text-center mb-10 sm:mb-16">
             <span className="inline-block px-4 py-1.5 rounded-full text-xs font-medium uppercase tracking-widest mb-4" style={{ background: `rgba(184,148,63,0.1)`, border: `1px solid ${goldBorder}`, color: goldDark }}>Especialidades</span>
-            <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold mb-4" style={{ color: text }}>Nossos Serviços</h2>
+            <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold mb-4" style={{ color: text }}>Nossos Tratamentos</h2>
             <p className="text-sm sm:text-base max-w-lg mx-auto" style={{ color: textMuted }}>Tratamentos odontológicos completos com tecnologia de ponta e cuidado que vai além do técnico.</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -357,11 +458,15 @@ export default function LeticiaPage() {
           </div>
 
           {/* Endereço */}
-          <div className="mt-8 p-5 rounded-2xl flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left" style={{ background: goldBg, border: `1px solid ${goldBorder}` }}>
-            <div className="text-2xl">📍</div>
+          <div className="mt-8 p-6 rounded-2xl flex flex-col items-center gap-3 text-center"
+            style={{ background: `linear-gradient(135deg, rgba(184,148,63,0.12), rgba(138,109,42,0.08))`, border: `1.5px solid rgba(184,148,63,0.45)`, boxShadow: '0 4px 20px rgba(184,148,63,0.12)' }}
+          >
+            <div className="w-10 h-10 rounded-full flex items-center justify-center text-lg"
+              style={{ background: `linear-gradient(135deg, ${gold}, ${goldDark})`, boxShadow: `0 4px 12px rgba(184,148,63,0.35)` }}
+            >📍</div>
             <div>
-              <p className="font-semibold text-sm" style={{ color: text }}>Av. Dr. Hélio Ribeiro — Alvorada, Cuiabá - MT</p>
-              <p className="text-xs mt-0.5" style={{ color: textMuted }}>Helbor Dual Business Office & Corporate · 78048-848</p>
+              <p className="font-bold text-sm" style={{ color: goldDark }}>Av. Dr. Hélio Ribeiro — Alvorada, Cuiabá - MT</p>
+              <p className="text-xs mt-1" style={{ color: textMuted }}>Helbor Dual Business Office & Corporate · 78048-848</p>
             </div>
           </div>
         </div>
@@ -469,55 +574,15 @@ export default function LeticiaPage() {
       </section>
 
       {/* ── Depoimentos ─────────────────────────────────────────────────────── */}
-      <section id="avaliacoes" className="py-16 sm:py-24" style={{ background: goldBg }}>
+      <section id="avaliacoes" className="py-16 sm:py-24 overflow-hidden" style={{ background: goldBg }}>
         <div className="max-w-6xl mx-auto px-5 sm:px-6">
           <div className="text-center mb-10 sm:mb-14">
             <span className="inline-block px-4 py-1.5 rounded-full text-xs font-medium uppercase tracking-widest mb-4" style={{ background: `rgba(184,148,63,0.1)`, border: `1px solid ${goldBorder}`, color: goldDark }}>Avaliações</span>
-            <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold mb-4" style={{ color: text }}>O que dizem nossos pacientes</h2>
-            <div className="flex items-center justify-center gap-1.5 mb-2">
-              {[...Array(5)].map((_,i) => (
-                <svg key={i} className="w-5 h-5" viewBox="0 0 20 20" fill={gold}><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-              ))}
-              <span className="ml-2 text-sm font-bold" style={{ color: goldDark }}>5.0 no Google</span>
-            </div>
+            <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold mb-3" style={{ color: text }}>O que dizem nossos pacientes</h2>
             <p className="text-xs" style={{ color: textMuted }}>Avaliações reais de pacientes do Instituto Junqueira</p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {reviews.map((r) => (
-              <div key={r.name} className="rounded-2xl p-6 flex flex-col gap-4 transition-all duration-300 hover:-translate-y-1"
-                style={{ background: '#fff', border: `1px solid ${goldBorder}`, boxShadow: '0 2px 16px rgba(184,148,63,0.07)' }}
-              >
-                {/* Stars */}
-                <div className="flex gap-0.5">
-                  {[...Array(5)].map((_,i) => (
-                    <svg key={i} className="w-4 h-4" viewBox="0 0 20 20" fill={gold}><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                  ))}
-                </div>
-                {/* Quote mark */}
-                <p className="text-sm leading-relaxed flex-1" style={{ color: textMuted }}>
-                  <span className="text-2xl leading-none font-serif mr-1" style={{ color: goldLight }}>&ldquo;</span>
-                  {r.text}
-                </p>
-                {/* Author */}
-                <div className="flex items-center gap-3 pt-2" style={{ borderTop: `1px solid rgba(184,148,63,0.1)` }}>
-                  <div className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
-                    style={{ background: `linear-gradient(135deg, ${gold}, ${goldDark})` }}
-                  >{r.initials}</div>
-                  <div>
-                    <p className="text-sm font-semibold" style={{ color: text }}>{r.name}</p>
-                    <p className="text-xs" style={{ color: textMuted }}>{r.time} · Google</p>
-                  </div>
-                  <svg className="ml-auto w-5 h-5 opacity-30" viewBox="0 0 24 24" fill="none">
-                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
-                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-                  </svg>
-                </div>
-              </div>
-            ))}
-          </div>
+          <ReviewsSlider />
 
           {/* Google rating badge */}
           <div className="mt-10 flex justify-center">
@@ -547,15 +612,42 @@ export default function LeticiaPage() {
             <span className="inline-block px-4 py-1.5 rounded-full text-xs font-medium uppercase tracking-widest mb-4" style={{ background: `rgba(184,148,63,0.1)`, border: `1px solid ${goldBorder}`, color: goldDark }}>Atendimento</span>
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold" style={{ color: text }}>Horários de Funcionamento</h2>
           </div>
-          <div className="rounded-3xl overflow-hidden shadow-sm" style={{ border: `1px solid ${goldBorder}`, background: '#fff' }}>
-            {schedule.map((item, i) => (
-              <div key={item.day} className="flex justify-between items-center px-6 py-4"
-                style={{ borderBottom: i < schedule.length - 1 ? `1px solid rgba(184,148,63,0.08)` : 'none' }}
-              >
-                <span className="text-sm font-medium" style={{ color: text }}>{item.day}</span>
-                <span className="text-sm font-semibold" style={{ color: item.hours === 'Fechado' ? '#EF4444' : goldDark }}>{item.hours}</span>
-              </div>
-            ))}
+          <div className="rounded-3xl overflow-hidden" style={{ border: `1px solid rgba(184,148,63,0.3)`, boxShadow: '0 8px 40px rgba(184,148,63,0.1)', background: '#fff' }}>
+            {/* Header strip */}
+            <div className="px-6 py-4 flex items-center gap-3" style={{ background: `linear-gradient(135deg, ${goldDark}, ${gold})` }}>
+              <svg className="w-4 h-4 text-white opacity-80" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span className="text-xs font-semibold uppercase tracking-widest text-white opacity-90">Instituto Junqueira · Cuiabá - MT</span>
+            </div>
+            {schedule.map((item, i) => {
+              const isWeekend = item.hours === 'Fechado'
+              const isToday = new Date().getDay() === [1,2,3,4,5,6,0][i]
+              return (
+                <div key={item.day}
+                  className="flex justify-between items-center px-6 py-4 transition-colors"
+                  style={{
+                    borderBottom: i < schedule.length - 1 ? `1px solid rgba(184,148,63,0.08)` : 'none',
+                    background: isToday ? `rgba(184,148,63,0.06)` : 'transparent',
+                  }}
+                >
+                  <div className="flex items-center gap-3">
+                    {isToday && <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse flex-shrink-0" />}
+                    {!isToday && <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: isWeekend ? 'rgba(239,68,68,0.3)' : `rgba(184,148,63,0.35)` }} />}
+                    <span className="text-sm font-medium" style={{ color: isToday ? goldDark : text }}>{item.day}</span>
+                    {isToday && <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: `rgba(184,148,63,0.12)`, color: goldDark }}>Hoje</span>}
+                  </div>
+                  <span className="text-sm font-semibold tabular-nums" style={{ color: isWeekend ? '#EF4444' : goldDark }}>
+                    {item.hours}
+                  </span>
+                </div>
+              )
+            })}
+            {/* Footer note */}
+            <div className="px-6 py-3 flex items-center gap-2" style={{ borderTop: `1px solid rgba(184,148,63,0.1)`, background: `rgba(184,148,63,0.03)` }}>
+              <svg className="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 20 20" fill={gold}><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd"/></svg>
+              <p className="text-xs" style={{ color: textMuted }}>Atendimento somente com hora marcada · (65) 99938-5035</p>
+            </div>
           </div>
         </div>
       </section>
