@@ -7,6 +7,7 @@ export async function proxy(req: NextRequest) {
   // Rotas públicas - não precisam de autenticação
   const publicPaths = [
     "/",
+    "/leticia",
     "/login",
     "/portal/login",
     "/recover-password",
