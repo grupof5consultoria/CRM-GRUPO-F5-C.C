@@ -352,7 +352,7 @@ export default function LeticiaPage() {
           <div className="grid md:grid-cols-2 gap-8 md:gap-16 items-center">
             {/* Text */}
             <div>
-              <div className="flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-full mb-4 sm:mb-6 w-fit"
+              <div className="flex items-center justify-center md:justify-start gap-2 px-3 sm:px-4 py-1.5 rounded-2xl mb-4 sm:mb-6 w-full md:w-fit"
                 style={{ background: `rgba(184,148,63,0.12)`, border: `1px solid ${goldBorder}` }}
               >
                 <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wide sm:tracking-widest" style={{ color: goldDark }}>Instituto Junqueira</span>
@@ -498,13 +498,13 @@ export default function LeticiaPage() {
             {beforeAfter.map((item) => (
               <div key={item.label} className="rounded-2xl overflow-hidden flex flex-col" style={{ border: `1px solid ${goldBorder}`, background: '#fff' }}>
                 {item.combined ? (
-                  /* Imagem única — mesma altura total dos pares */
-                  <div className="relative w-full flex-1 min-h-0" style={{ height: '200px' }}>
+                  /* Imagem única — mesma altura total dos pares (200px) */
+                  <div className="relative w-full" style={{ height: '200px' }}>
                     <Image src={item.combined} alt={item.label} fill className="object-cover object-center" />
                   </div>
                 ) : (
-                  /* Par antes/depois: duas imagens de altura fixa igual */
-                  <div className="flex flex-col flex-1">
+                  /* Par antes/depois: duas imagens de 100px cada = 200px total */
+                  <div>
                     <div className="relative w-full" style={{ height: '100px' }}>
                       <Image src={item.before!} alt="Antes" fill className="object-cover object-center" />
                       <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded text-[10px] font-bold text-white" style={{ background: 'rgba(0,0,0,0.55)' }}>ANTES</div>
@@ -533,7 +533,8 @@ export default function LeticiaPage() {
                 src="/leticia/5bda90fc-fa80-444c-9438-1658d92ffd3f.jpg"
                 alt="Dra. Letícia Junqueira"
                 fill
-                className="object-cover object-top"
+                className="object-cover"
+                style={{ objectPosition: 'center 12%' }}
               />
             </div>
             <div>
