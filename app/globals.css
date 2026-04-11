@@ -23,3 +23,118 @@ body {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #333333; border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #555555; }
+
+/* ── Landing Page Animations ── */
+@keyframes float {
+  0%, 100% { transform: translateY(0px) scale(1); }
+  50%       { transform: translateY(-24px) scale(1.04); }
+}
+@keyframes float-reverse {
+  0%, 100% { transform: translateY(0px) scale(1); }
+  50%       { transform: translateY(24px) scale(0.97); }
+}
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(32px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes slide-in-left {
+  from { opacity: 0; transform: translateX(-24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes gradient-x {
+  0%, 100% { background-position: 0% 50%; }
+  50%       { background-position: 100% 50%; }
+}
+@keyframes shimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(239,68,68,0.3); }
+  50%       { box-shadow: 0 0 40px rgba(239,68,68,0.6), 0 0 60px rgba(249,115,22,0.3); }
+}
+@keyframes border-spin {
+  from { --border-angle: 0deg; }
+  to   { --border-angle: 360deg; }
+}
+@keyframes count-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes orb-drift {
+  0%   { transform: translate(0, 0) scale(1); }
+  33%  { transform: translate(40px, -30px) scale(1.08); }
+  66%  { transform: translate(-20px, 20px) scale(0.95); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+
+.animate-float        { animation: float 6s ease-in-out infinite; }
+.animate-float-reverse{ animation: float-reverse 8s ease-in-out infinite; }
+.animate-fade-up      { animation: fade-up 0.7s ease forwards; }
+.animate-fade-in      { animation: fade-in 0.5s ease forwards; }
+.animate-slide-left   { animation: slide-in-left 0.6s ease forwards; }
+.animate-pulse-glow   { animation: pulse-glow 2.5s ease-in-out infinite; }
+.animate-orb          { animation: orb-drift 12s ease-in-out infinite; }
+.animate-orb-2        { animation: orb-drift 16s ease-in-out infinite reverse; }
+.animate-orb-3        { animation: orb-drift 20s ease-in-out infinite 2s; }
+
+.gradient-text {
+  background: linear-gradient(135deg, #f87171, #fb923c);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.gradient-text-animated {
+  background: linear-gradient(270deg, #f87171, #fb923c, #fbbf24, #fb923c, #f87171);
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradient-x 5s ease infinite;
+}
+.glass-card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  backdrop-filter: blur(20px);
+}
+.glass-card:hover {
+  background: rgba(255,255,255,0.055);
+  border-color: rgba(239,68,68,0.25);
+}
+.glow-btn {
+  background: linear-gradient(135deg, #ef4444, #f97316);
+  box-shadow: 0 0 30px rgba(239,68,68,0.35);
+  transition: box-shadow 0.3s ease, transform 0.2s ease;
+}
+.glow-btn:hover {
+  box-shadow: 0 0 50px rgba(239,68,68,0.55), 0 0 80px rgba(249,115,22,0.25);
+  transform: translateY(-2px) scale(1.02);
+}
+.card-hover {
+  transition: transform 0.3s ease, border-color 0.3s ease, background 0.3s ease;
+}
+.card-hover:hover {
+  transform: translateY(-6px);
+}
+.top-line::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(239,68,68,0.6), rgba(249,115,22,0.4), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.top-line:hover::before { opacity: 1; }
+
+/* Input focus ring */
+.lp-input:focus {
+  outline: none;
+  border-color: rgba(239,68,68,0.45);
+  box-shadow: 0 0 0 3px rgba(239,68,68,0.1);
+}
+.lp-input::placeholder { color: rgba(255,255,255,0.2); }
