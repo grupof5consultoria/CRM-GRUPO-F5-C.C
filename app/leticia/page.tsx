@@ -203,34 +203,34 @@ function ReviewsSlider() {
   }, [next, paused])
 
   return (
-    <div className="relative" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
+    <div className="relative px-8 sm:px-10" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
       {/* Slider window */}
-      <div className="overflow-hidden">
+      <div className="overflow-hidden rounded-2xl">
         <div
           className="flex transition-transform duration-700 ease-in-out"
           style={{ transform: `translateX(-${current * 100}%)` }}
         >
           {reviews.map((r) => (
-            <div key={r.name} className="w-full flex-shrink-0 px-1 sm:px-4">
-              <div className="mx-auto max-w-2xl rounded-2xl p-7 sm:p-9 flex flex-col gap-5"
+            <div key={r.name} className="w-full flex-shrink-0">
+              <div className="rounded-2xl p-5 sm:p-8 flex flex-col gap-4"
                 style={{ background: '#fff', border: `1px solid ${goldBorder}`, boxShadow: '0 4px 32px rgba(184,148,63,0.1)' }}
               >
                 {/* Quote */}
-                <p className="text-base sm:text-lg leading-relaxed text-center" style={{ color: text }}>
-                  <span className="text-4xl leading-none font-serif" style={{ color: goldLight }}>&ldquo;</span>
+                <p className="text-sm sm:text-base leading-relaxed text-center" style={{ color: text }}>
+                  <span className="text-3xl leading-none font-serif" style={{ color: goldLight }}>&ldquo;</span>
                   <br />
                   {r.text}
                 </p>
                 {/* Author */}
-                <div className="flex items-center justify-center gap-3 pt-3" style={{ borderTop: `1px solid rgba(184,148,63,0.1)` }}>
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0"
+                <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 pt-3" style={{ borderTop: `1px solid rgba(184,148,63,0.1)` }}>
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0"
                     style={{ background: `linear-gradient(135deg, ${gold}, ${goldDark})` }}
                   >{r.initials}</div>
                   <div className="text-left">
                     <p className="text-sm font-semibold" style={{ color: text }}>{r.name}</p>
                     <p className="text-xs" style={{ color: textMuted }}>{r.time} · Google</p>
                   </div>
-                  <div className="ml-2 flex gap-0.5">
+                  <div className="flex gap-0.5">
                     {[...Array(5)].map((_,i) => <StarIcon key={i} />)}
                   </div>
                   <GoogleIcon />
@@ -241,18 +241,18 @@ function ReviewsSlider() {
         </div>
       </div>
 
-      {/* Prev / Next */}
+      {/* Prev / Next — dentro da área */}
       <button onClick={prev} aria-label="Anterior"
-        className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 sm:-translate-x-5 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110"
+        className="absolute left-0 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full flex items-center justify-center text-lg font-bold active:scale-95"
         style={{ background: '#fff', border: `1px solid ${goldBorder}`, color: goldDark, boxShadow: '0 2px 12px rgba(184,148,63,0.15)' }}
       >‹</button>
       <button onClick={next} aria-label="Próximo"
-        className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 sm:translate-x-5 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110"
+        className="absolute right-0 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full flex items-center justify-center text-lg font-bold active:scale-95"
         style={{ background: '#fff', border: `1px solid ${goldBorder}`, color: goldDark, boxShadow: '0 2px 12px rgba(184,148,63,0.15)' }}
       >›</button>
 
       {/* Dots */}
-      <div className="flex justify-center gap-2 mt-7">
+      <div className="flex justify-center gap-2 mt-5">
         {reviews.map((_, i) => (
           <button key={i} onClick={() => setCurrent(i)} aria-label={`Ir para avaliação ${i+1}`}
             className="rounded-full transition-all duration-300"
@@ -327,57 +327,70 @@ export default function LeticiaPage() {
       </header>
 
       {/* ── Hero ────────────────────────────────────────────────────────────── */}
-      <section className="relative min-h-screen flex items-center overflow-hidden pt-16"
-        style={{ background: `linear-gradient(135deg, ${cream} 0%, ${goldBg} 60%, #F5EDD8 100%)` }}
+      <section className="relative flex items-center overflow-hidden pt-16"
+        style={{ background: `linear-gradient(135deg, ${cream} 0%, ${goldBg} 60%, #F5EDD8 100%)`, minHeight: 'calc(100svh - 0px)' }}
       >
         <div className="absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full pointer-events-none" style={{ background: `radial-gradient(circle, rgba(184,148,63,0.1), transparent 70%)` }} />
         <div className="absolute inset-0 pointer-events-none opacity-[0.03]" style={{ backgroundImage: `radial-gradient(${goldDark} 1px, transparent 1px)`, backgroundSize: '32px 32px' }} />
 
-        <div className="relative max-w-6xl mx-auto px-5 sm:px-6 py-12 w-full">
-          <div className="grid md:grid-cols-2 gap-10 md:gap-16 items-center">
+        <div className="relative max-w-6xl mx-auto px-5 sm:px-6 py-8 sm:py-12 w-full">
+          {/* Mobile: photo strip on top */}
+          <div className="md:hidden relative w-full h-56 rounded-2xl overflow-hidden mb-7 shadow-lg">
+            <Image
+              src="/leticia/3ff7d43f-5bb7-4e1b-bdb3-892020aba630.jpg"
+              alt="Dra. Letícia Junqueira"
+              fill
+              className="object-cover object-top"
+              priority
+            />
+            <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(138,109,42,0.25), transparent 60%)' }} />
+            <div className="absolute bottom-3 left-3 px-3 py-1.5 rounded-xl" style={{ background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(8px)', border: `1px solid ${goldBorder}` }}>
+              <p className="text-xs font-bold" style={{ color: goldDark }}>+10 anos de experiência</p>
+            </div>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8 md:gap-16 items-center">
             {/* Text */}
             <div>
-              <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-widest mb-6"
+              <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-widest mb-4 sm:mb-6"
                 style={{ background: `rgba(184,148,63,0.12)`, border: `1px solid ${goldBorder}`, color: goldDark }}
               >
                 <span>Instituto Junqueira</span>
                 <span className="w-px h-3 rounded-full" style={{ background: goldBorder, opacity: 1 }} />
                 <span style={{ color: textMuted, fontWeight: 500 }}>Dra. Letícia Junqueira</span>
               </div>
-              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-[1.1] mb-5" style={{ color: text }}>
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-[1.1] mb-4 sm:mb-5" style={{ color: text }}>
                 Seu sorriso merece{' '}
                 <span style={{ color: gold }}>o melhor cuidado</span>
               </h1>
-              <p className="text-base sm:text-lg leading-relaxed mb-8" style={{ color: textMuted }}>
+              <p className="text-sm sm:text-lg leading-relaxed mb-6 sm:mb-8" style={{ color: textMuted }}>
                 Há mais de 10 anos transformando sorrisos com excelência, precisão e um atendimento verdadeiramente humano. Cuiabá - MT.
               </p>
               <div className="flex flex-col sm:flex-row gap-3">
                 <a href={WA_URL} target="_blank" rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 px-7 py-4 rounded-full font-semibold text-white transition-all duration-300 hover:scale-105"
+                  className="flex items-center justify-center gap-2 px-6 py-3.5 sm:py-4 rounded-full font-semibold text-sm sm:text-base text-white transition-all duration-300 active:scale-95"
                   style={{ background: `linear-gradient(135deg, ${gold}, ${goldDark})`, boxShadow: `0 8px 24px rgba(184,148,63,0.35)` }}
                 >
                   <WaIcon /> Agendar Avaliação Gratuita
                 </a>
                 <a href="#resultados"
-                  className="flex items-center justify-center px-7 py-4 rounded-full font-semibold transition-all duration-300"
+                  className="flex items-center justify-center px-6 py-3.5 sm:py-4 rounded-full font-semibold text-sm sm:text-base transition-all duration-300"
                   style={{ border: `1.5px solid ${goldBorder}`, color: goldDark }}
-                  onMouseEnter={e => (e.currentTarget.style.background = goldBg)}
-                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                 >
                   Ver Resultados →
                 </a>
               </div>
-              <div className="mt-10 flex flex-wrap gap-6">
+              <div className="mt-7 sm:mt-10 flex gap-6 sm:gap-8">
                 {[['1.000+','Pacientes'],['1.500+','Procedimentos'],['5.0 ★','Google']].map(([v,l]) => (
                   <div key={l}>
-                    <p className="text-lg font-bold" style={{ color: goldDark }}>{v}</p>
-                    <p className="text-xs" style={{ color: textMuted }}>{l}</p>
+                    <p className="text-base sm:text-lg font-bold" style={{ color: goldDark }}>{v}</p>
+                    <p className="text-[11px] sm:text-xs" style={{ color: textMuted }}>{l}</p>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Hero photo */}
+            {/* Hero photo — desktop only */}
             <div className="relative hidden md:block">
               <div className="relative w-full aspect-[3/4] rounded-3xl overflow-hidden shadow-2xl">
                 <Image
@@ -389,7 +402,6 @@ export default function LeticiaPage() {
                 />
                 <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.15), transparent 60%)' }} />
               </div>
-              {/* Floating badge */}
               <div className="absolute -left-5 bottom-10 px-5 py-3 rounded-2xl shadow-xl" style={{ background: '#fff', border: `1px solid ${goldBorder}` }}>
                 <p className="text-xs font-bold" style={{ color: goldDark }}>+10 anos de experiência</p>
                 <p className="text-xs" style={{ color: textMuted }}>Instituto Junqueira · Cuiabá</p>
@@ -400,8 +412,8 @@ export default function LeticiaPage() {
       </section>
 
       {/* ── Stats bar ───────────────────────────────────────────────────────── */}
-      <section className="py-14 sm:py-20" style={{ background: `linear-gradient(135deg, ${goldDark}, ${gold})` }}>
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 grid grid-cols-2 md:grid-cols-4 gap-8">
+      <section className="py-10 sm:py-16" style={{ background: `linear-gradient(135deg, ${goldDark}, ${gold})` }}>
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 grid grid-cols-2 md:grid-cols-4 gap-5 sm:gap-8">
           <StatItemDark value={1000} suffix="+"   label="Pacientes atendidos" />
           <StatItemDark value={1500} suffix="+"   label="Procedimentos realizados" />
           <StatItemDark value={10}   suffix="+"   label="Anos de experiência" />
@@ -410,17 +422,17 @@ export default function LeticiaPage() {
       </section>
 
       {/* ── Serviços ────────────────────────────────────────────────────────── */}
-      <section id="servicos" className="py-16 sm:py-24" style={{ background: cream }}>
+      <section id="servicos" className="py-10 sm:py-20" style={{ background: cream }}>
         <div className="max-w-6xl mx-auto px-5 sm:px-6">
-          <div className="text-center mb-10 sm:mb-16">
+          <div className="text-center mb-8 sm:mb-12">
             <span className="inline-block px-4 py-1.5 rounded-full text-xs font-medium uppercase tracking-widest mb-4" style={{ background: `rgba(184,148,63,0.1)`, border: `1px solid ${goldBorder}`, color: goldDark }}>Especialidades</span>
             <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold mb-4" style={{ color: text }}>Nossos Tratamentos</h2>
             <p className="text-sm sm:text-base max-w-lg mx-auto" style={{ color: textMuted }}>Tratamentos odontológicos completos com tecnologia de ponta e cuidado que vai além do técnico.</p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {services.map((s) => (
               <div key={s.title}
-                className="relative rounded-2xl p-6 sm:p-7 transition-all duration-300 hover:-translate-y-1 cursor-default"
+                className="relative rounded-2xl p-5 sm:p-7 transition-all duration-300 hover:-translate-y-1 cursor-default"
                 style={{ background: '#fff', border: `1px solid rgba(184,148,63,0.12)`, boxShadow: '0 2px 16px rgba(184,148,63,0.06)' }}
                 onMouseEnter={e => { e.currentTarget.style.boxShadow = `0 8px 32px rgba(184,148,63,0.18)`; e.currentTarget.style.borderColor = goldBorder }}
                 onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 2px 16px rgba(184,148,63,0.06)'; e.currentTarget.style.borderColor = 'rgba(184,148,63,0.12)' }}
@@ -437,9 +449,9 @@ export default function LeticiaPage() {
       </section>
 
       {/* ── Clínica ─────────────────────────────────────────────────────────── */}
-      <section id="clinica" className="py-16 sm:py-24" style={{ background: '#fff' }}>
+      <section id="clinica" className="py-10 sm:py-20" style={{ background: '#fff' }}>
         <div className="max-w-6xl mx-auto px-5 sm:px-6">
-          <div className="text-center mb-10 sm:mb-14">
+          <div className="text-center mb-7 sm:mb-12">
             <span className="inline-block px-4 py-1.5 rounded-full text-xs font-medium uppercase tracking-widest mb-4" style={{ background: `rgba(184,148,63,0.1)`, border: `1px solid ${goldBorder}`, color: goldDark }}>Nosso Espaço</span>
             <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold mb-4" style={{ color: text }}>Um ambiente feito para você</h2>
             <p className="text-sm sm:text-base max-w-lg mx-auto" style={{ color: textMuted }}>Localizado em um dos edifícios mais modernos de Cuiabá, nosso espaço foi projetado para oferecer conforto e sofisticação.</p>
@@ -447,7 +459,7 @@ export default function LeticiaPage() {
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
             {clinicPhotos.map((photo) => (
-              <div key={photo.src} className="relative rounded-2xl overflow-hidden group" style={{ aspectRatio: '3/4' }}>
+              <div key={photo.src} className="relative rounded-2xl overflow-hidden group" style={{ aspectRatio: '1/1' }}>
                 <Image src={photo.src} alt={photo.label} fill className="object-cover transition-transform duration-500 group-hover:scale-105" />
                 <div className="absolute inset-0 transition-opacity duration-300 opacity-0 group-hover:opacity-100" style={{ background: 'linear-gradient(to top, rgba(138,109,42,0.7), transparent)' }} />
                 <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
@@ -473,15 +485,15 @@ export default function LeticiaPage() {
       </section>
 
       {/* ── Resultados / Antes e Depois ──────────────────────────────────────── */}
-      <section id="resultados" className="py-16 sm:py-24" style={{ background: cream }}>
+      <section id="resultados" className="py-10 sm:py-20" style={{ background: cream }}>
         <div className="max-w-6xl mx-auto px-5 sm:px-6">
-          <div className="text-center mb-10 sm:mb-14">
+          <div className="text-center mb-7 sm:mb-12">
             <span className="inline-block px-4 py-1.5 rounded-full text-xs font-medium uppercase tracking-widest mb-4" style={{ background: `rgba(184,148,63,0.1)`, border: `1px solid ${goldBorder}`, color: goldDark }}>Transformações Reais</span>
             <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold mb-4" style={{ color: text }}>Antes e Depois</h2>
             <p className="text-sm sm:text-base max-w-lg mx-auto" style={{ color: textMuted }}>Resultados reais de pacientes reais — cada sorriso é único e tratado com dedicação exclusiva.</p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
             {beforeAfter.map((item) => (
               <div key={item.label} className="rounded-2xl overflow-hidden" style={{ border: `1px solid ${goldBorder}`, background: '#fff' }}>
                 {item.combined ? (
@@ -510,10 +522,10 @@ export default function LeticiaPage() {
       </section>
 
       {/* ── Sobre ────────────────────────────────────────────────────────────── */}
-      <section id="sobre" className="py-16 sm:py-24" style={{ background: goldBg }}>
+      <section id="sobre" className="py-10 sm:py-20" style={{ background: goldBg }}>
         <div className="max-w-6xl mx-auto px-5 sm:px-6">
-          <div className="grid md:grid-cols-2 gap-10 md:gap-16 items-center">
-            <div className="relative rounded-3xl overflow-hidden shadow-xl" style={{ aspectRatio: '3/4' }}>
+          <div className="grid md:grid-cols-2 gap-8 md:gap-16 items-center">
+            <div className="relative rounded-3xl overflow-hidden shadow-xl h-64 sm:h-80 md:h-auto md:aspect-[3/4]">
               <Image
                 src="/leticia/5bda90fc-fa80-444c-9438-1658d92ffd3f.jpg"
                 alt="Dra. Letícia Junqueira"
@@ -550,7 +562,7 @@ export default function LeticiaPage() {
       </section>
 
       {/* ── Processo ────────────────────────────────────────────────────────── */}
-      <section className="py-16 sm:py-24" style={{ background: '#fff' }}>
+      <section className="py-10 sm:py-20" style={{ background: '#fff' }}>
         <div className="max-w-5xl mx-auto px-5 sm:px-6">
           <div className="text-center mb-10 sm:mb-16">
             <span className="inline-block px-4 py-1.5 rounded-full text-xs font-medium uppercase tracking-widest mb-4" style={{ background: `rgba(184,148,63,0.1)`, border: `1px solid ${goldBorder}`, color: goldDark }}>Como funciona</span>
@@ -574,7 +586,7 @@ export default function LeticiaPage() {
       </section>
 
       {/* ── Depoimentos ─────────────────────────────────────────────────────── */}
-      <section id="avaliacoes" className="py-16 sm:py-24 overflow-hidden" style={{ background: goldBg }}>
+      <section id="avaliacoes" className="py-10 sm:py-20 overflow-hidden" style={{ background: goldBg }}>
         <div className="max-w-6xl mx-auto px-5 sm:px-6">
           <div className="text-center mb-10 sm:mb-14">
             <span className="inline-block px-4 py-1.5 rounded-full text-xs font-medium uppercase tracking-widest mb-4" style={{ background: `rgba(184,148,63,0.1)`, border: `1px solid ${goldBorder}`, color: goldDark }}>Avaliações</span>
@@ -606,7 +618,7 @@ export default function LeticiaPage() {
       </section>
 
       {/* ── Horários ────────────────────────────────────────────────────────── */}
-      <section className="py-16 sm:py-24" style={{ background: cream }}>
+      <section className="py-10 sm:py-20" style={{ background: cream }}>
         <div className="max-w-4xl mx-auto px-5 sm:px-6">
           <div className="text-center mb-10">
             <span className="inline-block px-4 py-1.5 rounded-full text-xs font-medium uppercase tracking-widest mb-4" style={{ background: `rgba(184,148,63,0.1)`, border: `1px solid ${goldBorder}`, color: goldDark }}>Atendimento</span>
@@ -634,10 +646,10 @@ export default function LeticiaPage() {
                   <div className="flex items-center gap-3">
                     {isToday && <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse flex-shrink-0" />}
                     {!isToday && <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: isWeekend ? 'rgba(239,68,68,0.3)' : `rgba(184,148,63,0.35)` }} />}
-                    <span className="text-sm font-medium" style={{ color: isToday ? goldDark : text }}>{item.day}</span>
+                    <span className="text-xs sm:text-sm font-medium" style={{ color: isToday ? goldDark : text }}>{item.day}</span>
                     {isToday && <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: `rgba(184,148,63,0.12)`, color: goldDark }}>Hoje</span>}
                   </div>
-                  <span className="text-sm font-semibold tabular-nums" style={{ color: isWeekend ? '#EF4444' : goldDark }}>
+                  <span className="text-xs sm:text-sm font-semibold tabular-nums text-right" style={{ color: isWeekend ? '#EF4444' : goldDark }}>
                     {item.hours}
                   </span>
                 </div>
@@ -653,7 +665,7 @@ export default function LeticiaPage() {
       </section>
 
       {/* ── CTA Final ───────────────────────────────────────────────────────── */}
-      <section id="contato" className="py-16 sm:py-24 relative overflow-hidden"
+      <section id="contato" className="py-12 sm:py-20 relative overflow-hidden"
         style={{ background: `linear-gradient(135deg, ${goldDark} 0%, ${gold} 50%, ${goldLight} 100%)` }}
       >
         <div className="absolute inset-0 pointer-events-none opacity-10" style={{ backgroundImage: `radial-gradient(white 1px, transparent 1px)`, backgroundSize: '32px 32px' }} />
@@ -671,6 +683,14 @@ export default function LeticiaPage() {
           <p className="mt-5 text-xs" style={{ color: 'rgba(255,255,255,0.6)' }}>(65) 99938-5035 · Seg–Sex 08h–18h</p>
         </div>
       </section>
+
+      {/* ── Botão WhatsApp flutuante (mobile) ─────────────────────────────── */}
+      <a href={WA_URL} target="_blank" rel="noopener noreferrer"
+        className="fixed bottom-5 right-5 z-50 md:hidden flex items-center gap-2 pl-4 pr-5 py-3 rounded-full font-semibold text-sm text-white shadow-2xl active:scale-95 transition-transform"
+        style={{ background: '#25D366', boxShadow: '0 4px 20px rgba(37,211,102,0.45)' }}
+      >
+        <WaIcon /> Agendar
+      </a>
 
       {/* ── Footer ───────────────────────────────────────────────────────────── */}
       <footer className="py-8" style={{ background: text }}>
