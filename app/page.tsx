@@ -50,11 +50,11 @@ function StatItem({ value, suffix, prefix = '', label }: {
   const { ref, inView } = useInView()
   const count = useCounter(value, 1800, inView)
   return (
-    <div ref={ref} className="text-center">
-      <p className="text-5xl md:text-6xl font-bold gradient-text tabular-nums">
+    <div ref={ref} className="text-center px-2">
+      <p className="text-3xl sm:text-4xl md:text-5xl font-bold gradient-text tabular-nums whitespace-nowrap">
         {prefix}{count}{suffix}
       </p>
-      <p className="mt-2 text-xs uppercase tracking-widest text-gray-500">{label}</p>
+      <p className="mt-2 text-[10px] sm:text-xs uppercase tracking-widest text-gray-500 leading-tight">{label}</p>
     </div>
   )
 }
@@ -236,51 +236,51 @@ export default function HomePage() {
         <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px)', backgroundSize: '60px 60px' }} />
         <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at center, transparent 40%, #080808 100%)' }} />
 
-        <div className="relative z-10 max-w-5xl mx-auto px-6 text-center animate-fade-up">
-          <div className="inline-flex items-center gap-2 mb-8">
+        <div className="relative z-10 max-w-5xl mx-auto px-5 sm:px-6 text-center animate-fade-up">
+          <div className="inline-flex items-center gap-2 mb-6 sm:mb-8">
             <Badge>
               <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-              100+ clínicas odontológicas atendidas
+              100+ clínicas atendidas
             </Badge>
           </div>
 
-          <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold leading-[1.08] tracking-tight mb-6">
+          <h1 className="text-3xl sm:text-5xl md:text-7xl font-bold leading-[1.1] tracking-tight mb-5 sm:mb-6">
             Transformamos clínicas em{' '}
             <br className="hidden sm:block" />
             <span className="gradient-text-animated">máquinas de agendamento</span>
           </h1>
 
-          <p className="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
+          <p className="text-gray-400 text-base sm:text-lg md:text-xl max-w-2xl mx-auto mb-8 sm:mb-10 leading-relaxed">
             Estratégia, tecnologia e execução de alto nível para clínicas odontológicas que querem crescimento previsível e escalável.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href="#contato" className="px-8 py-4 rounded-full text-base font-semibold glow-btn animate-pulse-glow">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
+            <a href="#contato" className="px-7 py-3.5 sm:px-8 sm:py-4 rounded-full text-sm sm:text-base font-semibold glow-btn animate-pulse-glow">
               Quero consultoria gratuita
             </a>
-            <a href="#resultados" className="px-8 py-4 rounded-full text-base font-semibold text-gray-300 hover:text-white transition-all duration-300" style={{ border: '1px solid rgba(255,255,255,0.1)' }}>
+            <a href="#resultados" className="px-7 py-3.5 sm:px-8 sm:py-4 rounded-full text-sm sm:text-base font-semibold text-gray-300 hover:text-white transition-all duration-300" style={{ border: '1px solid rgba(255,255,255,0.1)' }}>
               Ver resultados →
             </a>
           </div>
 
-          <div className="mt-16 flex flex-wrap justify-center gap-3">
-            {['R$20M+ em vendas geradas', '100+ empresas', 'Retorno em 12h'].map(pill => (
-              <span key={pill} className="px-4 py-2 rounded-full text-xs text-gray-400" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
+          <div className="mt-10 sm:mt-16 flex flex-wrap justify-center gap-2 sm:gap-3">
+            {['R$20M+ em vendas', '100+ empresas', 'Retorno em 12h'].map(pill => (
+              <span key={pill} className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs text-gray-400" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
                 {pill}
               </span>
             ))}
           </div>
         </div>
 
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-30">
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 hidden sm:flex flex-col items-center gap-2 opacity-30">
           <span className="text-[10px] uppercase tracking-widest">scroll</span>
           <div className="w-px h-10 bg-gradient-to-b from-white to-transparent" />
         </div>
       </section>
 
       {/* ── Stats ───────────────────────────────────────────────────────────── */}
-      <section id="resultados" className="py-24" style={{ borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'linear-gradient(180deg, #0a0a0a, #0d0d0d)' }}>
-        <div className="max-w-5xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-12">
+      <section id="resultados" className="py-16 md:py-24" style={{ borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'linear-gradient(180deg, #0a0a0a, #0d0d0d)' }}>
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-6">
           <StatItem value={100} suffix="+" label="Empresas atendidas" />
           <StatItem value={20}  suffix="M+" prefix="R$" label="Em vendas geradas" />
           <StatItem value={10}  suffix="M+" prefix="R$" label="Em demanda captada" />
@@ -289,20 +289,20 @@ export default function HomePage() {
       </section>
 
       {/* ── Metodologia ─────────────────────────────────────────────────────── */}
-      <section id="metodologia" className="py-28 relative">
+      <section id="metodologia" className="py-16 sm:py-24 md:py-28 relative">
         <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at 20% 50%, rgba(124,58,237,0.05), transparent 60%)' }} />
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="text-center mb-16">
+        <div className="max-w-6xl mx-auto px-5 sm:px-6">
+          <div className="text-center mb-10 sm:mb-16">
             <Badge>Nossa metodologia</Badge>
-            <h2 className="mt-5 text-3xl md:text-5xl font-bold">O Método <span className="gradient-text">F5</span></h2>
-            <p className="mt-4 text-gray-400 max-w-lg mx-auto">Um sistema completo de 4 pilares que transforma seu negócio em uma operação previsível e escalável.</p>
+            <h2 className="mt-4 text-2xl sm:text-3xl md:text-5xl font-bold">O Método <span className="gradient-text">F5</span></h2>
+            <p className="mt-3 text-gray-400 text-sm sm:text-base max-w-lg mx-auto">Um sistema completo de 4 pilares que transforma seu negócio em uma operação previsível e escalável.</p>
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
             {methodology.map((m) => (
-              <div key={m.num} className="glass-card card-hover top-line relative rounded-2xl p-6 overflow-hidden">
-                <div className="text-3xl mb-4">{m.emoji}</div>
+              <div key={m.num} className="glass-card card-hover top-line relative rounded-2xl p-5 sm:p-6 overflow-hidden">
+                <div className="text-2xl sm:text-3xl mb-3 sm:mb-4">{m.emoji}</div>
                 <p className="text-xs font-mono text-gray-600 mb-1">{m.num}</p>
-                <h3 className="text-lg font-bold mb-2">{m.title}</h3>
+                <h3 className="text-base sm:text-lg font-bold mb-2">{m.title}</h3>
                 <p className="text-sm text-gray-400 leading-relaxed">{m.desc}</p>
               </div>
             ))}
@@ -311,22 +311,22 @@ export default function HomePage() {
       </section>
 
       {/* ── Serviços ────────────────────────────────────────────────────────── */}
-      <section id="servicos" className="py-28" style={{ background: 'rgba(255,255,255,0.01)' }}>
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="text-center mb-16">
+      <section id="servicos" className="py-16 sm:py-24 md:py-28" style={{ background: 'rgba(255,255,255,0.01)' }}>
+        <div className="max-w-6xl mx-auto px-5 sm:px-6">
+          <div className="text-center mb-10 sm:mb-16">
             <Badge>O que oferecemos</Badge>
-            <h2 className="mt-5 text-3xl md:text-5xl font-bold">Nossos Serviços</h2>
-            <p className="mt-4 text-gray-400 max-w-lg mx-auto">Soluções completas e integradas para crescimento sustentável de clínicas odontológicas.</p>
+            <h2 className="mt-4 text-2xl sm:text-3xl md:text-5xl font-bold">Nossos Serviços</h2>
+            <p className="mt-3 text-gray-400 text-sm sm:text-base max-w-lg mx-auto">Soluções completas e integradas para crescimento sustentável de clínicas odontológicas.</p>
           </div>
-          <div className="grid md:grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
             {services.map((s) => (
-              <div key={s.title} className="glass-card card-hover top-line relative rounded-2xl p-7">
-                <div className="flex items-start gap-5">
-                  <div className="w-14 h-14 rounded-xl flex items-center justify-center text-2xl flex-shrink-0" style={{ background: s.color }}>
+              <div key={s.title} className="glass-card card-hover top-line relative rounded-2xl p-5 sm:p-7">
+                <div className="flex items-start gap-4 sm:gap-5">
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center text-xl sm:text-2xl flex-shrink-0" style={{ background: s.color }}>
                     {s.emoji}
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold mb-2">{s.title}</h3>
+                    <h3 className="text-base sm:text-lg font-bold mb-1 sm:mb-2">{s.title}</h3>
                     <p className="text-sm text-gray-400 leading-relaxed">{s.desc}</p>
                   </div>
                 </div>
@@ -337,25 +337,30 @@ export default function HomePage() {
       </section>
 
       {/* ── Processo ────────────────────────────────────────────────────────── */}
-      <section className="py-28 relative overflow-hidden">
+      <section className="py-16 sm:py-24 md:py-28 relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at 80% 50%, rgba(109,40,217,0.06), transparent 60%)' }} />
-        <div className="max-w-5xl mx-auto px-6">
-          <div className="text-center mb-16">
+        <div className="max-w-5xl mx-auto px-5 sm:px-6">
+          <div className="text-center mb-10 sm:mb-16">
             <Badge>Como funciona</Badge>
-            <h2 className="mt-5 text-3xl md:text-5xl font-bold">
+            <h2 className="mt-4 text-2xl sm:text-3xl md:text-5xl font-bold">
               Consultoria <span className="gradient-text">gratuita</span> em 3 passos
             </h2>
-            <p className="mt-4 text-gray-400 max-w-lg mx-auto">Do primeiro contato ao plano de ação em mãos — sem compromisso.</p>
+            <p className="mt-3 text-gray-400 text-sm sm:text-base max-w-lg mx-auto">Do primeiro contato ao plano de ação em mãos — sem compromisso.</p>
           </div>
-          <div className="relative grid md:grid-cols-3 gap-8">
-            <div className="hidden md:block absolute top-8 left-[16%] right-[16%] h-px pointer-events-none" style={{ background: 'linear-gradient(90deg, transparent, rgba(124,58,237,0.4), rgba(109,40,217,0.3), transparent)' }} />
-            {steps.map((s) => (
-              <div key={s.num} className="text-center">
-                <div className="w-16 h-16 rounded-2xl mx-auto mb-6 flex items-center justify-center font-bold text-lg relative z-10" style={{ background: 'linear-gradient(135deg, rgba(124,58,237,0.18), rgba(109,40,217,0.18))', border: '1px solid rgba(124,58,237,0.3)' }}>
+          <div className="relative grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-6">
+            <div className="hidden sm:block absolute top-8 left-[16%] right-[16%] h-px pointer-events-none" style={{ background: 'linear-gradient(90deg, transparent, rgba(124,58,237,0.4), rgba(109,40,217,0.3), transparent)' }} />
+            {steps.map((s, i) => (
+              <div key={s.num} className="flex sm:block items-start sm:text-center gap-4 sm:gap-0">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl sm:mx-auto sm:mb-6 flex items-center justify-center font-bold text-base sm:text-lg relative z-10 flex-shrink-0" style={{ background: 'linear-gradient(135deg, rgba(124,58,237,0.18), rgba(109,40,217,0.18))', border: '1px solid rgba(124,58,237,0.3)' }}>
                   <span className="gradient-text">{s.num}</span>
                 </div>
-                <h3 className="text-lg font-bold mb-3">{s.title}</h3>
-                <p className="text-sm text-gray-400 leading-relaxed">{s.desc}</p>
+                <div>
+                  <h3 className="text-base sm:text-lg font-bold mb-1 sm:mb-3">{s.title}</h3>
+                  <p className="text-sm text-gray-400 leading-relaxed">{s.desc}</p>
+                  {i < steps.length - 1 && (
+                    <div className="sm:hidden mt-4 ml-0 w-px h-6 bg-gradient-to-b from-purple-500/30 to-transparent" />
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -363,22 +368,22 @@ export default function HomePage() {
       </section>
 
       {/* ── Depoimentos ─────────────────────────────────────────────────────── */}
-      <section id="depoimentos" className="py-28" style={{ background: 'rgba(255,255,255,0.01)' }}>
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="text-center mb-16">
+      <section id="depoimentos" className="py-16 sm:py-24 md:py-28" style={{ background: 'rgba(255,255,255,0.01)' }}>
+        <div className="max-w-6xl mx-auto px-5 sm:px-6">
+          <div className="text-center mb-10 sm:mb-16">
             <Badge>Prova social</Badge>
-            <h2 className="mt-5 text-3xl md:text-5xl font-bold">O que nossos clientes dizem</h2>
+            <h2 className="mt-4 text-2xl sm:text-3xl md:text-5xl font-bold">O que nossos clientes dizem</h2>
           </div>
-          <div className="grid md:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-5">
             {testimonials.map((t) => (
-              <div key={t.name} className="glass-card card-hover relative rounded-2xl p-7 overflow-hidden">
+              <div key={t.name} className="glass-card card-hover relative rounded-2xl p-5 sm:p-7 overflow-hidden">
                 <div className="absolute top-0 left-0 right-0 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(124,58,237,0.6), rgba(109,40,217,0.4), transparent)' }} />
-                <div className="flex gap-0.5 mb-5">
+                <div className="flex gap-0.5 mb-4">
                   {Array.from({ length: t.stars }).map((_, i) => (
                     <span key={i} className="text-yellow-400 text-sm">★</span>
                   ))}
                 </div>
-                <p className="text-sm text-gray-300 leading-relaxed mb-6">&ldquo;{t.text}&rdquo;</p>
+                <p className="text-sm text-gray-300 leading-relaxed mb-5">&ldquo;{t.text}&rdquo;</p>
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0" style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)' }}>
                     {t.name.charAt(0)}
@@ -395,26 +400,26 @@ export default function HomePage() {
       </section>
 
       {/* ── CTA / Contato ────────────────────────────────────────────────────── */}
-      <section id="contato" className="py-28 relative overflow-hidden">
+      <section id="contato" className="py-16 sm:py-24 md:py-28 relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none" style={{ background: 'linear-gradient(135deg, rgba(124,58,237,0.07), rgba(109,40,217,0.07))' }} />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none" style={{ width: 800, height: 400, borderRadius: '50%', background: 'radial-gradient(ellipse, rgba(124,58,237,0.14), rgba(109,40,217,0.08), transparent)', filter: 'blur(40px)' }} />
 
-        <div className="relative max-w-xl mx-auto px-6 text-center">
+        <div className="relative max-w-xl mx-auto px-5 sm:px-6 text-center">
           <Badge>Diagnóstico gratuito</Badge>
-          <h2 className="mt-5 text-3xl md:text-5xl font-bold mb-4">
+          <h2 className="mt-4 text-2xl sm:text-3xl md:text-5xl font-bold mb-3 sm:mb-4">
             Pronto para <span className="gradient-text">crescer?</span>
           </h2>
-          <p className="text-gray-400 mb-10">
+          <p className="text-gray-400 text-sm sm:text-base mb-8 sm:mb-10">
             Preencha o formulário e nossa equipe entrará em contato em até 12 horas pelo WhatsApp.
           </p>
 
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            <div className="grid sm:grid-cols-2 gap-4">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <input required type="text" placeholder="Seu nome"
                 className="lp-input px-4 py-3.5 rounded-xl text-sm text-white transition-all"
                 style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
               />
-              <input required type="text" placeholder="WhatsApp"
+              <input required type="tel" placeholder="WhatsApp"
                 className="lp-input px-4 py-3.5 rounded-xl text-sm text-white transition-all"
                 style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
               />
@@ -433,18 +438,18 @@ export default function HomePage() {
               <option value="30k80k"   style={{ background: '#1a1a1a', color: 'white' }}>R$ 30.000 – R$ 80.000</option>
               <option value="acima80k" style={{ background: '#1a1a1a', color: 'white' }}>Acima de R$ 80.000</option>
             </select>
-            <button type="submit" className="py-4 rounded-xl font-semibold text-base glow-btn flex items-center justify-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+            <button type="submit" className="py-4 rounded-xl font-semibold text-sm sm:text-base glow-btn flex items-center justify-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
               </svg>
               Quero meu diagnóstico gratuito
             </button>
           </form>
 
-          <p className="mt-5 text-xs text-gray-600">
+          <p className="mt-4 sm:mt-5 text-xs text-gray-600">
             Prefere ir direto?{' '}
             <a href={WA_URL} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors underline underline-offset-2">
-              Clique aqui para falar agora no WhatsApp
+              Falar agora no WhatsApp
             </a>
           </p>
         </div>
