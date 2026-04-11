@@ -334,8 +334,8 @@ export default function LeticiaPage() {
         <div className="absolute inset-0 pointer-events-none opacity-[0.03]" style={{ backgroundImage: `radial-gradient(${goldDark} 1px, transparent 1px)`, backgroundSize: '32px 32px' }} />
 
         <div className="relative max-w-6xl mx-auto px-5 sm:px-6 py-8 sm:py-12 w-full">
-          {/* Mobile: photo strip on top */}
-          <div className="md:hidden relative w-full h-56 rounded-2xl overflow-hidden mb-7 shadow-lg">
+          {/* Mobile: photo portrait on top */}
+          <div className="md:hidden relative w-full rounded-2xl overflow-hidden mb-7 shadow-lg" style={{ aspectRatio: '3/4' }}>
             <Image
               src="/leticia/3ff7d43f-5bb7-4e1b-bdb3-892020aba630.jpg"
               alt="Dra. Letícia Junqueira"
@@ -352,12 +352,12 @@ export default function LeticiaPage() {
           <div className="grid md:grid-cols-2 gap-8 md:gap-16 items-center">
             {/* Text */}
             <div>
-              <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-widest mb-4 sm:mb-6"
-                style={{ background: `rgba(184,148,63,0.12)`, border: `1px solid ${goldBorder}`, color: goldDark }}
+              <div className="flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-full mb-4 sm:mb-6 w-fit"
+                style={{ background: `rgba(184,148,63,0.12)`, border: `1px solid ${goldBorder}` }}
               >
-                <span>Instituto Junqueira</span>
-                <span className="w-px h-3 rounded-full" style={{ background: goldBorder, opacity: 1 }} />
-                <span style={{ color: textMuted, fontWeight: 500 }}>Dra. Letícia Junqueira</span>
+                <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wide sm:tracking-widest" style={{ color: goldDark }}>Instituto Junqueira</span>
+                <span className="w-px h-3 flex-shrink-0" style={{ background: `rgba(184,148,63,0.4)` }} />
+                <span className="text-[10px] sm:text-xs font-medium uppercase tracking-wide sm:tracking-widest whitespace-nowrap" style={{ color: textMuted }}>Dra. Letícia Junqueira</span>
               </div>
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-[1.1] mb-4 sm:mb-5" style={{ color: text }}>
                 Seu sorriso merece{' '}
@@ -380,9 +380,9 @@ export default function LeticiaPage() {
                   Ver Resultados →
                 </a>
               </div>
-              <div className="mt-7 sm:mt-10 flex gap-6 sm:gap-8">
+              <div className="mt-7 sm:mt-10 flex justify-center md:justify-start gap-6 sm:gap-8">
                 {[['1.000+','Pacientes'],['1.500+','Procedimentos'],['5.0 ★','Google']].map(([v,l]) => (
-                  <div key={l}>
+                  <div key={l} className="text-center md:text-left">
                     <p className="text-base sm:text-lg font-bold" style={{ color: goldDark }}>{v}</p>
                     <p className="text-[11px] sm:text-xs" style={{ color: textMuted }}>{l}</p>
                   </div>
@@ -461,9 +461,10 @@ export default function LeticiaPage() {
             {clinicPhotos.map((photo) => (
               <div key={photo.src} className="relative rounded-2xl overflow-hidden group" style={{ aspectRatio: '1/1' }}>
                 <Image src={photo.src} alt={photo.label} fill className="object-cover transition-transform duration-500 group-hover:scale-105" />
-                <div className="absolute inset-0 transition-opacity duration-300 opacity-0 group-hover:opacity-100" style={{ background: 'linear-gradient(to top, rgba(138,109,42,0.7), transparent)' }} />
-                <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-                  <p className="text-white text-xs font-semibold">{photo.label}</p>
+                {/* Overlay: sempre visível no mobile, hover no desktop */}
+                <div className="absolute inset-0 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300" style={{ background: 'linear-gradient(to top, rgba(138,109,42,0.75), transparent 60%)' }} />
+                <div className="absolute bottom-0 left-0 right-0 p-2 sm:p-3 md:translate-y-full md:group-hover:translate-y-0 transition-transform duration-300">
+                  <p className="text-white text-[11px] sm:text-xs font-semibold">{photo.label}</p>
                 </div>
               </div>
             ))}
@@ -495,25 +496,27 @@ export default function LeticiaPage() {
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
             {beforeAfter.map((item) => (
-              <div key={item.label} className="rounded-2xl overflow-hidden" style={{ border: `1px solid ${goldBorder}`, background: '#fff' }}>
+              <div key={item.label} className="rounded-2xl overflow-hidden flex flex-col" style={{ border: `1px solid ${goldBorder}`, background: '#fff' }}>
                 {item.combined ? (
-                  <div className="relative w-full" style={{ aspectRatio: '1/1' }}>
-                    <Image src={item.combined} alt={item.label} fill className="object-cover" />
+                  /* Imagem única — mesma altura total dos pares */
+                  <div className="relative w-full flex-1 min-h-0" style={{ height: '200px' }}>
+                    <Image src={item.combined} alt={item.label} fill className="object-cover object-center" />
                   </div>
                 ) : (
-                  <div className="flex flex-col">
-                    <div className="relative w-full" style={{ aspectRatio: '4/3' }}>
-                      <Image src={item.before!} alt="Antes" fill className="object-cover" />
-                      <div className="absolute top-2 left-2 px-2 py-0.5 rounded text-xs font-bold text-white" style={{ background: 'rgba(0,0,0,0.55)' }}>ANTES</div>
+                  /* Par antes/depois: duas imagens de altura fixa igual */
+                  <div className="flex flex-col flex-1">
+                    <div className="relative w-full" style={{ height: '100px' }}>
+                      <Image src={item.before!} alt="Antes" fill className="object-cover object-center" />
+                      <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded text-[10px] font-bold text-white" style={{ background: 'rgba(0,0,0,0.55)' }}>ANTES</div>
                     </div>
-                    <div className="relative w-full" style={{ aspectRatio: '4/3' }}>
-                      <Image src={item.after!} alt="Depois" fill className="object-cover" />
-                      <div className="absolute top-2 left-2 px-2 py-0.5 rounded text-xs font-bold text-white" style={{ background: `rgba(184,148,63,0.85)` }}>DEPOIS</div>
+                    <div className="relative w-full" style={{ height: '100px' }}>
+                      <Image src={item.after!} alt="Depois" fill className="object-cover object-center" />
+                      <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded text-[10px] font-bold text-white" style={{ background: `rgba(184,148,63,0.85)` }}>DEPOIS</div>
                     </div>
                   </div>
                 )}
-                <div className="p-3 text-center">
-                  <p className="text-sm font-semibold" style={{ color: goldDark }}>{item.label}</p>
+                <div className="p-2 sm:p-3 text-center">
+                  <p className="text-xs sm:text-sm font-semibold" style={{ color: goldDark }}>{item.label}</p>
                 </div>
               </div>
             ))}
@@ -525,7 +528,7 @@ export default function LeticiaPage() {
       <section id="sobre" className="py-10 sm:py-20" style={{ background: goldBg }}>
         <div className="max-w-6xl mx-auto px-5 sm:px-6">
           <div className="grid md:grid-cols-2 gap-8 md:gap-16 items-center">
-            <div className="relative rounded-3xl overflow-hidden shadow-xl h-64 sm:h-80 md:h-auto md:aspect-[3/4]">
+            <div className="relative rounded-3xl overflow-hidden shadow-xl" style={{ aspectRatio: '3/4' }}>
               <Image
                 src="/leticia/5bda90fc-fa80-444c-9438-1658d92ffd3f.jpg"
                 alt="Dra. Letícia Junqueira"
@@ -686,10 +689,10 @@ export default function LeticiaPage() {
 
       {/* ── Botão WhatsApp flutuante (mobile) ─────────────────────────────── */}
       <a href={WA_URL} target="_blank" rel="noopener noreferrer"
-        className="fixed bottom-5 right-5 z-50 md:hidden flex items-center gap-2 pl-4 pr-5 py-3 rounded-full font-semibold text-sm text-white shadow-2xl active:scale-95 transition-transform"
+        className="fixed bottom-5 right-5 z-50 md:hidden flex items-center justify-center w-14 h-14 rounded-full text-white shadow-2xl active:scale-95 transition-transform"
         style={{ background: '#25D366', boxShadow: '0 4px 20px rgba(37,211,102,0.45)' }}
       >
-        <WaIcon /> Agendar
+        <WaIcon />
       </a>
 
       {/* ── Footer ───────────────────────────────────────────────────────────── */}
