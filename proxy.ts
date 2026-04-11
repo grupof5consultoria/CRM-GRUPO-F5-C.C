@@ -6,22 +6,21 @@ export async function proxy(req: NextRequest) {
 
   // Rotas públicas - não precisam de autenticação
   const publicPaths = [
+    "/",
     "/login",
     "/portal/login",
     "/recover-password",
+    "/privacidade",
+    "/termos",
     "/proposal/",
     "/api/webhooks/",
     "/_next/",
     "/favicon.ico",
+    "/icon.svg",
   ];
 
-  if (publicPaths.some((p) => pathname.startsWith(p))) {
+  if (publicPaths.some((p) => pathname === p || (p.endsWith("/") && pathname.startsWith(p)))) {
     return NextResponse.next();
-  }
-
-  // Rota raiz → redireciona para login
-  if (pathname === "/") {
-    return NextResponse.redirect(new URL("/login", req.url));
   }
 
   const token = req.cookies.get("session")?.value;
