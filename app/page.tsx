@@ -3,6 +3,10 @@
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 
+const WA_NUMBER = '5511984314897'
+const WA_MESSAGE = 'Olá, gostaria de um diagnostico para a minha clinica'
+const WA_URL = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(WA_MESSAGE)}`
+
 // ── Hooks ─────────────────────────────────────────────────────────────────────
 
 function useInView(threshold = 0.15) {
@@ -40,9 +44,7 @@ function useCounter(target: number, duration = 2000, start = false) {
 
 // ── Sub-components ─────────────────────────────────────────────────────────────
 
-function StatItem({
-  value, suffix, prefix = '', label,
-}: {
+function StatItem({ value, suffix, prefix = '', label }: {
   value: number; suffix: string; prefix?: string; label: string
 }) {
   const { ref, inView } = useInView()
@@ -62,9 +64,9 @@ function Badge({ children }: { children: React.ReactNode }) {
     <span
       className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs uppercase tracking-widest font-medium"
       style={{
-        background: 'rgba(239,68,68,0.08)',
-        border: '1px solid rgba(239,68,68,0.2)',
-        color: '#f87171',
+        background: 'rgba(124,58,237,0.1)',
+        border: '1px solid rgba(124,58,237,0.25)',
+        color: '#a78bfa',
       }}
     >
       {children}
@@ -76,92 +78,74 @@ function Badge({ children }: { children: React.ReactNode }) {
 
 const methodology = [
   {
-    num: '01',
-    emoji: '🎯',
-    title: 'Captação',
+    num: '01', emoji: '🎯', title: 'Captação',
     desc: 'Identificamos seu público ideal e criamos campanhas que geram demanda qualificada e previsível.',
   },
   {
-    num: '02',
-    emoji: '💰',
-    title: 'Receita',
+    num: '02', emoji: '💰', title: 'Receita',
     desc: 'Convertemos leads em agendamentos e agendamentos em pacientes pagantes com alto ticket.',
   },
   {
-    num: '03',
-    emoji: '🤝',
-    title: 'Engajamento',
+    num: '03', emoji: '🤝', title: 'Engajamento',
     desc: 'Construímos relacionamentos que fidelizam pacientes e geram indicações consistentes.',
   },
   {
-    num: '04',
-    emoji: '🚀',
-    title: 'Monetização',
+    num: '04', emoji: '🚀', title: 'Monetização',
     desc: 'Maximizamos o valor de cada cliente, identificando oportunidades de upsell e recompra.',
   },
 ]
 
 const services = [
   {
-    emoji: '📈',
-    title: 'Tráfego Pago',
+    emoji: '📈', title: 'Tráfego Pago',
     desc: 'Anúncios estratégicos no Meta Ads e Google Ads com segmentação precisa para atrair pacientes qualificados.',
-    color: 'rgba(239,68,68,0.12)',
+    color: 'rgba(124,58,237,0.14)',
   },
   {
-    emoji: '🎯',
-    title: 'Gestão de Leads',
+    emoji: '🎯', title: 'Gestão de Leads',
     desc: 'Capturamos, qualificamos e nutrimos cada lead até a conversão, maximizando seu retorno sobre investimento.',
-    color: 'rgba(249,115,22,0.12)',
+    color: 'rgba(109,40,217,0.14)',
   },
   {
-    emoji: '🏆',
-    title: 'Treinamento Comercial',
+    emoji: '🏆', title: 'Treinamento Comercial',
     desc: 'Capacitamos sua equipe com scripts e técnicas comprovadas para converter consultas em vendas fechadas.',
-    color: 'rgba(239,68,68,0.12)',
+    color: 'rgba(124,58,237,0.14)',
   },
   {
-    emoji: '🧠',
-    title: 'Consultoria Estratégica',
+    emoji: '🧠', title: 'Consultoria Estratégica',
     desc: 'Diagnóstico completo do seu negócio e plano personalizado de crescimento com metas e prazos definidos.',
-    color: 'rgba(249,115,22,0.12)',
+    color: 'rgba(109,40,217,0.14)',
   },
 ]
 
 const steps = [
   {
-    num: '01',
-    title: 'Diagnóstico',
+    num: '01', title: 'Diagnóstico',
     desc: 'Analisamos sua operação atual, identificando gargalos e as principais oportunidades de crescimento.',
   },
   {
-    num: '02',
-    title: 'Análise Estratégica',
+    num: '02', title: 'Análise Estratégica',
     desc: 'Mapeamos o mercado e desenhamos a estratégia mais eficiente para o seu perfil de negócio.',
   },
   {
-    num: '03',
-    title: 'Plano de Ação',
+    num: '03', title: 'Plano de Ação',
     desc: 'Entregamos um plano detalhado com ações, prazos, responsáveis e metas mensuráveis.',
   },
 ]
 
 const testimonials = [
   {
-    name: 'Dr. Carlos Mendes',
-    role: 'Clínica Sorriso Perfeito • São Paulo',
+    name: 'Dr. Carlos Mendes', role: 'Clínica Sorriso Perfeito • São Paulo',
     text: 'Em 3 meses triplicamos os agendamentos mensais. A equipe do Grupo F5 vai muito além do esperado, entregando resultados que agências anteriores nunca conseguiram.',
     stars: 5,
   },
   {
-    name: 'Dra. Ana Lima',
-    role: 'OdontoVida Clínica • Rio de Janeiro',
+    name: 'Dra. Ana Lima', role: 'OdontoVida Clínica • Rio de Janeiro',
     text: 'O investimento em tráfego pago com eles é completamente diferente. Cada real investido retorna multiplicado. Dedicação e profissionalismo fora do comum.',
     stars: 5,
   },
   {
-    name: 'Dr. Rafael Costa',
-    role: 'Centro Odontológico Costa • BH',
+    name: 'Dr. Rafael Costa', role: 'Centro Odontológico Costa • BH',
     text: 'Depois do treinamento comercial minha taxa de fechamento aumentou mais de 60%. Hoje sei exatamente como converter uma consulta em venda.',
     stars: 5,
   },
@@ -172,7 +156,6 @@ const testimonials = [
 export default function HomePage() {
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
-  const [submitted, setSubmitted] = useState(false)
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 30)
@@ -182,7 +165,7 @@ export default function HomePage() {
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    setSubmitted(true)
+    window.open(WA_URL, '_blank')
   }
 
   return (
@@ -199,12 +182,8 @@ export default function HomePage() {
         } : {}}
       >
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          {/* Logo */}
-          <span className="text-xl font-bold gradient-text tracking-tight select-none">
-            GRUPO F5
-          </span>
+          <span className="text-xl font-bold gradient-text tracking-tight select-none">GRUPO F5</span>
 
-          {/* Desktop links */}
           <nav className="hidden md:flex items-center gap-8">
             {[
               ['Metodologia', '#metodologia'],
@@ -212,61 +191,32 @@ export default function HomePage() {
               ['Resultados',  '#resultados'],
               ['Depoimentos', '#depoimentos'],
             ].map(([label, href]) => (
-              <a
-                key={label}
-                href={href}
-                className="text-sm text-gray-400 hover:text-white transition-colors duration-200"
-              >
+              <a key={label} href={href} className="text-sm text-gray-400 hover:text-white transition-colors duration-200">
                 {label}
               </a>
             ))}
           </nav>
 
-          {/* CTA */}
-          <a
-            href="#contato"
-            className="hidden md:inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold glow-btn"
-          >
-            Falar com especialista
-            <span className="text-base">→</span>
+          <a href="#contato" className="hidden md:inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold glow-btn">
+            Falar com especialista <span>→</span>
           </a>
 
-          {/* Mobile burger */}
-          <button
-            onClick={() => setMenuOpen(o => !o)}
-            className="md:hidden flex flex-col justify-center gap-1.5 w-8 h-8"
-            aria-label="Menu"
-          >
+          <button onClick={() => setMenuOpen(o => !o)} className="md:hidden flex flex-col justify-center gap-1.5 w-8 h-8" aria-label="Menu">
             <span className={`block h-0.5 bg-white transition-all duration-300 ${menuOpen ? 'rotate-45 translate-y-2' : ''}`} />
             <span className={`block h-0.5 bg-white transition-all duration-300 ${menuOpen ? 'opacity-0 scale-x-0' : ''}`} />
             <span className={`block h-0.5 bg-white transition-all duration-300 ${menuOpen ? '-rotate-45 -translate-y-2' : ''}`} />
           </button>
         </div>
 
-        {/* Mobile menu */}
         <div
           className="md:hidden overflow-hidden transition-all duration-300"
-          style={{
-            maxHeight: menuOpen ? '320px' : '0',
-            borderBottom: menuOpen ? '1px solid rgba(255,255,255,0.06)' : 'none',
-          }}
+          style={{ maxHeight: menuOpen ? '320px' : '0', borderBottom: menuOpen ? '1px solid rgba(255,255,255,0.06)' : 'none' }}
         >
           <div className="px-6 py-4 flex flex-col gap-4" style={{ background: 'rgba(8,8,8,0.95)', backdropFilter: 'blur(24px)' }}>
-            {[
-              ['Metodologia', '#metodologia'],
-              ['Serviços',    '#servicos'],
-              ['Resultados',  '#resultados'],
-              ['Depoimentos', '#depoimentos'],
-            ].map(([label, href]) => (
-              <a key={label} href={href} onClick={() => setMenuOpen(false)} className="text-gray-300 hover:text-white transition-colors py-1">
-                {label}
-              </a>
+            {[['Metodologia','#metodologia'],['Serviços','#servicos'],['Resultados','#resultados'],['Depoimentos','#depoimentos']].map(([l,h]) => (
+              <a key={l} href={h} onClick={() => setMenuOpen(false)} className="text-gray-300 hover:text-white transition-colors py-1">{l}</a>
             ))}
-            <a
-              href="#contato"
-              onClick={() => setMenuOpen(false)}
-              className="text-center py-3 rounded-xl font-semibold glow-btn"
-            >
+            <a href="#contato" onClick={() => setMenuOpen(false)} className="text-center py-3 rounded-xl font-semibold glow-btn">
               Falar com especialista
             </a>
           </div>
@@ -275,58 +225,18 @@ export default function HomePage() {
 
       {/* ── Hero ─────────────────────────────────────────────────────────────── */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
-
-        {/* Background base */}
         <div className="absolute inset-0 bg-[#080808]" />
 
-        {/* Animated orbs */}
-        <div
-          className="absolute animate-orb pointer-events-none"
-          style={{
-            top: '10%', left: '-8%',
-            width: 500, height: 500,
-            borderRadius: '50%',
-            background: 'radial-gradient(circle at 40% 40%, rgba(239,68,68,0.25), transparent 65%)',
-            filter: 'blur(48px)',
-          }}
-        />
-        <div
-          className="absolute animate-orb-2 pointer-events-none"
-          style={{
-            bottom: '5%', right: '-8%',
-            width: 600, height: 600,
-            borderRadius: '50%',
-            background: 'radial-gradient(circle at 60% 60%, rgba(249,115,22,0.2), transparent 65%)',
-            filter: 'blur(56px)',
-          }}
-        />
-        <div
-          className="absolute animate-orb-3 pointer-events-none"
-          style={{
-            top: '40%', left: '35%',
-            width: 400, height: 400,
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(239,68,68,0.06), transparent 70%)',
-            filter: 'blur(40px)',
-          }}
-        />
+        {/* Orbs */}
+        <div className="absolute animate-orb pointer-events-none" style={{ top: '10%', left: '-8%', width: 500, height: 500, borderRadius: '50%', background: 'radial-gradient(circle at 40% 40%, rgba(124,58,237,0.28), transparent 65%)', filter: 'blur(48px)' }} />
+        <div className="absolute animate-orb-2 pointer-events-none" style={{ bottom: '5%', right: '-8%', width: 600, height: 600, borderRadius: '50%', background: 'radial-gradient(circle at 60% 60%, rgba(109,40,217,0.22), transparent 65%)', filter: 'blur(56px)' }} />
+        <div className="absolute animate-orb-3 pointer-events-none" style={{ top: '40%', left: '35%', width: 400, height: 400, borderRadius: '50%', background: 'radial-gradient(circle, rgba(124,58,237,0.07), transparent 70%)', filter: 'blur(40px)' }} />
 
-        {/* Grid pattern */}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            backgroundImage: 'linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px)',
-            backgroundSize: '60px 60px',
-          }}
-        />
-
-        {/* Vignette */}
+        {/* Grid */}
+        <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px)', backgroundSize: '60px 60px' }} />
         <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at center, transparent 40%, #080808 100%)' }} />
 
-        {/* Content */}
         <div className="relative z-10 max-w-5xl mx-auto px-6 text-center animate-fade-up">
-
-          {/* Live badge */}
           <div className="inline-flex items-center gap-2 mb-8">
             <Badge>
               <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
@@ -348,30 +258,20 @@ export default function HomePage() {
             <a href="#contato" className="px-8 py-4 rounded-full text-base font-semibold glow-btn animate-pulse-glow">
               Quero consultoria gratuita
             </a>
-            <a
-              href="#resultados"
-              className="px-8 py-4 rounded-full text-base font-semibold text-gray-300 hover:text-white transition-all duration-300 hover:border-white/20"
-              style={{ border: '1px solid rgba(255,255,255,0.1)' }}
-            >
+            <a href="#resultados" className="px-8 py-4 rounded-full text-base font-semibold text-gray-300 hover:text-white transition-all duration-300" style={{ border: '1px solid rgba(255,255,255,0.1)' }}>
               Ver resultados →
             </a>
           </div>
 
-          {/* Floating stats pills */}
           <div className="mt-16 flex flex-wrap justify-center gap-3">
             {['R$20M+ em vendas geradas', '100+ empresas', 'Retorno em 12h'].map(pill => (
-              <span
-                key={pill}
-                className="px-4 py-2 rounded-full text-xs text-gray-400"
-                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
-              >
+              <span key={pill} className="px-4 py-2 rounded-full text-xs text-gray-400" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
                 {pill}
               </span>
             ))}
           </div>
         </div>
 
-        {/* Scroll indicator */}
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-30">
           <span className="text-[10px] uppercase tracking-widest">scroll</span>
           <div className="w-px h-10 bg-gradient-to-b from-white to-transparent" />
@@ -390,19 +290,13 @@ export default function HomePage() {
 
       {/* ── Metodologia ─────────────────────────────────────────────────────── */}
       <section id="metodologia" className="py-28 relative">
-        <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at 20% 50%, rgba(239,68,68,0.04), transparent 60%)' }} />
-
+        <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at 20% 50%, rgba(124,58,237,0.05), transparent 60%)' }} />
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-16">
             <Badge>Nossa metodologia</Badge>
-            <h2 className="mt-5 text-3xl md:text-5xl font-bold">
-              O Método <span className="gradient-text">F5</span>
-            </h2>
-            <p className="mt-4 text-gray-400 max-w-lg mx-auto">
-              Um sistema completo de 4 pilares que transforma seu negócio em uma operação previsível e escalável.
-            </p>
+            <h2 className="mt-5 text-3xl md:text-5xl font-bold">O Método <span className="gradient-text">F5</span></h2>
+            <p className="mt-4 text-gray-400 max-w-lg mx-auto">Um sistema completo de 4 pilares que transforma seu negócio em uma operação previsível e escalável.</p>
           </div>
-
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {methodology.map((m) => (
               <div key={m.num} className="glass-card card-hover top-line relative rounded-2xl p-6 overflow-hidden">
@@ -410,9 +304,6 @@ export default function HomePage() {
                 <p className="text-xs font-mono text-gray-600 mb-1">{m.num}</p>
                 <h3 className="text-lg font-bold mb-2">{m.title}</h3>
                 <p className="text-sm text-gray-400 leading-relaxed">{m.desc}</p>
-
-                {/* Subtle inner glow on hover via CSS */}
-                <div className="absolute inset-0 rounded-2xl pointer-events-none" style={{ background: 'linear-gradient(135deg, rgba(239,68,68,0.05), rgba(249,115,22,0.05))', opacity: 0 }} />
               </div>
             ))}
           </div>
@@ -425,19 +316,13 @@ export default function HomePage() {
           <div className="text-center mb-16">
             <Badge>O que oferecemos</Badge>
             <h2 className="mt-5 text-3xl md:text-5xl font-bold">Nossos Serviços</h2>
-            <p className="mt-4 text-gray-400 max-w-lg mx-auto">
-              Soluções completas e integradas para crescimento sustentável de clínicas odontológicas.
-            </p>
+            <p className="mt-4 text-gray-400 max-w-lg mx-auto">Soluções completas e integradas para crescimento sustentável de clínicas odontológicas.</p>
           </div>
-
           <div className="grid md:grid-cols-2 gap-5">
             {services.map((s) => (
               <div key={s.title} className="glass-card card-hover top-line relative rounded-2xl p-7">
                 <div className="flex items-start gap-5">
-                  <div
-                    className="w-14 h-14 rounded-xl flex items-center justify-center text-2xl flex-shrink-0"
-                    style={{ background: s.color }}
-                  >
+                  <div className="w-14 h-14 rounded-xl flex items-center justify-center text-2xl flex-shrink-0" style={{ background: s.color }}>
                     {s.emoji}
                   </div>
                   <div>
@@ -453,39 +338,20 @@ export default function HomePage() {
 
       {/* ── Processo ────────────────────────────────────────────────────────── */}
       <section className="py-28 relative overflow-hidden">
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{ background: 'radial-gradient(ellipse at 80% 50%, rgba(249,115,22,0.05), transparent 60%)' }}
-        />
+        <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at 80% 50%, rgba(109,40,217,0.06), transparent 60%)' }} />
         <div className="max-w-5xl mx-auto px-6">
           <div className="text-center mb-16">
             <Badge>Como funciona</Badge>
             <h2 className="mt-5 text-3xl md:text-5xl font-bold">
-              Consultoria{' '}
-              <span className="gradient-text">gratuita</span>{' '}
-              em 3 passos
+              Consultoria <span className="gradient-text">gratuita</span> em 3 passos
             </h2>
-            <p className="mt-4 text-gray-400 max-w-lg mx-auto">
-              Do primeiro contato ao plano de ação em mãos — sem compromisso.
-            </p>
+            <p className="mt-4 text-gray-400 max-w-lg mx-auto">Do primeiro contato ao plano de ação em mãos — sem compromisso.</p>
           </div>
-
           <div className="relative grid md:grid-cols-3 gap-8">
-            {/* Connector */}
-            <div
-              className="hidden md:block absolute top-8 left-[16%] right-[16%] h-px pointer-events-none"
-              style={{ background: 'linear-gradient(90deg, transparent, rgba(239,68,68,0.35), rgba(249,115,22,0.25), transparent)' }}
-            />
-
+            <div className="hidden md:block absolute top-8 left-[16%] right-[16%] h-px pointer-events-none" style={{ background: 'linear-gradient(90deg, transparent, rgba(124,58,237,0.4), rgba(109,40,217,0.3), transparent)' }} />
             {steps.map((s) => (
               <div key={s.num} className="text-center">
-                <div
-                  className="w-16 h-16 rounded-2xl mx-auto mb-6 flex items-center justify-center font-bold text-lg relative z-10"
-                  style={{
-                    background: 'linear-gradient(135deg, rgba(239,68,68,0.15), rgba(249,115,22,0.15))',
-                    border: '1px solid rgba(239,68,68,0.25)',
-                  }}
-                >
+                <div className="w-16 h-16 rounded-2xl mx-auto mb-6 flex items-center justify-center font-bold text-lg relative z-10" style={{ background: 'linear-gradient(135deg, rgba(124,58,237,0.18), rgba(109,40,217,0.18))', border: '1px solid rgba(124,58,237,0.3)' }}>
                   <span className="gradient-text">{s.num}</span>
                 </div>
                 <h3 className="text-lg font-bold mb-3">{s.title}</h3>
@@ -503,35 +369,18 @@ export default function HomePage() {
             <Badge>Prova social</Badge>
             <h2 className="mt-5 text-3xl md:text-5xl font-bold">O que nossos clientes dizem</h2>
           </div>
-
           <div className="grid md:grid-cols-3 gap-5">
             {testimonials.map((t) => (
-              <div
-                key={t.name}
-                className="glass-card card-hover relative rounded-2xl p-7 overflow-hidden"
-              >
-                {/* Top shimmer line */}
-                <div
-                  className="absolute top-0 left-0 right-0 h-px"
-                  style={{ background: 'linear-gradient(90deg, transparent, rgba(239,68,68,0.5), rgba(249,115,22,0.3), transparent)' }}
-                />
-
-                {/* Stars */}
+              <div key={t.name} className="glass-card card-hover relative rounded-2xl p-7 overflow-hidden">
+                <div className="absolute top-0 left-0 right-0 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(124,58,237,0.6), rgba(109,40,217,0.4), transparent)' }} />
                 <div className="flex gap-0.5 mb-5">
                   {Array.from({ length: t.stars }).map((_, i) => (
                     <span key={i} className="text-yellow-400 text-sm">★</span>
                   ))}
                 </div>
-
-                <p className="text-sm text-gray-300 leading-relaxed mb-6">
-                  &ldquo;{t.text}&rdquo;
-                </p>
-
+                <p className="text-sm text-gray-300 leading-relaxed mb-6">&ldquo;{t.text}&rdquo;</p>
                 <div className="flex items-center gap-3">
-                  <div
-                    className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0"
-                    style={{ background: 'linear-gradient(135deg, #ef4444, #f97316)' }}
-                  >
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0" style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)' }}>
                     {t.name.charAt(0)}
                   </div>
                   <div>
@@ -547,106 +396,65 @@ export default function HomePage() {
 
       {/* ── CTA / Contato ────────────────────────────────────────────────────── */}
       <section id="contato" className="py-28 relative overflow-hidden">
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{ background: 'linear-gradient(135deg, rgba(239,68,68,0.06), rgba(249,115,22,0.06))' }}
-        />
-        <div
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
-          style={{
-            width: 800, height: 400,
-            borderRadius: '50%',
-            background: 'radial-gradient(ellipse, rgba(239,68,68,0.12), rgba(249,115,22,0.08), transparent)',
-            filter: 'blur(40px)',
-          }}
-        />
+        <div className="absolute inset-0 pointer-events-none" style={{ background: 'linear-gradient(135deg, rgba(124,58,237,0.07), rgba(109,40,217,0.07))' }} />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none" style={{ width: 800, height: 400, borderRadius: '50%', background: 'radial-gradient(ellipse, rgba(124,58,237,0.14), rgba(109,40,217,0.08), transparent)', filter: 'blur(40px)' }} />
 
         <div className="relative max-w-xl mx-auto px-6 text-center">
           <Badge>Diagnóstico gratuito</Badge>
           <h2 className="mt-5 text-3xl md:text-5xl font-bold mb-4">
-            Pronto para{' '}
-            <span className="gradient-text">crescer?</span>
+            Pronto para <span className="gradient-text">crescer?</span>
           </h2>
           <p className="text-gray-400 mb-10">
-            Preencha o formulário e nossa equipe entrará em contato em até 12 horas.
+            Preencha o formulário e nossa equipe entrará em contato em até 12 horas pelo WhatsApp.
           </p>
 
-          {submitted ? (
-            <div
-              className="rounded-2xl p-10 text-center"
-              style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}
-            >
-              <div className="text-4xl mb-4">🎉</div>
-              <h3 className="text-xl font-bold mb-2">Recebemos seu contato!</h3>
-              <p className="text-gray-400 text-sm">Nossa equipe vai entrar em contato em até 12 horas.</p>
-            </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-              <div className="grid sm:grid-cols-2 gap-4">
-                <input
-                  required
-                  type="text"
-                  placeholder="Seu nome"
-                  className="lp-input px-4 py-3.5 rounded-xl text-sm text-white transition-all"
-                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
-                />
-                <input
-                  required
-                  type="text"
-                  placeholder="WhatsApp"
-                  className="lp-input px-4 py-3.5 rounded-xl text-sm text-white transition-all"
-                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
-                />
-              </div>
-              <input
-                required
-                type="text"
-                placeholder="Nome da clínica"
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <div className="grid sm:grid-cols-2 gap-4">
+              <input required type="text" placeholder="Seu nome"
                 className="lp-input px-4 py-3.5 rounded-xl text-sm text-white transition-all"
                 style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
               />
-              <select
-                className="lp-input px-4 py-3.5 rounded-xl text-sm transition-all appearance-none"
-                style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.35)' }}
-              >
-                <option value="">Faturamento mensal</option>
-                <option value="ate10k" style={{ background: '#1a1a1a', color: 'white' }}>Até R$ 10.000</option>
-                <option value="10k30k" style={{ background: '#1a1a1a', color: 'white' }}>R$ 10.000 – R$ 30.000</option>
-                <option value="30k80k" style={{ background: '#1a1a1a', color: 'white' }}>R$ 30.000 – R$ 80.000</option>
-                <option value="acima80k" style={{ background: '#1a1a1a', color: 'white' }}>Acima de R$ 80.000</option>
-              </select>
-              <button type="submit" className="py-4 rounded-xl font-semibold text-base glow-btn">
-                Quero meu diagnóstico gratuito →
-              </button>
-            </form>
-          )}
+              <input required type="text" placeholder="WhatsApp"
+                className="lp-input px-4 py-3.5 rounded-xl text-sm text-white transition-all"
+                style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
+              />
+            </div>
+            <input required type="text" placeholder="Nome da clínica"
+              className="lp-input px-4 py-3.5 rounded-xl text-sm text-white transition-all"
+              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
+            />
+            <select
+              className="lp-input px-4 py-3.5 rounded-xl text-sm transition-all appearance-none"
+              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.35)' }}
+            >
+              <option value="">Faturamento mensal</option>
+              <option value="ate10k"   style={{ background: '#1a1a1a', color: 'white' }}>Até R$ 10.000</option>
+              <option value="10k30k"   style={{ background: '#1a1a1a', color: 'white' }}>R$ 10.000 – R$ 30.000</option>
+              <option value="30k80k"   style={{ background: '#1a1a1a', color: 'white' }}>R$ 30.000 – R$ 80.000</option>
+              <option value="acima80k" style={{ background: '#1a1a1a', color: 'white' }}>Acima de R$ 80.000</option>
+            </select>
+            <button type="submit" className="py-4 rounded-xl font-semibold text-base glow-btn flex items-center justify-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+              </svg>
+              Quero meu diagnóstico gratuito
+            </button>
+          </form>
 
           <p className="mt-5 text-xs text-gray-600">
-            Prefere WhatsApp?{' '}
-            <a
-              href="https://wa.me/5500000000000"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-gray-400 hover:text-white transition-colors underline underline-offset-2"
-            >
-              Clique aqui para falar agora
+            Prefere ir direto?{' '}
+            <a href={WA_URL} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors underline underline-offset-2">
+              Clique aqui para falar agora no WhatsApp
             </a>
           </p>
         </div>
       </section>
 
       {/* ── Footer ───────────────────────────────────────────────────────────── */}
-      <footer
-        className="py-10"
-        style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}
-      >
+      <footer className="py-10" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
         <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-5">
           <span className="text-xl font-bold gradient-text tracking-tight">GRUPO F5</span>
-
-          <p className="text-xs text-gray-600">
-            © {new Date().getFullYear()} Grupo F5. Todos os direitos reservados.
-          </p>
-
+          <p className="text-xs text-gray-600">© {new Date().getFullYear()} Grupo F5. Todos os direitos reservados.</p>
           <nav className="flex gap-6 text-sm text-gray-500">
             <Link href="/privacidade" className="hover:text-gray-300 transition-colors">Privacidade</Link>
             <Link href="/termos"      className="hover:text-gray-300 transition-colors">Termos</Link>
