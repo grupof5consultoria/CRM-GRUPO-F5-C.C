@@ -64,8 +64,8 @@ const DIFFERENTIALS = [
   },
   {
     icon: "🚀",
-    title: "Resultados a partir do 1º mês",
-    text: "Nossa metodologia foi testada em mais de 30 clínicas odontológicas. O protocolo de lançamento gera leads qualificados logo nas primeiras semanas.",
+    title: "Resultados a partir do 2º mês",
+    text: "O 1º mês é dedicado à implementação completa da estrutura. A partir do 2º mês, as campanhas já estão no ar e gerando leads qualificados para a sua clínica.",
   },
   {
     icon: "🖥️",
