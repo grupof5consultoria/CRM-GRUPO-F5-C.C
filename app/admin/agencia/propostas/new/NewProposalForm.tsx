@@ -3,7 +3,7 @@
 import { useActionState, useState } from "react";
 import { createProposalAction } from "../actions";
 import Link from "next/link";
-import { PLAN_CONFIG } from "@/services/agencia";
+import { PLAN_CONFIG } from "@/lib/agencia-config";
 
 type Client = { id: string; name: string };
 

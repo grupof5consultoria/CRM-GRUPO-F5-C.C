@@ -2,7 +2,7 @@
 
 import { useTransition } from "react";
 import Link from "next/link";
-import { PLAN_CONFIG } from "@/services/agencia";
+import { PLAN_CONFIG } from "@/lib/agencia-config";
 import { updateProposalStatusAction } from "./actions";
 
 type Proposal = {

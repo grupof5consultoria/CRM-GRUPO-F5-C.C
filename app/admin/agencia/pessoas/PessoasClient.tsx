@@ -2,7 +2,7 @@
 
 import { useState, useActionState, useTransition } from "react";
 import { TeamMemberRole, TeamMemberStatus } from "@prisma/client";
-import { ROLE_LABELS, STATUS_LABELS } from "@/services/agencia";
+import { ROLE_LABELS, STATUS_LABELS } from "@/lib/agencia-config";
 import { createTeamMemberAction, updateTeamMemberAction, toggleOffboardingAction } from "./actions";
 
 type OffboardingItem = { id: string; label: string; revoked: boolean; revokedAt: Date | null; responsible: string | null };
