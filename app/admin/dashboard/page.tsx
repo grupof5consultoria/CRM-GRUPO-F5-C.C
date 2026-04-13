@@ -117,12 +117,12 @@ async function getDashboardData() {
       _count: { id: true },
     }),
 
-    // Top clientes por cobrança paga no mês
-    prisma.charge.groupBy({
+    // Top clientes por faturamento de pacientes no mês (portal de fechamento)
+    prisma.attendance.groupBy({
       by: ["clientId"],
-      where: { status: "paid", paidAt: { gte: start, lte: end } },
-      _sum: { value: true },
-      orderBy: { _sum: { value: "desc" } },
+      where: { status: "closed", period, valueClosed: { not: null } },
+      _sum: { valueClosed: true },
+      orderBy: { _sum: { valueClosed: "desc" } },
       take: 5,
     }),
   ]);
@@ -176,7 +176,7 @@ async function getDashboardData() {
     topClientsByRevenue: topClientsByRevenue.map(r => ({
       clientId: r.clientId,
       name: clientNameMap[r.clientId] ?? "—",
-      value: Number(r._sum.value ?? 0),
+      value: Number(r._sum.valueClosed ?? 0),
     })),
   };
 }
@@ -505,10 +505,13 @@ export default async function DashboardPage() {
               <div className="bg-[#1a1a1a] border border-[#262626] rounded-2xl p-6">
                 <div className="flex items-center gap-2.5 mb-4">
                   <div className="w-1.5 h-5 rounded-full bg-amber-500" />
-                  <h3 className="text-sm font-semibold text-white uppercase tracking-wider">Top por Faturamento</h3>
+                  <h3 className="text-sm font-semibold text-white uppercase tracking-wider">Faturamento das Doutoras</h3>
                 </div>
                 {data.topClientsByRevenue.length === 0 ? (
-                  <p className="text-sm text-gray-600 text-center py-4">Sem dados este mês</p>
+                  <div className="text-center py-4">
+                    <p className="text-sm text-gray-600">Sem dados este mês</p>
+                    <p className="text-[10px] text-gray-700 mt-1">Preenchido a partir dos fechamentos no portal das clínicas</p>
+                  </div>
                 ) : (
                   <div className="space-y-3">
                     {data.topClientsByRevenue.map((c, i) => {
@@ -529,6 +532,7 @@ export default async function DashboardPage() {
                         </div>
                       );
                     })}
+                    <p className="text-[10px] text-gray-700 pt-1">Fonte: fechamentos registrados no portal de cada clínica</p>
                   </div>
                 )}
               </div>
