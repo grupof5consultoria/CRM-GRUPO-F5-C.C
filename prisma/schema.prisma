@@ -121,6 +121,16 @@ enum AttendanceOrigin {
   other
 }
 
+enum PatientLeadStatus {
+  novo_lead           // entrou pelo tráfego
+  em_contato          // equipe entrou em contato
+  agendado            // consulta marcada
+  consulta_realizada  // paciente compareceu
+  proposta_enviada    // proposta de tratamento enviada
+  fechado             // tratamento fechado/pago
+  perdido             // não converteu
+}
+
 // ─── Usuários ─────────────────────────────────────────────────────────────────
 
 model User {
@@ -134,14 +144,15 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  assignedLeads    Lead[]         @relation("LeadOwner")
-  assignedClients  Client[]       @relation("ClientOwner")
-  assignedTasks    Task[]         @relation("TaskOwner")
-  createdProposals Proposal[]     @relation("ProposalCreator")
-  createdContracts Contract[]     @relation("ContractCreator")
-  leadActivities   LeadActivity[]
-  clientUser       ClientUser?
-  auditLogs        AuditLog[]
+  assignedLeads       Lead[]         @relation("LeadOwner")
+  assignedClients     Client[]       @relation("ClientOwner")
+  assignedTasks       Task[]         @relation("TaskOwner")
+  createdProposals    Proposal[]     @relation("ProposalCreator")
+  createdContracts    Contract[]     @relation("ContractCreator")
+  leadActivities      LeadActivity[]
+  clientUser          ClientUser?
+  auditLogs           AuditLog[]
+  assignedPatientLeads PatientLead[] @relation("PatientLeadAssignee")
 
   @@map("users")
 }
@@ -381,6 +392,7 @@ model Client {
   audienceUpdates      AudienceUpdate[]
   instagramTracking    InstagramTracking[]
   landingPageProject   LandingPageProject?
+  patientLeads         PatientLead[]
 
   @@map("clients")
 }
@@ -814,6 +826,30 @@ model LandingPagePhase {
 
   @@unique([projectId, phaseNumber])
   @@map("landing_page_phases")
+}
+
+// ─── CRM Cliente (leads de tráfego pago das doutoras) ────────────────────────
+
+model PatientLead {
+  id             String            @id @default(cuid())
+  clientId       String
+  client         Client            @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  name           String
+  phone          String?
+  email          String?
+  status         PatientLeadStatus @default(novo_lead)
+  origin         AttendanceOrigin  @default(other)
+  treatmentValue Decimal?          @db.Decimal(10, 2)
+  lostReason     String?
+  scheduledAt    DateTime?
+  notes          String?
+  source         String?           // campanha, anúncio, UTM, etc.
+  assigneeId     String?
+  assignee       User?             @relation("PatientLeadAssignee", fields: [assigneeId], references: [id])
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@map("patient_leads")
 }
 
 // ─── Estratégias ──────────────────────────────────────────────────────────────
