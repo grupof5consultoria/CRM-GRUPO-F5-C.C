@@ -85,7 +85,7 @@ export default async function PropostaComercialPage({ params }: PageProps) {
           <h2 style={{ color: "#fff", fontSize: 18, fontWeight: 700, margin: "0 0 6px" }}>O que está incluso no plano</h2>
           <p style={{ color: "#555", fontSize: 13, margin: "0 0 24px" }}>Tudo que a F5 Agência entrega para sua clínica crescer</p>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-            {cfg?.services.map((s, i) => (
+            {(cfg?.services ?? []).map((s, i) => (
               <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10, background: "#1a1a1a", border: "1px solid #222", borderRadius: 12, padding: "14px 16px" }}>
                 <div style={{ width: 22, height: 22, borderRadius: 6, background: "rgba(139,92,246,0.15)", border: "1px solid rgba(139,92,246,0.3)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1 }}>
                   <span style={{ color: "#a78bfa", fontSize: 11, fontWeight: 900 }}>✓</span>

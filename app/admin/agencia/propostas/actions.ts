@@ -36,10 +36,10 @@ export async function updateProposalStatusAction(id: string, status: string) {
 }
 
 export async function createClientForProposalAction(name: string, email?: string, phone?: string) {
-  await requireInternalAuth();
+  const session = await requireInternalAuth();
   const { prisma } = await import("@/lib/prisma");
   const client = await prisma.client.create({
-    data: { name, email: email || null, phone: phone || null, status: "active" },
+    data: { name, email: email || null, phone: phone || null, status: "active", ownerId: session.userId },
     select: { id: true, name: true },
   });
   return client;
