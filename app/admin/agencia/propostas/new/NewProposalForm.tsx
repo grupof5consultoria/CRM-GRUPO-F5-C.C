@@ -1,19 +1,39 @@
 "use client";
 
-import { useActionState, useState } from "react";
-import { createProposalAction } from "../actions";
+import { useActionState, useState, useTransition } from "react";
+import { createProposalAction, createClientForProposalAction } from "../actions";
 import Link from "next/link";
 import { PLAN_CONFIG } from "@/lib/agencia-config";
 
 type Client = { id: string; name: string };
 
-export function NewProposalForm({ clients }: { clients: Client[] }) {
+export function NewProposalForm({ clients: initialClients }: { clients: Client[] }) {
   const [state, action, isPending] = useActionState(createProposalAction, {});
   const [plan, setPlan] = useState<"start" | "scale">("start");
   const [discount, setDiscount] = useState(false);
+  const [clients, setClients] = useState<Client[]>(initialClients);
+  const [selectedClientId, setSelectedClientId] = useState("");
+
+  // New client inline
+  const [showNewClient, setShowNewClient] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newEmail, setNewEmail] = useState("");
+  const [newPhone, setNewPhone] = useState("");
+  const [creatingClient, startClientTransition] = useTransition();
 
   const cfg = PLAN_CONFIG[plan];
   const implPrice = discount ? cfg.priceImplDiscount : cfg.priceImpl;
+
+  function handleCreateClient() {
+    if (!newName.trim()) return;
+    startClientTransition(async () => {
+      const created = await createClientForProposalAction(newName.trim(), newEmail || undefined, newPhone || undefined);
+      setClients(prev => [...prev, created]);
+      setSelectedClientId(created.id);
+      setShowNewClient(false);
+      setNewName(""); setNewEmail(""); setNewPhone("");
+    });
+  }
 
   return (
     <form action={action} className="space-y-6">
@@ -23,11 +43,64 @@ export function NewProposalForm({ clients }: { clients: Client[] }) {
 
       {/* Cliente */}
       <div>
-        <label className="block text-sm font-medium text-gray-400 mb-1.5">Cliente *</label>
-        <select name="clientId" required className="w-full bg-[#1a1a1a] border border-[#2e2e2e] rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-violet-500">
-          <option value="">Selecione o cliente...</option>
-          {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </select>
+        <div className="flex items-center justify-between mb-1.5">
+          <label className="text-sm font-medium text-gray-400">Cliente *</label>
+          <button
+            type="button"
+            onClick={() => setShowNewClient(!showNewClient)}
+            className="text-xs text-violet-400 hover:text-violet-300 transition-colors"
+          >
+            {showNewClient ? "← Cancelar" : "+ Novo cliente"}
+          </button>
+        </div>
+
+        {showNewClient ? (
+          <div className="bg-[#111] border border-violet-500/20 rounded-xl p-4 space-y-3">
+            <p className="text-xs font-semibold text-violet-400 uppercase tracking-wider">Cadastrar novo cliente</p>
+            <input
+              value={newName}
+              onChange={e => setNewName(e.target.value)}
+              placeholder="Nome da clínica / dentista *"
+              className="w-full bg-[#1a1a1a] border border-[#2e2e2e] rounded-xl px-3 py-2 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-violet-500"
+            />
+            <div className="grid grid-cols-2 gap-2">
+              <input
+                value={newEmail}
+                onChange={e => setNewEmail(e.target.value)}
+                placeholder="E-mail"
+                type="email"
+                className="bg-[#1a1a1a] border border-[#2e2e2e] rounded-xl px-3 py-2 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-violet-500"
+              />
+              <input
+                value={newPhone}
+                onChange={e => setNewPhone(e.target.value)}
+                placeholder="WhatsApp"
+                className="bg-[#1a1a1a] border border-[#2e2e2e] rounded-xl px-3 py-2 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-violet-500"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={handleCreateClient}
+              disabled={creatingClient || !newName.trim()}
+              className="w-full py-2 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium transition-colors disabled:opacity-50"
+            >
+              {creatingClient ? "Cadastrando..." : "Cadastrar e Selecionar"}
+            </button>
+          </div>
+        ) : (
+          <select
+            name="clientId"
+            required
+            value={selectedClientId}
+            onChange={e => setSelectedClientId(e.target.value)}
+            className="w-full bg-[#1a1a1a] border border-[#2e2e2e] rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-violet-500"
+          >
+            <option value="">Selecione o cliente...</option>
+            {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+        )}
+        {/* Hidden to ensure clientId is sent even after inline create */}
+        {showNewClient && <input type="hidden" name="clientId" value={selectedClientId} />}
       </div>
 
       {/* Plano */}
@@ -101,8 +174,8 @@ export function NewProposalForm({ clients }: { clients: Client[] }) {
         <Link href="/admin/agencia/propostas" className="flex-1 py-2.5 rounded-xl border border-[#2e2e2e] text-gray-400 text-sm font-medium text-center hover:border-[#3e3e3e] transition-colors">
           Cancelar
         </Link>
-        <button type="submit" disabled={isPending} className="flex-1 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium transition-colors disabled:opacity-50">
-          {isPending ? "Criando..." : "Criar Proposta"}
+        <button type="submit" disabled={isPending || !selectedClientId} className="flex-1 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium transition-colors disabled:opacity-50">
+          {isPending ? "Criando..." : "Criar Proposta Comercial"}
         </button>
       </div>
     </form>

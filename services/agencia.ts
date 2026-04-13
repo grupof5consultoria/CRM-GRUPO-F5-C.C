@@ -4,6 +4,34 @@ import { OFFBOARDING_ITEMS, PLAN_CONFIG } from "@/lib/agencia-config";
 
 export { ROLE_LABELS, STATUS_LABELS, OFFBOARDING_ITEMS, PLAN_CONFIG } from "@/lib/agencia-config";
 
+// ─── Processos ────────────────────────────────────────────────────────────────
+
+export async function getProcesses(role?: string) {
+  return prisma.agencyProcess.findMany({
+    where: role ? { role } : undefined,
+    orderBy: [{ role: "asc" }, { order: "asc" }, { createdAt: "asc" }],
+  });
+}
+
+export async function createProcess(data: {
+  role: string; title: string; description: string; frequency: string; tool?: string;
+}) {
+  const count = await prisma.agencyProcess.count({ where: { role: data.role } });
+  return prisma.agencyProcess.create({
+    data: { ...data, tool: data.tool || null, order: count },
+  });
+}
+
+export async function updateProcess(id: string, data: {
+  title?: string; description?: string; frequency?: string; tool?: string | null;
+}) {
+  return prisma.agencyProcess.update({ where: { id }, data });
+}
+
+export async function deleteProcess(id: string) {
+  return prisma.agencyProcess.delete({ where: { id } });
+}
+
 export async function getTeamMembers() {
   return prisma.agencyTeamMember.findMany({
     include: { offboarding: true },

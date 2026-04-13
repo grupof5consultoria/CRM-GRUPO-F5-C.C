@@ -979,3 +979,17 @@ model CommercialProposal {
 
   @@map("commercial_proposals")
 }
+
+model AgencyProcess {
+  id          String   @id @default(cuid())
+  role        String   // sdr | closer | cs | traffic_manager | manager | other
+  title       String
+  description String
+  frequency   String   // Diário | Semanal | Quinzenal | Mensal | Conforme demanda | A cada novo cliente
+  tool        String?
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("agency_processes")
+}

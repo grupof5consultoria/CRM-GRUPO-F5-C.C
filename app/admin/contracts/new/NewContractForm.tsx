@@ -5,6 +5,7 @@ import { createContractAction } from "../actions";
 import { Button } from "@/components/ui/Button";
 import Link from "next/link";
 import { renderContract, ContractVars, DEFAULT_SERVICES } from "@/lib/contractTemplate";
+import { PLAN_CONFIG } from "@/lib/agencia-config";
 
 interface Client { id: string; name: string; document: string | null }
 
@@ -169,14 +170,34 @@ export function NewContractForm({ clients }: { clients: Client[] }) {
               <select
                 name="plano"
                 value={plano}
-                onChange={e => setPlano(e.target.value)}
+                onChange={e => {
+                  const p = e.target.value;
+                  setPlano(p);
+                  // Auto-fill price and services from PLAN_CONFIG
+                  if (p === "F5 START") {
+                    setValor(PLAN_CONFIG.start.priceMonthly);
+                    setServicos(PLAN_CONFIG.start.services);
+                  } else if (p === "F5 SCALE") {
+                    setValor(PLAN_CONFIG.scale.priceMonthly);
+                    setServicos(PLAN_CONFIG.scale.services);
+                  }
+                }}
                 className="w-full rounded-xl border border-[#333] bg-[#1a1a1a] px-3 py-2.5 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500"
               >
-                <option value="START">START</option>
-                <option value="SCALE">SCALE</option>
-                <option value="PREMIUM">PREMIUM</option>
-                <option value="ELITE">ELITE</option>
+                <optgroup label="Planos F5 Agência">
+                  <option value="F5 START">F5 START — R$ {PLAN_CONFIG.start.priceMonthly.toLocaleString("pt-BR")}/mês</option>
+                  <option value="F5 SCALE">F5 SCALE — R$ {PLAN_CONFIG.scale.priceMonthly.toLocaleString("pt-BR")}/mês</option>
+                </optgroup>
+                <optgroup label="Outros">
+                  <option value="START">START</option>
+                  <option value="SCALE">SCALE</option>
+                  <option value="PREMIUM">PREMIUM</option>
+                  <option value="ELITE">ELITE</option>
+                </optgroup>
               </select>
+              {(plano === "F5 START" || plano === "F5 SCALE") && (
+                <p className="text-xs text-violet-400 mt-1">✓ Preço e serviços preenchidos automaticamente pelo plano selecionado</p>
+              )}
             </div>
 
             {/* Meses + Dia vencimento */}

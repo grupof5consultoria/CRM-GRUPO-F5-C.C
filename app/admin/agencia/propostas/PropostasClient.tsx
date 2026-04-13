@@ -23,6 +23,22 @@ const STATUS_LABEL: Record<string, string> = {
   draft: "Rascunho", sent: "Enviada", accepted: "Aceita", rejected: "Recusada", expired: "Expirada"
 };
 
+function CopyLinkButton({ id }: { id: string }) {
+  function copy() {
+    const url = `${window.location.origin}/proposta-comercial/${id}`;
+    navigator.clipboard.writeText(url);
+  }
+  return (
+    <button
+      onClick={copy}
+      className="text-[10px] px-2 py-0.5 rounded border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 transition-colors"
+      title="Copiar link da landing page para enviar ao cliente"
+    >
+      🔗 Copiar Link
+    </button>
+  );
+}
+
 function ProposalCard({ p }: { p: Proposal }) {
   const [isPending, startTransition] = useTransition();
   const cfg = PLAN_CONFIG[p.plan as "start" | "scale"];
@@ -35,19 +51,28 @@ function ProposalCard({ p }: { p: Proposal }) {
     <div className="bg-[#1a1a1a] border border-[#262626] rounded-2xl p-5">
       <div className="flex items-start justify-between gap-3 mb-3">
         <div>
+          <p className="text-xs text-gray-600 uppercase tracking-wider mb-0.5">Proposta Comercial</p>
           <p className="text-white font-semibold">{p.client.name}</p>
           <p className="text-violet-400 text-sm font-bold">{cfg?.label ?? p.plan.toUpperCase()}</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 flex-wrap justify-end">
           <span className={`text-[10px] px-2 py-0.5 rounded border font-semibold ${STATUS_BADGE[p.status]}`}>
             {STATUS_LABEL[p.status]}
           </span>
           <Link
-            href={`/api/agencia/proposta/${p.id}`}
+            href={`/proposta-comercial/${p.id}`}
             target="_blank"
             className="text-[10px] px-2 py-0.5 rounded border border-violet-500/30 text-violet-400 hover:bg-violet-500/10 transition-colors"
           >
-            Ver PDF
+            Ver Proposta
+          </Link>
+          <CopyLinkButton id={p.id} />
+          <Link
+            href={`/api/agencia/proposta/${p.id}`}
+            target="_blank"
+            className="text-[10px] px-2 py-0.5 rounded border border-[#333] text-gray-500 hover:text-gray-300 transition-colors"
+          >
+            PDF
           </Link>
         </div>
       </div>
@@ -56,7 +81,7 @@ function ProposalCard({ p }: { p: Proposal }) {
         <div>
           <p className="text-gray-600 mb-0.5">Implementação</p>
           <p className="text-white font-bold">R$ {Number(p.priceImpl).toLocaleString("pt-BR")}</p>
-          {p.discountApplied && <p className="text-emerald-400">-R$ 500 desconto</p>}
+          {p.discountApplied && <p className="text-emerald-400">-R$ 500 desc.</p>}
         </div>
         <div>
           <p className="text-gray-600 mb-0.5">Mensalidade</p>
@@ -100,7 +125,7 @@ export function PropostasClient({ proposals }: { proposals: Proposal[] }) {
     return (
       <div className="text-center py-16 text-gray-600 text-sm">
         Nenhuma proposta criada ainda.<br />
-        <span className="text-gray-700">Clique em "+ Nova Proposta" para começar.</span>
+        <span className="text-gray-700">Clique em "+ Nova Proposta Comercial" para começar.</span>
       </div>
     );
   }
