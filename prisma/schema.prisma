@@ -406,6 +406,7 @@ model Client {
   instagramTracking    InstagramTracking[]
   landingPageProject   LandingPageProject?
   patientLeads         PatientLead[]
+  commercialProposals  CommercialProposal[]
 
   @@map("clients")
 }
@@ -878,4 +879,103 @@ model Strategy {
 
   @@unique([clientId, month])
   @@map("strategies")
+}
+
+// ─── Agência (wiki interna + equipe + proposta comercial) ─────────────────────
+
+enum TeamMemberStatus {
+  active
+  vacation
+  dismissed
+}
+
+enum TeamMemberRole {
+  sdr
+  closer
+  cs
+  traffic_manager
+  designer
+  manager
+  other
+}
+
+model AgencyTeamMember {
+  id          String           @id @default(cuid())
+  name        String
+  role        TeamMemberRole
+  email       String?
+  whatsapp    String?
+  status      TeamMemberStatus @default(active)
+  joinedAt    DateTime?
+  dismissedAt DateTime?
+  notes       String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  offboarding AgencyOffboarding[]
+
+  @@map("agency_team_members")
+}
+
+model AgencyOffboarding {
+  id          String           @id @default(cuid())
+  memberId    String
+  member      AgencyTeamMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  accessItem  String           // drive | meta | google_mcc | analytics | etc.
+  label       String
+  revoked     Boolean          @default(false)
+  revokedAt   DateTime?
+  responsible String?
+  createdAt   DateTime         @default(now())
+
+  @@map("agency_offboarding")
+}
+
+model AgencyMeeting {
+  id           String    @id @default(cuid())
+  type         String    // weekly | monthly
+  scheduledAt  DateTime?
+  participants String[]
+  meetingLink  String?
+  status       String    @default("scheduled") // scheduled | done | cancelled
+  summary      String?
+  nextSteps    String?
+  responsible  String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@map("agency_meetings")
+}
+
+model AgencyWikiPage {
+  id        String   @id @default(cuid())
+  section   String   // services | processes | educational
+  slug      String
+  title     String
+  content   String?
+  links     String[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([section, slug])
+  @@map("agency_wiki_pages")
+}
+
+model CommercialProposal {
+  id              String   @id @default(cuid())
+  clientId        String
+  client          Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  plan            String   // start | scale
+  priceImpl       Decimal  @db.Decimal(10, 2)
+  priceMonthly    Decimal  @db.Decimal(10, 2)
+  discountApplied Boolean  @default(false)
+  adBudget        Decimal? @db.Decimal(10, 2)
+  status          String   @default("draft") // draft | sent | accepted | rejected | expired
+  notes           String?
+  sentAt          DateTime?
+  expiresAt       DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("commercial_proposals")
 }
