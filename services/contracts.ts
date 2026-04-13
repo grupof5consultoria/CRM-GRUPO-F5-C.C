@@ -35,7 +35,7 @@ export async function getContractById(id: string) {
   return prisma.contract.findUnique({
     where: { id },
     include: {
-      client: { select: { id: true, name: true } },
+      client: { select: { id: true, name: true, phone: true } },
       creator: { select: { id: true, name: true } },
       proposal: { select: { id: true, title: true, totalValue: true } },
       events: { orderBy: { createdAt: "desc" } },
