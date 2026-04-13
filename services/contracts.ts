@@ -257,17 +257,73 @@ export async function renewContract(contractId: string, additionalMonths: number
   });
 }
 
-export async function requestCancellation(contractId: string) {
+export async function finishContract(contractId: string, reason: string, note?: string) {
+  const contract = await prisma.contract.findUnique({
+    where: { id: contractId },
+    select: { id: true, clientId: true, title: true },
+  });
+  if (!contract) throw new Error("Contrato não encontrado");
+
   await prisma.contract.update({
     where: { id: contractId },
-    data: { status: "pending_cancellation" },
+    data: { status: "finished", finishReason: reason, finishNote: note || null },
   });
 
   await prisma.contractEvent.create({
     data: {
       contractId,
+      type: "finished",
+      description: `Contrato finalizado. Motivo: ${reason}${note ? ` — ${note}` : ""}`,
+    },
+  });
+}
+
+export async function requestCancellation(contractId: string, reason?: string, note?: string) {
+  await prisma.contract.update({
+    where: { id: contractId },
+    data: {
+      status: "pending_cancellation",
+      ...(reason ? { cancelReason: reason } : {}),
+      ...(note ? { cancelNote: note } : {}),
+    },
+  });
+
+  // ── Cancel all pending charges for this contract ────────────────────────────
+  await prisma.charge.updateMany({
+    where: { contractId, status: "pending" },
+    data: { status: "cancelled" },
+  });
+
+  // ── Mark client as inactive (churn) ────────────────────────────────────────
+  const contract = await prisma.contract.findUnique({
+    where: { id: contractId },
+    select: { clientId: true },
+  });
+  if (contract?.clientId) {
+    await prisma.client.update({
+      where: { id: contract.clientId },
+      data: {
+        status: "inactive",
+        churnReason: reason ?? "cancelamento_contrato",
+        churnNote: note ?? null,
+        churnedAt: new Date(),
+      },
+    });
+
+    await prisma.clientHealthLog.create({
+      data: {
+        clientId: contract.clientId,
+        health: "at_risk",
+        note: `Contrato cancelado. Motivo: ${reason ?? "não informado"}${note ? ` — ${note}` : ""}`,
+      },
+    });
+  }
+
+  await prisma.contractEvent.create({
+    data: {
+      contractId,
       type: "cancellation_requested",
-      description: "Cancelamento solicitado. Distrato gerado e enviado ao portal do cliente para assinatura.",
+      description: `Cancelamento solicitado${reason ? `. Motivo: ${reason}` : ""}. Cobranças pendentes canceladas. Cliente inativado. Distrato gerado e enviado ao portal para assinatura.`,
     },
   });
 }

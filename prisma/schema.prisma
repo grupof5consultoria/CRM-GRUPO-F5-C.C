@@ -311,6 +311,14 @@ model Contract {
   valorMensalExtenso  String?
   servicos            String[]  // lista de serviços incluídos na cláusula 1.2
 
+  // Encerramento / Finalização
+  finishReason  String?
+  finishNote    String?
+
+  // Cancelamento
+  cancelReason  String?
+  cancelNote    String?
+
   // Digital signature
   signedToken      String    @unique @default(cuid())
   signedByName     String?

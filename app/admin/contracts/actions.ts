@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireInternalAuth } from "@/lib/auth";
-import { createContract, updateContractStatus, sendContractForSignature, renewContract, requestCancellation } from "@/services/contracts";
+import { createContract, updateContractStatus, sendContractForSignature, renewContract, requestCancellation, finishContract } from "@/services/contracts";
 import { ContractStatus } from "@prisma/client";
 
 export async function createContractAction(_prev: { error?: string }, formData: FormData) {
@@ -59,9 +59,18 @@ export async function renewContractAction(contractId: string, additionalMonths: 
   revalidatePath("/admin/contracts");
 }
 
-export async function requestCancellationAction(contractId: string) {
+export async function finishContractAction(contractId: string, reason: string, note?: string) {
   await requireInternalAuth();
-  await requestCancellation(contractId);
+  await finishContract(contractId, reason, note);
   revalidatePath(`/admin/contracts/${contractId}`);
   revalidatePath("/admin/contracts");
+}
+
+export async function requestCancellationAction(contractId: string, reason?: string, note?: string) {
+  await requireInternalAuth();
+  await requestCancellation(contractId, reason, note);
+  revalidatePath(`/admin/contracts/${contractId}`);
+  revalidatePath("/admin/contracts");
+  revalidatePath("/admin/clients");
+  revalidatePath("/admin/billing");
 }
