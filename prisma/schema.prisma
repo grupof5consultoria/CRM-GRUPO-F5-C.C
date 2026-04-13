@@ -963,6 +963,7 @@ model AgencyWikiPage {
 
 model CommercialProposal {
   id              String   @id @default(cuid())
+  slug            String?  @unique  // ex: dra-ana-paula-silva-start
   clientId        String
   client          Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
   plan            String   // start | scale

@@ -1,9 +1,21 @@
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { getProposalById } from "@/services/agencia";
 import { PLAN_CONFIG } from "@/lib/agencia-config";
 
 interface PageProps {
   params: Promise<{ id: string }>;
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { id } = await params;
+  const proposal = await getProposalById(id);
+  if (!proposal) return { title: "Proposta Comercial | F5 Agência" };
+  const cfg = PLAN_CONFIG[proposal.plan as "start" | "scale"];
+  return {
+    title: `Proposta ${cfg?.label ?? proposal.plan.toUpperCase()} | ${proposal.client.name} · F5 Agência`,
+    description: `Proposta comercial exclusiva da F5 Agência para ${proposal.client.name}. Tráfego pago, landing page e portal do cliente.`,
+  };
 }
 
 const TESTIMONIALS = [

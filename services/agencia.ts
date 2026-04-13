@@ -171,6 +171,30 @@ export async function upsertWikiPage(section: string, slug: string, title: strin
 
 // ─── Propostas Comerciais ─────────────────────────────────────────────────────
 
+function toSlug(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")  // remove acentos
+    .replace(/[^a-z0-9\s-]/g, "")    // remove caracteres especiais
+    .trim()
+    .replace(/\s+/g, "-")             // espaços → hífens
+    .replace(/-+/g, "-");             // hífens duplos → simples
+}
+
+async function generateUniqueSlug(clientName: string, plan: string): Promise<string> {
+  const base = `${toSlug(clientName)}-${plan}`;
+  // Verifica se o slug já existe; se sim, adiciona sufixo numérico
+  let slug = base;
+  let attempt = 0;
+  while (true) {
+    const existing = await prisma.commercialProposal.findUnique({ where: { slug } });
+    if (!existing) return slug;
+    attempt++;
+    slug = `${base}-${attempt}`;
+  }
+}
+
 export async function getProposals() {
   return prisma.commercialProposal.findMany({
     include: { client: { select: { id: true, name: true } } },
@@ -178,11 +202,13 @@ export async function getProposals() {
   });
 }
 
-export async function getProposalById(id: string) {
-  return prisma.commercialProposal.findUnique({
-    where: { id },
-    include: { client: { select: { id: true, name: true, email: true, phone: true } } },
-  });
+/** Aceita ID (cuid) ou slug (ex: dra-ana-paula-start) */
+export async function getProposalById(idOrSlug: string) {
+  const include = { client: { select: { id: true, name: true, email: true, phone: true } } };
+  // Tenta por slug primeiro (slugs não têm 25 chars do cuid)
+  const bySlug = await prisma.commercialProposal.findUnique({ where: { slug: idOrSlug }, include });
+  if (bySlug) return bySlug;
+  return prisma.commercialProposal.findUnique({ where: { id: idOrSlug }, include });
 }
 
 export async function createProposal(data: {
@@ -193,8 +219,13 @@ export async function createProposal(data: {
   notes?: string;
 }) {
   const cfg = PLAN_CONFIG[data.plan as "start" | "scale"];
+  // Busca nome do cliente para gerar slug
+  const client = await prisma.client.findUnique({ where: { id: data.clientId }, select: { name: true } });
+  const slug = client ? await generateUniqueSlug(client.name, data.plan) : null;
+
   return prisma.commercialProposal.create({
     data: {
+      slug,
       clientId: data.clientId,
       plan: data.plan,
       priceImpl: data.discountApplied ? cfg.priceImplDiscount : cfg.priceImpl,

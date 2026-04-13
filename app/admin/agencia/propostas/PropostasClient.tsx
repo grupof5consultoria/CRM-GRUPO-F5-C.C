@@ -6,7 +6,7 @@ import { PLAN_CONFIG } from "@/lib/agencia-config";
 import { updateProposalStatusAction } from "./actions";
 
 type Proposal = {
-  id: string; plan: string; status: string; priceImpl: unknown; priceMonthly: unknown;
+  id: string; slug: string | null; plan: string; status: string; priceImpl: unknown; priceMonthly: unknown;
   discountApplied: boolean; adBudget: unknown; notes: string | null;
   sentAt: Date | null; expiresAt: Date | null; createdAt: Date;
   client: { id: string; name: string };
@@ -23,9 +23,10 @@ const STATUS_LABEL: Record<string, string> = {
   draft: "Rascunho", sent: "Enviada", accepted: "Aceita", rejected: "Recusada", expired: "Expirada"
 };
 
-function CopyLinkButton({ id }: { id: string }) {
+function CopyLinkButton({ id, slug }: { id: string; slug: string | null }) {
   function copy() {
-    const url = `${window.location.origin}/proposta-comercial/${id}`;
+    const key = slug ?? id;
+    const url = `${window.location.origin}/proposta-comercial/${key}`;
     navigator.clipboard.writeText(url);
   }
   return (
@@ -60,13 +61,13 @@ function ProposalCard({ p }: { p: Proposal }) {
             {STATUS_LABEL[p.status]}
           </span>
           <Link
-            href={`/proposta-comercial/${p.id}`}
+            href={`/proposta-comercial/${p.slug ?? p.id}`}
             target="_blank"
             className="text-[10px] px-2 py-0.5 rounded border border-violet-500/30 text-violet-400 hover:bg-violet-500/10 transition-colors"
           >
             Ver Proposta
           </Link>
-          <CopyLinkButton id={p.id} />
+          <CopyLinkButton id={p.id} slug={p.slug} />
           <Link
             href={`/api/agencia/proposta/${p.id}`}
             target="_blank"
@@ -93,6 +94,11 @@ function ProposalCard({ p }: { p: Proposal }) {
         </div>
       </div>
 
+      {p.slug && (
+        <p className="text-[10px] text-gray-700 mb-3 font-mono bg-[#111] px-2 py-1 rounded-lg">
+          /proposta-comercial/<span className="text-violet-500">{p.slug}</span>
+        </p>
+      )}
       {p.notes && <p className="text-xs text-gray-500 mb-4 italic">{p.notes}</p>}
 
       <div className="flex gap-2 flex-wrap">
