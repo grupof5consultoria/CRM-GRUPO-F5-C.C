@@ -73,6 +73,7 @@ export async function createClient(data: {
   monthlyValue?: number;
   startDate?: string;
   ownerId: string;
+  source?: string;
 }) {
   return prisma.client.create({
     data: {
@@ -84,6 +85,7 @@ export async function createClient(data: {
       monthlyValue: data.monthlyValue ?? null,
       startDate: data.startDate ? new Date(data.startDate) : null,
       ownerId: data.ownerId,
+      source: data.source || null,
     },
   });
 }
@@ -100,6 +102,7 @@ export async function updateClient(
     ownerId?: string;
     monthlyValue?: number | null;
     startDate?: Date | null;
+    source?: string | null;
   }
 ) {
   return prisma.client.update({ where: { id }, data });

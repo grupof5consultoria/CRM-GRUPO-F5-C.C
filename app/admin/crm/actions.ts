@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireInternalAuth } from "@/lib/auth";
-import { createLead, updateLead, addLeadActivity } from "@/services/leads";
+import { createLead, updateLead, addLeadActivity, getLeadById } from "@/services/leads";
 import { LeadStatus } from "@prisma/client";
 
 const leadSchema = z.object({
@@ -30,7 +30,17 @@ export async function createLeadAction(_prev: { error?: string }, formData: Form
 
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
-  const lead = await createLead({ ...parsed.data, ownerId: session.userId });
+  const valueRaw = formData.get("value") as string;
+  const source   = (formData.get("source") as string) || undefined;
+  const platforms = formData.getAll("platforms") as string[];
+
+  const lead = await createLead({
+    ...parsed.data,
+    value: valueRaw ? parseFloat(valueRaw) : undefined,
+    source,
+    platforms,
+    ownerId: session.userId,
+  });
 
   await addLeadActivity({
     leadId: lead.id,
@@ -46,7 +56,7 @@ export async function createLeadAction(_prev: { error?: string }, formData: Form
 export async function updateLeadAction(_prev: { error?: string }, formData: FormData) {
   const session = await requireInternalAuth();
 
-  const id = formData.get("id") as string;
+  const id     = formData.get("id") as string;
   const status = formData.get("status") as LeadStatus | null;
 
   const parsed = leadSchema.safeParse({
@@ -61,8 +71,18 @@ export async function updateLeadAction(_prev: { error?: string }, formData: Form
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
   const lostReason = formData.get("lostReason") as string | null;
+  const valueRaw   = formData.get("value") as string;
+  const source     = (formData.get("source") as string) || null;
+  const platforms  = formData.getAll("platforms") as string[];
 
-  await updateLead(id, { ...parsed.data, status: status ?? undefined, lostReason: lostReason ?? undefined });
+  await updateLead(id, {
+    ...parsed.data,
+    status: status ?? undefined,
+    lostReason: lostReason ?? undefined,
+    value: valueRaw ? parseFloat(valueRaw) : null,
+    source,
+    platforms,
+  });
 
   await addLeadActivity({
     leadId: id,
@@ -105,4 +125,41 @@ export async function updateLeadStatusAction(leadId: string, status: LeadStatus,
 
   revalidatePath(`/admin/crm/${leadId}`);
   revalidatePath("/admin/crm");
+}
+
+export async function updateLeadQuickAction(leadId: string, data: {
+  status?: LeadStatus;
+  nextFollowUp?: string | null;
+  notes?: string;
+  platforms?: string[];
+  value?: number | null;
+  source?: string | null;
+}) {
+  const session = await requireInternalAuth();
+
+  await updateLead(leadId, {
+    ...(data.status ? { status: data.status } : {}),
+    ...(data.nextFollowUp !== undefined ? { nextFollowUp: data.nextFollowUp ?? undefined } : {}),
+    ...(data.notes !== undefined ? { notes: data.notes } : {}),
+    ...(data.platforms !== undefined ? { platforms: data.platforms } : {}),
+    ...(data.value !== undefined ? { value: data.value } : {}),
+    ...(data.source !== undefined ? { source: data.source } : {}),
+  });
+
+  if (data.status) {
+    await addLeadActivity({
+      leadId,
+      userId: session.userId,
+      type: "status_changed",
+      description: `Status alterado para: ${data.status}`,
+    });
+  }
+
+  revalidatePath(`/admin/crm/${leadId}`);
+  revalidatePath("/admin/crm");
+}
+
+export async function getLeadDetailsAction(leadId: string) {
+  await requireInternalAuth();
+  return getLeadById(leadId);
 }

@@ -18,7 +18,7 @@ export default async function PortalAuthLayout({
     <div className="flex min-h-screen">
       <PortalSidebar userName={session.name} logoutAction={logoutAction} />
       {/* pt-14 = top header height on mobile; pb-16 = bottom nav height on mobile */}
-      <div className="flex-1 flex flex-col min-w-0 bg-[#111111] pt-14 pb-16 md:pt-0 md:pb-0">
+      <div className="flex-1 flex flex-col min-w-0 w-full overflow-x-hidden bg-[#111111] pt-14 pb-20 md:pt-0 md:pb-0">
         {children}
       </div>
     </div>

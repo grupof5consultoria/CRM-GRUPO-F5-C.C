@@ -7,7 +7,7 @@ import { Select } from "@/components/ui/Select";
 import { Textarea } from "@/components/ui/Textarea";
 import { Button } from "@/components/ui/Button";
 
-interface Client { id: string; name: string; email: string | null; phone: string | null; document: string | null; notes: string | null; status: string; ownerId: string; monthlyValue?: { toString(): string } | number | null; startDate?: Date | string | null; }
+interface Client { id: string; name: string; email: string | null; phone: string | null; document: string | null; notes: string | null; status: string; ownerId: string; monthlyValue?: { toString(): string } | number | null; startDate?: Date | string | null; source?: string | null; }
 interface User { id: string; name: string; }
 const initialState = { error: undefined as string | undefined };
 
@@ -34,6 +34,18 @@ export function EditClientForm({ client, users }: { client: Client; users: User[
         <Input label="Início do contrato" name="startDate" type="date" defaultValue={client.startDate ? new Date(client.startDate).toISOString().split("T")[0] : ""} />
         <Select label="Status" name="status" options={STATUS_OPTIONS} defaultValue={client.status} />
         <Select label="Responsável" name="ownerId" options={userOptions} defaultValue={client.ownerId} />
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-1">Como nos conheceu</label>
+          <select name="source" defaultValue={client.source ?? ""} className="w-full rounded-xl border border-[#333] bg-[#1a1a1a] text-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
+            <option value="">Selecione...</option>
+            <option value="indicacao">Indicação</option>
+            <option value="google">Google</option>
+            <option value="anuncio">Anúncio Pago</option>
+            <option value="instagram">Instagram</option>
+            <option value="organico">Orgânico</option>
+            <option value="outro">Outro</option>
+          </select>
+        </div>
       </div>
       <Textarea label="Observações" name="notes" defaultValue={client.notes ?? ""} />
       <Button type="submit" variant="secondary" size="sm" loading={isPending}>Salvar</Button>

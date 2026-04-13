@@ -158,6 +158,9 @@ model Lead {
   lostReason   String?
   nextFollowUp DateTime?
   notes        String?
+  value        Decimal?   @db.Decimal(12, 2)
+  source       String?
+  platforms    String[]
   ownerId      String
   owner        User       @relation("LeadOwner", fields: [ownerId], references: [id])
   createdAt    DateTime   @default(now())
@@ -352,6 +355,8 @@ model Client {
   googleAdsCustomerId String?
   googleRefreshToken  String?
 
+  source              String?  // indicacao, google, anuncio, instagram, organico, outro
+
   // Metas mensais
   metaConvGoal        Int?     // meta mensal de conversas WhatsApp
   metaFaturamento     Decimal? @db.Decimal(12, 2) // meta mensal de faturamento
@@ -370,6 +375,12 @@ model Client {
   whatsappCampaigns WhatsAppCampaign[]
   onboardingTasks   OnboardingTask[]
   strategies        Strategy[]
+  trafficSettings      TrafficSettings?
+  trafficTasks         TrafficTask[]
+  campaignOptimizations CampaignOptimization[]
+  audienceUpdates      AudienceUpdate[]
+  instagramTracking    InstagramTracking[]
+  landingPageProject   LandingPageProject?
 
   @@map("clients")
 }
@@ -674,6 +685,135 @@ model OnboardingTask {
   data        Json?     // checklist items and extra fields per step
 
   @@map("onboarding_tasks")
+}
+
+// ─── Tráfego Pago ─────────────────────────────────────────────────────────────
+
+model TrafficSettings {
+  id            String   @id @default(cuid())
+  clientId      String   @unique
+  client        Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  platforms     String[] // ["meta_ads", "google_ads"]
+  caMeta        String?  // Conta de Anúncios Meta
+  caGoogle      String?  // Conta de Anúncios Google
+  dailyBudget   Decimal? @db.Decimal(10, 2)
+  monthlyBudget Decimal? @db.Decimal(10, 2)
+  driveLink     String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("traffic_settings")
+}
+
+model TrafficTask {
+  id          String    @id @default(cuid())
+  clientId    String
+  client      Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  type        String    // "optimization_daily" | "optimization_weekly" | "optimization_monthly" | "report_weekly" | "report_monthly" | "measurement" | "audience_update" | "instagram_check"
+  title       String
+  frequency   String?   // "daily" | "weekly" | "monthly"
+  assignedTo  String?
+  status      String    @default("pending") // "pending" | "done" | "skipped"
+  comment     String?
+  dueDate     DateTime?
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("traffic_tasks")
+}
+
+model CampaignOptimization {
+  id            String   @id @default(cuid())
+  clientId      String
+  client        Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  date          String   // "YYYY-MM-DD"
+  platform      String   // "meta" | "google" | "both"
+  campaignName  String?
+  description   String?
+  frequencyType String?  // "daily" | "weekly" | "monthly"
+  assignedTo    String?
+  comment       String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("campaign_optimizations")
+}
+
+model AudienceUpdate {
+  id           String   @id @default(cuid())
+  clientId     String
+  client       Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  audienceType String   // "videoview" | "remarketing"
+  name         String   // e.g. "Visualizou 75% do vídeo", "Visitou página de serviços"
+  windowDays   Int?     // optional: 30 | 60 | 90 | 180 | 365
+  assignedTo   String?
+  comment      String?
+  lastUpdated  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("audience_updates")
+}
+
+model InstagramTracking {
+  id            String   @id @default(cuid())
+  clientId      String
+  client        Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  weekReference String   // "YYYY-WNN" e.g. "2024-W15"
+  postedDaily   String?  // "yes" | "no" | "partial"
+  postedWeekly  Boolean?
+  assignedTo    String?
+  comment       String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([clientId, weekReference])
+  @@map("instagram_tracking")
+}
+
+// ─── Landing Page ─────────────────────────────────────────────────────────────
+
+model LandingPageProject {
+  id             String   @id @default(cuid())
+  clientId       String   @unique
+  client         Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  companyName    String
+  services       String?
+  colorPrimary   String?
+  colorSecondary String?
+  references     String?
+  domain         String?
+  hasDomain      Boolean  @default(false)
+  businessHours  String?
+  businessDays   String[]
+  wantsBlog      Boolean  @default(false)
+  purpose        String?  // "ads" | "organic" | "both"
+  progress       Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  phases LandingPagePhase[]
+
+  @@map("landing_page_projects")
+}
+
+model LandingPagePhase {
+  id          String             @id @default(cuid())
+  projectId   String
+  project     LandingPageProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  phaseNumber Int
+  title       String
+  status      String             @default("not_started")
+  assignedTo  String?
+  startedAt   DateTime?
+  completedAt DateTime?
+  comment     String?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  @@unique([projectId, phaseNumber])
+  @@map("landing_page_phases")
 }
 
 // ─── Estratégias ──────────────────────────────────────────────────────────────

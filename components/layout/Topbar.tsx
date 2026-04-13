@@ -57,7 +57,7 @@ export async function Topbar({ title, backHref, backLabel }: TopbarProps) {
   ];
 
   return (
-    <header className="bg-[#171717] border-b border-[#262626] px-6 py-3.5 flex items-center justify-between">
+    <header className="bg-[#171717] border-b border-[#262626] px-4 md:px-6 py-3.5 flex items-center justify-between">
       <div className="flex items-center gap-3">
         {backHref && (
           <>

@@ -88,6 +88,28 @@ const DEFAULT_NAV_ITEMS: NavItem[] = [
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
       </svg>
     ),
+    subItems: [
+      {
+        label: "Tráfego Pago",
+        href: "/admin/tasks/traffic",
+        color: "text-sky-400",
+        icon: (
+          <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+          </svg>
+        ),
+      },
+      {
+        label: "Landing Page",
+        href: "/admin/tasks/landing",
+        color: "text-emerald-400",
+        icon: (
+          <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+          </svg>
+        ),
+      },
+    ],
   },
   {
     label: "Catálogo",
@@ -165,12 +187,20 @@ export function Sidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [items, setItems] = useState(DEFAULT_NAV_ITEMS);
-  const [metricsOpen, setMetricsOpen] = useState(false);
+  const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
   const dragNode = useRef<EventTarget | null>(null);
 
   const isMetricsActive = pathname.startsWith("/admin/metrics");
+
+  function toggleMenu(href: string) {
+    setOpenMenus(prev => ({ ...prev, [href]: !prev[href] }));
+  }
+
+  function isMenuOpen(href: string) {
+    return !!openMenus[href];
+  }
 
   useEffect(() => {
     const saved = localStorage.getItem("sidebar-collapsed");
@@ -195,8 +225,14 @@ export function Sidebar() {
       }
     }
 
-    // Auto-open metrics submenu if on a metrics page
-    if (pathname.startsWith("/admin/metrics")) setMetricsOpen(true);
+    // Auto-open submenus if on a sub-page
+    const autoOpen: Record<string, boolean> = {};
+    for (const item of DEFAULT_NAV_ITEMS) {
+      if (item.subItems?.some(s => pathname.startsWith(s.href))) {
+        autoOpen[item.href] = true;
+      }
+    }
+    if (Object.keys(autoOpen).length > 0) setOpenMenus(autoOpen);
   }, [pathname]);
 
   function toggle() {
@@ -244,9 +280,24 @@ export function Sidebar() {
   }
 
   return (
+    <>
+    {/* ── Mobile top header ────────────────────────────────────────────────── */}
+    <header className="md:hidden fixed top-0 left-0 right-0 z-40 h-14 bg-[#171717] border-b border-[#262626] flex items-center px-4 gap-3">
+      <div className="w-8 h-8 rounded-xl bg-violet-600 flex items-center justify-center flex-shrink-0">
+        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
+          <path d="M14 2L5 13.5H11.5L10 22L19 10.5H12.5L14 2Z" fill="white" fillOpacity="0.95" />
+        </svg>
+      </div>
+      <div>
+        <p className="text-white font-bold text-sm">Grupo F5</p>
+        <p className="text-gray-600 text-[10px]">Gestão Interna</p>
+      </div>
+    </header>
+
+    {/* ── Desktop sidebar (hidden on mobile) ──────────────────────────────── */}
     <aside
       className={clsx(
-        "flex flex-col min-h-screen bg-[#171717] border-r border-[#262626] transition-all duration-300 ease-in-out",
+        "hidden md:flex flex-col min-h-screen bg-[#171717] border-r border-[#262626] transition-all duration-300 ease-in-out",
         collapsed ? "w-16" : "w-64"
       )}
     >
@@ -280,8 +331,7 @@ export function Sidebar() {
       {/* Nav */}
       <nav className={clsx("flex-1 py-4 space-y-0.5 overflow-y-auto overflow-x-hidden", collapsed ? "px-2" : "px-3")}>
         {items.map((item, index) => {
-          const isMetrics = item.href === "/admin/metrics";
-          const active = !isMetrics && (pathname === item.href || pathname.startsWith(item.href + "/"));
+          const active = !item.subItems && (pathname === item.href || pathname.startsWith(item.href + "/"));
           const isDragging = dragIndex === index;
           const isOver = overIndex === index && dragIndex !== index;
 
@@ -295,7 +345,7 @@ export function Sidebar() {
             )
           );
 
-          const dragHandle = !collapsed && !isMetrics && (
+          const dragHandle = !collapsed && !item.subItems && (
             <span
               className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover/item:opacity-100 cursor-grab active:cursor-grabbing transition-opacity z-20 text-gray-600 hover:text-gray-400"
               onMouseDown={(e) => e.stopPropagation()}
@@ -306,8 +356,10 @@ export function Sidebar() {
             </span>
           );
 
-          // ── Métricas: parent with submenu ───────────────────────────────
-          if (isMetrics && item.subItems) {
+          // ── Item with submenu ───────────────────────────────────────────
+          if (item.subItems) {
+            const menuOpen = isMenuOpen(item.href);
+            const isParentActive = pathname === item.href || item.subItems.some(s => pathname.startsWith(s.href));
             return (
               <div key={item.href} className={wrapperClass}
                 draggable
@@ -316,20 +368,19 @@ export function Sidebar() {
                 onDrop={(e) => handleDrop(e, index)}
                 onDragEnd={handleDragEnd}
               >
-                {/* Parent button */}
                 <button
-                  onClick={() => setMetricsOpen(!metricsOpen)}
+                  onClick={() => toggleMenu(item.href)}
                   title={collapsed ? item.label : undefined}
                   className={clsx(
                     "relative w-full flex items-center rounded-xl text-sm font-medium overflow-hidden transition-all duration-150",
                     collapsed ? "justify-center w-10 h-10 mx-auto" : "gap-3 px-3 py-2.5",
-                    isMetricsActive
+                    isParentActive
                       ? "text-white"
                       : "text-gray-500 hover:bg-[#222222] hover:text-gray-300"
                   )}
-                  style={isMetricsActive ? { background: "linear-gradient(135deg, #6d28d9 0%, #7c3aed 40%, #5b21b6 100%)" } : undefined}
+                  style={isParentActive ? { background: "linear-gradient(135deg, #6d28d9 0%, #7c3aed 40%, #5b21b6 100%)" } : undefined}
                 >
-                  {isMetricsActive && (
+                  {isParentActive && (
                     <>
                       <span className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.03) 40%, transparent 60%)" }} />
                       <span className="absolute top-0 left-0 right-0 h-px pointer-events-none" style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)" }} />
@@ -340,7 +391,7 @@ export function Sidebar() {
                     <>
                       <span className="relative z-10 truncate flex-1 text-left">{item.label}</span>
                       <svg
-                        className={clsx("relative z-10 w-3.5 h-3.5 flex-shrink-0 transition-transform duration-200", metricsOpen ? "rotate-90" : "")}
+                        className={clsx("relative z-10 w-3.5 h-3.5 flex-shrink-0 transition-transform duration-200", menuOpen ? "rotate-90" : "")}
                         fill="none" stroke="currentColor" viewBox="0 0 24 24"
                       >
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -349,8 +400,7 @@ export function Sidebar() {
                   )}
                 </button>
 
-                {/* Sub-items */}
-                {!collapsed && metricsOpen && (
+                {!collapsed && menuOpen && (
                   <div className="mt-0.5 ml-3 pl-3 border-l border-[#2e2e2e] space-y-0.5">
                     {item.subItems.map((sub) => {
                       const subActive = pathname === sub.href || pathname.startsWith(sub.href + "/");
@@ -360,9 +410,7 @@ export function Sidebar() {
                           href={sub.href}
                           className={clsx(
                             "flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-150",
-                            subActive
-                              ? "bg-[#222222] text-white"
-                              : "text-gray-500 hover:bg-[#1e1e1e] hover:text-gray-300"
+                            subActive ? "bg-[#222222] text-white" : "text-gray-500 hover:bg-[#1e1e1e] hover:text-gray-300"
                           )}
                         >
                           <span className={subActive ? sub.color : "text-gray-600"}>{sub.icon}</span>
@@ -374,8 +422,7 @@ export function Sidebar() {
                   </div>
                 )}
 
-                {/* Collapsed: show both sub-icons stacked as tooltip */}
-                {collapsed && metricsOpen && (
+                {collapsed && menuOpen && (
                   <div className="mt-0.5 space-y-0.5">
                     {item.subItems.map((sub) => {
                       const subActive = pathname === sub.href;
@@ -464,5 +511,28 @@ export function Sidebar() {
         </form>
       </div>
     </aside>
+
+    {/* ── Mobile bottom nav ───────────────────────────────────────────────── */}
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#171717] border-t border-[#262626] overflow-x-auto scrollbar-none">
+      <div className="flex min-w-max">
+        {items.map((item) => {
+          const active = pathname === item.href || pathname.startsWith(item.href + "/");
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={clsx(
+                "flex flex-col items-center justify-center gap-1 py-3 px-4 flex-shrink-0 transition-colors",
+                active ? "text-violet-400" : "text-gray-600 hover:text-gray-400"
+              )}
+            >
+              <span className="w-5 h-5 flex items-center justify-center">{item.icon}</span>
+              <span className="text-[10px] font-medium leading-none">{item.label}</span>
+            </Link>
+          );
+        })}
+      </div>
+    </nav>
+    </>
   );
 }

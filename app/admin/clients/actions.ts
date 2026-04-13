@@ -30,6 +30,7 @@ export async function createClientAction(_prev: { error?: string }, formData: Fo
     monthlyValue: monthlyValueRaw ? parseFloat(monthlyValueRaw.replace(",", ".")) : undefined,
     startDate: (formData.get("startDate") as string) || undefined,
     ownerId: (formData.get("ownerId") as string) || session.userId,
+    source: (formData.get("source") as string) || undefined,
   });
 
   await createOnboardingForClient(client.id);
@@ -102,6 +103,7 @@ export async function updateClientAction(_prev: { error?: string }, formData: Fo
     ownerId: (formData.get("ownerId") as string) || undefined,
     monthlyValue: monthlyValueRaw ? parseFloat(monthlyValueRaw.replace(",", ".")) : null,
     startDate: startDateRaw ? new Date(startDateRaw) : null,
+    source: (formData.get("source") as string) || null,
   });
 
   revalidatePath(`/admin/clients/${id}`);

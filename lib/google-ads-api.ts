@@ -11,6 +11,27 @@ export interface GoogleDailyInsight extends GoogleInsights {
   date: string; // "YYYY-MM-DD"
 }
 
+// Auto-detects the latest supported Google Ads API version
+let _cachedVersion: string | null = null;
+async function getLatestApiVersion(): Promise<string> {
+  if (_cachedVersion) return _cachedVersion;
+  // Try from newest to oldest
+  const candidates = ["v24", "v23", "v22", "v21", "v20"];
+  for (const v of candidates) {
+    const res = await fetch(`https://googleads.googleapis.com/${v}/customers:listAccessibleCustomers`, {
+      method: "GET",
+      headers: { "Authorization": "Bearer test" },
+    });
+    // 401 = version exists (unauthorized), 404 = version doesn't exist
+    if (res.status === 401) {
+      _cachedVersion = v;
+      return v;
+    }
+  }
+  _cachedVersion = "v20"; // safe fallback
+  return "v20";
+}
+
 async function getGoogleAccessToken(refreshToken: string): Promise<string> {
   const res = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST",
@@ -37,7 +58,10 @@ export async function fetchGoogleAdsInsights(
   dateFrom: string, // "2024-01-01"
   dateTo: string    // "2024-01-31"
 ): Promise<GoogleDailyInsight[]> {
-  const accessToken = await getGoogleAccessToken(refreshToken);
+  const [accessToken, apiVersion] = await Promise.all([
+    getGoogleAccessToken(refreshToken),
+    getLatestApiVersion(),
+  ]);
   const cleanId = customerId.replace(/-/g, "");
   const managerId = process.env.GOOGLE_ADS_MANAGER_ID?.replace(/-/g, "");
 
@@ -60,18 +84,22 @@ export async function fetchGoogleAdsInsights(
     "developer-token": process.env.GOOGLE_ADS_DEVELOPER_TOKEN ?? "",
     "Content-Type": "application/json",
   };
-  if (managerId) headers["login-customer-id"] = managerId;
+  // Only send login-customer-id when manager is different from the customer being accessed
+  if (managerId && managerId !== cleanId) headers["login-customer-id"] = managerId;
 
   const res = await fetch(
-    `https://googleads.googleapis.com/v17/customers/${cleanId}/googleAds:search`,
+    `https://googleads.googleapis.com/${apiVersion}/customers/${cleanId}/googleAds:search`,
     { method: "POST", headers, body: JSON.stringify({ query }), next: { revalidate: 0 } }
   );
 
-  const data = await res.json();
+  const text = await res.text();
   if (!res.ok) {
-    const msg = data.error?.message ?? JSON.stringify(data);
-    throw new Error(`Google Ads API: ${msg}`);
+    // Try to parse JSON error, fallback to raw text
+    let msg = text;
+    try { const d = JSON.parse(text); msg = d.error?.message ?? d[0]?.error?.message ?? JSON.stringify(d); } catch {}
+    throw new Error(`Google Ads API (${res.status}): ${msg.substring(0, 300)}`);
   }
+  const data = JSON.parse(text);
 
   type Row = {
     segments?: { date?: string };

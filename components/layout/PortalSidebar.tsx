@@ -163,25 +163,25 @@ export function PortalSidebar({ userName, logoutAction }: PortalSidebarProps) {
       </header>
 
       {/* ── Mobile bottom nav ─────────────────────────────── */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#171717] border-t border-[#262626] flex items-stretch">
-        {navItems.map((item) => {
-          const active = pathname === item.href || pathname.startsWith(item.href + "/");
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex-1 flex flex-col items-center justify-center gap-1 py-2 transition-colors ${
-                active ? "text-violet-400" : "text-gray-600 hover:text-gray-400"
-              }`}
-            >
-              <span className={`${active ? "text-violet-400" : ""}`}>
-                {item.icon}
-              </span>
-              <span className="text-[9px] font-medium leading-none">{item.label}</span>
-              {active && <span className="absolute bottom-0 w-8 h-0.5 bg-violet-500 rounded-t-full" />}
-            </Link>
-          );
-        })}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#171717] border-t border-[#262626] overflow-x-auto scrollbar-none">
+        <div className="flex items-stretch min-w-max px-1">
+          {navItems.map((item) => {
+            const active = pathname === item.href || pathname.startsWith(item.href + "/");
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`relative flex flex-col items-center justify-center gap-1.5 py-3 px-4 transition-colors flex-shrink-0 ${
+                  active ? "text-violet-400" : "text-gray-600 hover:text-gray-400"
+                }`}
+              >
+                <span>{item.icon}</span>
+                <span className="text-[10px] font-medium leading-none whitespace-nowrap">{item.label}</span>
+                {active && <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-violet-500 rounded-t-full" />}
+              </Link>
+            );
+          })}
+        </div>
       </nav>
     </>
   );

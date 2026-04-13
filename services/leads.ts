@@ -44,6 +44,9 @@ export async function createLead(data: {
   company?: string;
   notes?: string;
   nextFollowUp?: string;
+  value?: number;
+  source?: string;
+  platforms?: string[];
   ownerId: string;
 }) {
   return prisma.lead.create({
@@ -54,6 +57,9 @@ export async function createLead(data: {
       company: data.company || null,
       notes: data.notes || null,
       nextFollowUp: data.nextFollowUp ? new Date(data.nextFollowUp) : null,
+      value: data.value ?? null,
+      source: data.source || null,
+      platforms: data.platforms ?? [],
       ownerId: data.ownerId,
     },
   });
@@ -71,6 +77,9 @@ export async function updateLead(
     nextFollowUp?: string;
     notes?: string;
     ownerId?: string;
+    value?: number | null;
+    source?: string | null;
+    platforms?: string[];
   }
 ) {
   return prisma.lead.update({

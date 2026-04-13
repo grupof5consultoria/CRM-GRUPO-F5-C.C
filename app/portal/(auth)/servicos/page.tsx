@@ -15,7 +15,7 @@ export default async function PortalServicosPage() {
   });
 
   return (
-    <main className="flex-1 p-5 bg-[#111111] min-h-screen max-w-lg mx-auto">
+    <main className="flex-1 p-4 bg-[#111111] min-h-screen w-full overflow-x-hidden">
       <div className="mb-6">
         <h1 className="text-xl font-bold text-white">Meus Serviços</h1>
         <p className="text-sm text-gray-500 mt-1">Cadastre os serviços que você oferece para usar nos atendimentos</p>

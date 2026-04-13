@@ -29,6 +29,18 @@ export function NewClientForm({ users }: { users: User[] }) {
         <Input label="Dia de vencimento" name="dueDay" type="number" min="1" max="31" placeholder="Ex: 10" />
         <Input label="Início do contrato" name="startDate" type="date" />
         <Select label="Responsável" name="ownerId" options={userOptions} placeholder="Selecione..." />
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-1">Como nos conheceu</label>
+          <select name="source" className="w-full rounded-xl border border-[#333] bg-[#1a1a1a] text-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
+            <option value="">Selecione...</option>
+            <option value="indicacao">Indicação</option>
+            <option value="google">Google</option>
+            <option value="anuncio">Anúncio Pago</option>
+            <option value="instagram">Instagram</option>
+            <option value="organico">Orgânico</option>
+            <option value="outro">Outro</option>
+          </select>
+        </div>
       </div>
       <Textarea label="Observações" name="notes" placeholder="Contexto, histórico, informações importantes..." />
       <div className="flex gap-3 pt-2">

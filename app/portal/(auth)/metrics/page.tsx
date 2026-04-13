@@ -16,6 +16,11 @@ function generatePeriods(count = 6): string[] {
   }
   return periods;
 }
+function todayStr() { return new Date().toISOString().split("T")[0]; }
+function firstOfMonthStr() {
+  const n = new Date();
+  return new Date(n.getFullYear(), n.getMonth(), 1).toISOString().split("T")[0];
+}
 function fmtR(v: number | null) {
   if (!v || v === 0) return "—";
   return `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
@@ -42,7 +47,7 @@ const IcoBars    = () => <svg className="w-5 h-5" fill="none" stroke="currentCol
 // ── KPI Card ──────────────────────────────────────────────────────────────────
 function KpiCard({ label, value, icon }: { label: string; value: string; icon: React.ReactNode }) {
   return (
-    <div className="bg-[#111] rounded-2xl p-4 flex flex-col justify-between gap-4 min-h-[96px]">
+    <div className="bg-[#111] rounded-2xl p-3 flex flex-col justify-between gap-3 min-h-[80px]">
       <div className="flex items-start justify-between gap-2">
         <p className="text-[11px] text-gray-500 leading-snug">{label}</p>
         <span className="text-blue-500/70 flex-shrink-0">{icon}</span>
@@ -56,13 +61,27 @@ function KpiCard({ label, value, icon }: { label: string; value: string; icon: R
 export default async function PortalMetricsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ period?: string }>;
+  searchParams: Promise<{ period?: string; dateFrom?: string; dateTo?: string }>;
 }) {
   const session = await getSession();
   if (!session?.clientId) redirect("/portal/login");
 
   const periods = generatePeriods(6);
-  const { period: rawPeriod } = await searchParams;
+  const { period: rawPeriod, dateFrom: rawFrom, dateTo: rawTo } = await searchParams;
+
+  // Support both old period param and new dateFrom/dateTo
+  let dateFrom: string;
+  let dateTo: string;
+  if (rawFrom && rawTo) {
+    dateFrom = rawFrom;
+    dateTo   = rawTo;
+  } else if (rawPeriod && periods.includes(rawPeriod)) {
+    dateFrom = `${rawPeriod}-01`;
+    dateTo   = new Date(Number(rawPeriod.split("-")[0]), Number(rawPeriod.split("-")[1]), 0).toISOString().split("T")[0];
+  } else {
+    dateFrom = firstOfMonthStr();
+    dateTo   = todayStr();
+  }
   const period = rawPeriod && periods.includes(rawPeriod) ? rawPeriod : periods[0];
 
   const client = await prisma.client.findUnique({
@@ -82,7 +101,7 @@ export default async function PortalMetricsPage({
 
   // ── Aggregate for selected period ─────────────────────────────────────────
   const periodEntries = client.metricEntries.filter(
-    (e) => e.platform === "meta" && e.date.startsWith(period)
+    (e) => e.platform === "meta" && e.date >= dateFrom && e.date <= dateTo
   );
 
   let spend = 0, conversations = 0, impressions = 0, reach = 0;
@@ -128,17 +147,15 @@ export default async function PortalMetricsPage({
   const maxConv  = Math.max(...dailyEntries.map((e) => e.conversations), 1);
 
   // ── Period label ──────────────────────────────────────────────────────────
-  const [y, m] = period.split("-");
-  const periodLabel = new Date(Number(y), Number(m) - 1, 1).toLocaleDateString("pt-BR", {
-    month: "long", year: "numeric",
-  });
+  const fmtDate = (d: string) => new Date(d + "T12:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
+  const periodLabel = dateFrom === dateTo ? fmtDate(dateFrom) : `${fmtDate(dateFrom)} — ${fmtDate(dateTo)}`;
 
   return (
-    <main className="flex-1 bg-[#0d0d0d] min-h-screen">
-      <div className="max-w-2xl mx-auto px-5 pt-8 pb-24 space-y-8">
+    <main className="flex-1 bg-[#0d0d0d] min-h-screen w-full overflow-x-hidden">
+      <div className="w-full px-4 pt-6 pb-24 space-y-6">
 
         {/* ── Header ──────────────────────────────────────────────────────── */}
-        <div className="flex items-start justify-between gap-3">
+        <div className="space-y-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
               <svg className="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
@@ -149,7 +166,7 @@ export default async function PortalMetricsPage({
             <h1 className="text-2xl font-bold text-white">Métricas</h1>
             <p className="text-sm text-gray-600 capitalize mt-0.5">{periodLabel}</p>
           </div>
-          <MetricsPeriodSelect periods={periods} current={period} />
+          <MetricsPeriodSelect currentFrom={dateFrom} currentTo={dateTo} />
         </div>
 
         {/* ── Sem conexão ─────────────────────────────────────────────────── */}
@@ -281,6 +298,8 @@ export default async function PortalMetricsPage({
                 currentPeriod={period}
                 hasMeta={hasMeta}
                 hasGoogle={hasGoogle}
+                dateFrom={dateFrom}
+                dateTo={dateTo}
               />
             </div>
           </div>

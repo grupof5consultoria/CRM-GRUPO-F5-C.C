@@ -19,6 +19,8 @@ interface Props {
   periods: string[];
   currentPeriod: string;
   hasMeta: boolean;
+  dateFrom?: string;
+  dateTo?: string;
   hasGoogle: boolean;
 }
 
@@ -27,7 +29,7 @@ function fmt(v: { toString(): string } | null | undefined) {
   return `R$ ${Number(v).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
 }
 
-export function MetricsForm({ entries, periods, currentPeriod, hasMeta, hasGoogle }: Props) {
+export function MetricsForm({ entries, periods, currentPeriod, hasMeta, hasGoogle, dateFrom, dateTo }: Props) {
   const [tab, setTab] = useState<Platform>(hasMeta ? "meta" : "google");
   const [period, setPeriod] = useState(currentPeriod);
   const [state, action, pending] = useActionState(savePortalMetricsAction, {});

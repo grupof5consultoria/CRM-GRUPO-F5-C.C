@@ -175,6 +175,8 @@ export default async function ClientDetailPage({ params }: PageProps) {
             </div>
           </div>
         </div>
+
+
       </main>
     </>
   );

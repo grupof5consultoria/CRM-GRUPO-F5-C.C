@@ -27,39 +27,37 @@ export function ServicesClient({ services: initial }: { services: Service[] }) {
         {state.success && (
           <p className="text-xs text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 rounded-xl px-3 py-2 mb-3">Serviço adicionado!</p>
         )}
-        <form action={action} className="space-y-3">
+        <form action={action} className="space-y-2">
           <input
             name="name"
             type="text"
             placeholder="Nome do serviço *"
             required
-            className="w-full bg-[#111111] border border-[#333] rounded-xl px-3 py-2.5 text-sm text-gray-300 placeholder-gray-700 focus:outline-none focus:border-violet-500"
+            className="w-full bg-[#111111] border border-[#333] rounded-xl px-3 py-2 text-sm text-gray-300 placeholder-gray-700 focus:outline-none focus:border-violet-500"
           />
-          <div className="grid grid-cols-2 gap-3">
+          <input
+            name="description"
+            type="text"
+            placeholder="Descrição (opcional)"
+            className="w-full bg-[#111111] border border-[#333] rounded-xl px-3 py-2 text-sm text-gray-300 placeholder-gray-700 focus:outline-none focus:border-violet-500"
+          />
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-600">R$</span>
             <input
-              name="description"
-              type="text"
-              placeholder="Descrição (opcional)"
-              className="bg-[#111111] border border-[#333] rounded-xl px-3 py-2.5 text-sm text-gray-300 placeholder-gray-700 focus:outline-none focus:border-violet-500"
+              name="price"
+              type="number"
+              step="0.01"
+              min="0"
+              placeholder="0,00"
+              className="w-full bg-[#111111] border border-[#333] rounded-xl pl-9 pr-3 py-2 text-sm text-gray-300 placeholder-gray-700 focus:outline-none focus:border-violet-500"
             />
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-600">R$</span>
-              <input
-                name="price"
-                type="number"
-                step="0.01"
-                min="0"
-                placeholder="0,00"
-                className="w-full bg-[#111111] border border-[#333] rounded-xl pl-9 pr-3 py-2.5 text-sm text-gray-300 placeholder-gray-700 focus:outline-none focus:border-violet-500"
-              />
-            </div>
           </div>
           <button
             type="submit"
             disabled={pending}
-            className="w-full py-2.5 rounded-xl text-sm font-semibold text-white bg-violet-600 hover:bg-violet-500 disabled:opacity-50 transition-colors"
+            className="w-full py-2 rounded-xl text-sm font-semibold text-white bg-violet-600 hover:bg-violet-500 disabled:opacity-50 transition-colors"
           >
-            {pending ? "Adicionando..." : "+ Adicionar Serviço"}
+            {pending ? "Adicionando..." : "+ Adicionar"}
           </button>
         </form>
       </div>
