@@ -201,6 +201,38 @@ export async function resetPortalPasswordAction(
   return { success: true };
 }
 
+export async function churnClientAction(
+  clientId: string,
+  churnReason: string,
+  churnNote: string,
+): Promise<{ error?: string }> {
+  await requireInternalAuth();
+
+  if (!churnReason?.trim()) return { error: "Informe o motivo da saída" };
+
+  await prisma.client.update({
+    where: { id: clientId },
+    data: {
+      status: "inactive",
+      churnReason,
+      churnNote: churnNote || null,
+      churnedAt: new Date(),
+    },
+  });
+
+  await prisma.clientHealthLog.create({
+    data: {
+      clientId,
+      health: "at_risk",
+      note: `Cliente encerrado. Motivo: ${churnReason}${churnNote ? ` — ${churnNote}` : ""}`,
+    },
+  });
+
+  revalidatePath(`/admin/clients/${clientId}`);
+  revalidatePath("/admin/clients");
+  return {};
+}
+
 export async function deletePortalAccessAction(clientUserId: string, userId: string, clientId: string) {
   await requireInternalAuth();
   await prisma.clientUser.delete({ where: { id: clientUserId } });

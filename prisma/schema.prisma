@@ -372,6 +372,11 @@ model Client {
   metaConvGoal        Int?     // meta mensal de conversas WhatsApp
   metaFaturamento     Decimal? @db.Decimal(12, 2) // meta mensal de faturamento
 
+  // Churn / encerramento
+  churnReason   String?   // motivo da saída (enum textual)
+  churnNote     String?   // observação livre
+  churnedAt     DateTime? // quando foi encerrado
+
   contacts        ClientContact[]
   clientUsers     ClientUser[]
   proposals       Proposal[]

@@ -12,6 +12,7 @@ import { AddContactForm } from "./AddContactForm";
 import { DeleteContactButton } from "./DeleteContactButton";
 import { ClientSidebar } from "./ClientSidebar";
 import { OnboardingPanel } from "./OnboardingPanel";
+import { ChurnClientButton } from "./ChurnClientButton";
 import { headers } from "next/headers";
 // searchParams no longer used (meta connection moved to /admin/connections)
 
@@ -139,7 +140,7 @@ export default async function ClientDetailPage({ params }: PageProps) {
           </div>
 
           {/* Sidebar */}
-          <div>
+          <div className="space-y-3">
             <ClientSidebar
               clientId={client.id}
               portalUrl={portalUrl}
@@ -160,6 +161,21 @@ export default async function ClientDetailPage({ params }: PageProps) {
                 user: cu.user,
               }))}
             />
+            {client.status === "active" && (
+              <div className="bg-[#1a1a1a] border border-[#262626] rounded-2xl p-4">
+                <p className="text-xs text-gray-600 uppercase tracking-wider font-semibold mb-3">Encerramento</p>
+                <ChurnClientButton clientId={client.id} clientName={client.name} />
+              </div>
+            )}
+            {client.status === "inactive" && (client as { churnReason?: string | null }).churnReason && (
+              <div className="bg-red-500/5 border border-red-500/20 rounded-2xl p-4">
+                <p className="text-xs text-red-400 font-semibold uppercase tracking-wider mb-2">Motivo de Saída</p>
+                <p className="text-sm text-gray-300">{(client as { churnReason?: string | null }).churnReason}</p>
+                {(client as { churnNote?: string | null }).churnNote && (
+                  <p className="text-xs text-gray-500 mt-1">{(client as { churnNote?: string | null }).churnNote}</p>
+                )}
+              </div>
+            )}
           </div>
         </div>
 

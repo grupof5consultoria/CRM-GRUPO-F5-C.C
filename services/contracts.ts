@@ -121,15 +121,20 @@ export async function updateContractStatus(contractId: string, status: ContractS
 }
 
 export async function signContract(token: string, signedByName: string, signedByCpf: string, ip: string) {
-  const contract = await prisma.contract.findUnique({ where: { signedToken: token } });
+  const contract = await prisma.contract.findUnique({
+    where: { signedToken: token },
+    include: { client: { select: { id: true, name: true, email: true } } },
+  });
   if (!contract) throw new Error("Contrato não encontrado");
   if (contract.status !== "pending_signature") throw new Error("Contrato não está aguardando assinatura");
+
+  const now = new Date();
 
   await prisma.contract.update({
     where: { signedToken: token },
     data: {
       status: "active",
-      signedAt: new Date(),
+      signedAt: now,
       signedByName,
       signedByCpf,
       signedIp: ip,
@@ -142,6 +147,48 @@ export async function signContract(token: string, signedByName: string, signedBy
       type: "signed",
       description: `Contrato assinado digitalmente por ${signedByName} (CPF: ${signedByCpf}) — IP: ${ip}`,
     },
+  });
+
+  // ── Auto-create first billing charge ────────────────────────────────────────
+  if (contract.value && Number(contract.value) > 0) {
+    const MONTHS_PT = [
+      "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+      "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
+    ];
+    const monthLabel = `${MONTHS_PT[now.getMonth()]}/${now.getFullYear()}`;
+    const dueDay = contract.diaVencimento ?? 10;
+
+    // Due date: current month at dueDay; if already passed, push to next month
+    const dueDate = new Date(now.getFullYear(), now.getMonth(), dueDay);
+    if (dueDate < now) dueDate.setMonth(dueDate.getMonth() + 1);
+    const dueDateStr = dueDate.toISOString().split("T")[0];
+
+    const charge = await prisma.charge.create({
+      data: {
+        clientId: contract.clientId,
+        contractId: contract.id,
+        description: `Mensalidade ${monthLabel} — ${contract.title}`,
+        value: Number(contract.value),
+        dueDate: new Date(dueDateStr),
+        paymentMethod: "pix",
+        isRecurring: true,
+        recurrenceDay: dueDay,
+      },
+    });
+
+    await prisma.chargeEvent.create({
+      data: {
+        chargeId: charge.id,
+        type: "created",
+        description: `Cobrança criada automaticamente após assinatura do contrato por ${signedByName}.`,
+      },
+    });
+  }
+
+  // ── Ensure client is marked active ──────────────────────────────────────────
+  await prisma.client.update({
+    where: { id: contract.clientId },
+    data: { status: "active" },
   });
 
   return contract;
