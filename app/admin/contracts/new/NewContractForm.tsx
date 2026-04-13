@@ -1,7 +1,7 @@
 "use client";
 
-import { useActionState, useState } from "react";
-import { createContractAction } from "../actions";
+import { useActionState, useState, useTransition } from "react";
+import { createContractAction, createClientForContractAction } from "../actions";
 import { Button } from "@/components/ui/Button";
 import Link from "next/link";
 import { renderContract, ContractVars, DEFAULT_SERVICES } from "@/lib/contractTemplate";
@@ -32,11 +32,31 @@ function buildPreview(fields: {
   return renderContract(vars);
 }
 
-export function NewContractForm({ clients }: { clients: Client[] }) {
+export function NewContractForm({ clients: initialClients }: { clients: Client[] }) {
   const [state, formAction, isPending] = useActionState(createContractAction, initialState);
   const [showPreview, setShowPreview] = useState(false);
 
+  const [clients, setClients] = useState(initialClients);
   const [selectedClientId, setSelectedClientId] = useState("");
+
+  // Novo cliente inline
+  const [showNewClient, setShowNewClient] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newEmail, setNewEmail] = useState("");
+  const [newPhone, setNewPhone] = useState("");
+  const [isCreatingClient, startClientTransition] = useTransition();
+
+  function handleCreateClient() {
+    if (!newName.trim()) return;
+    startClientTransition(async () => {
+      const created = await createClientForContractAction(newName.trim(), newEmail || undefined, newPhone || undefined);
+      setClients(prev => [...prev, { id: created.id, name: created.name, document: null, status: created.status }]);
+      setSelectedClientId(created.id);
+      setShowNewClient(false);
+      setNewName(""); setNewEmail(""); setNewPhone("");
+    });
+  }
+
   const [cpf, setCpf] = useState("");
   const [endereco, setEndereco] = useState("");
   const [cidadeEstadoCep, setCidadeEstadoCep] = useState("");
@@ -119,6 +139,59 @@ export function NewContractForm({ clients }: { clients: Client[] }) {
                 </optgroup>
               )}
             </select>
+
+            {/* Botão novo cliente */}
+            {!showNewClient ? (
+              <button
+                type="button"
+                onClick={() => setShowNewClient(true)}
+                className="mt-2 text-xs text-violet-400 hover:text-violet-300 transition-colors flex items-center gap-1"
+              >
+                <span className="text-base leading-none">+</span> Cadastrar novo cliente
+              </button>
+            ) : (
+              <div className="mt-3 p-4 rounded-xl border border-violet-500/20 bg-violet-500/5 space-y-3">
+                <p className="text-xs font-semibold text-violet-400">Novo cliente</p>
+                <input
+                  type="text"
+                  placeholder="Nome completo *"
+                  value={newName}
+                  onChange={e => setNewName(e.target.value)}
+                  className="w-full rounded-xl border border-[#333] bg-[#111] px-3 py-2 text-sm text-gray-100 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                />
+                <input
+                  type="email"
+                  placeholder="E-mail (opcional)"
+                  value={newEmail}
+                  onChange={e => setNewEmail(e.target.value)}
+                  className="w-full rounded-xl border border-[#333] bg-[#111] px-3 py-2 text-sm text-gray-100 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                />
+                <input
+                  type="tel"
+                  placeholder="WhatsApp com DDD (opcional)"
+                  value={newPhone}
+                  onChange={e => setNewPhone(e.target.value)}
+                  className="w-full rounded-xl border border-[#333] bg-[#111] px-3 py-2 text-sm text-gray-100 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                />
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => { setShowNewClient(false); setNewName(""); setNewEmail(""); setNewPhone(""); }}
+                    className="flex-1 text-xs border border-[#333] text-gray-600 hover:text-gray-400 rounded-lg py-1.5 transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCreateClient}
+                    disabled={!newName.trim() || isCreatingClient}
+                    className="flex-1 text-xs bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white font-semibold rounded-lg py-1.5 transition-colors"
+                  >
+                    {isCreatingClient ? "Salvando..." : "Salvar"}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Nome no contrato */}

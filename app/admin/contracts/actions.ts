@@ -38,6 +38,16 @@ export async function createContractAction(_prev: { error?: string }, formData: 
   redirect(`/admin/contracts/${contract.id}`);
 }
 
+export async function createClientForContractAction(name: string, email?: string, phone?: string) {
+  const session = await requireInternalAuth();
+  const { prisma } = await import("@/lib/prisma");
+  const client = await prisma.client.create({
+    data: { name, email: email || null, phone: phone || null, status: "prospect", ownerId: session.userId },
+    select: { id: true, name: true, status: true },
+  });
+  return client;
+}
+
 export async function updateContractStatusAction(contractId: string, status: ContractStatus) {
   await requireInternalAuth();
   await updateContractStatus(contractId, status);
