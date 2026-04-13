@@ -1,10 +1,15 @@
 import { prisma } from "@/lib/prisma";
 import { ClientStatus, ClientHealth } from "@prisma/client";
 
-export async function getClients(filters?: { status?: ClientStatus; search?: string; health?: ClientHealth }) {
+export async function getClients(filters?: { status?: ClientStatus | "all"; search?: string; health?: ClientHealth }) {
   return prisma.client.findMany({
     where: {
-      ...(filters?.status ? { status: filters.status } : {}),
+      // Por padrão, nunca mostra prospects (só aparecem na área de propostas)
+      ...(filters?.status === "all"
+        ? {}
+        : filters?.status
+          ? { status: filters.status as ClientStatus }
+          : { status: { not: "prospect" } }),
       ...(filters?.health ? { health: filters.health } : {}),
       ...(filters?.search
         ? {
@@ -143,12 +148,14 @@ export async function getInternalUsersForSelect() {
 }
 
 export const CLIENT_STATUS_LABELS: Record<ClientStatus, string> = {
+  prospect: "Prospect",
   active: "Ativo",
   inactive: "Inativo",
   blocked: "Bloqueado",
 };
 
 export const CLIENT_STATUS_VARIANTS: Record<ClientStatus, "success" | "gray" | "danger"> = {
+  prospect: "gray",
   active: "success",
   inactive: "gray",
   blocked: "danger",

@@ -54,6 +54,7 @@ enum ContractStatus {
 }
 
 enum ClientStatus {
+  prospect
   active
   inactive
   blocked
