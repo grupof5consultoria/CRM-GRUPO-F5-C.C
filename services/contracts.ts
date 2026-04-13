@@ -211,8 +211,8 @@ export async function sendContractForSignature(contractId: string) {
 
 export async function getClientsForSelect() {
   return prisma.client.findMany({
-    where: { status: "active" },
-    select: { id: true, name: true, document: true },
+    where: { status: { in: ["active", "prospect"] } },
+    select: { id: true, name: true, document: true, status: true },
     orderBy: { name: "asc" },
   });
 }

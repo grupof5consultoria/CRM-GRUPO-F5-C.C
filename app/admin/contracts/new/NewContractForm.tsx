@@ -7,7 +7,7 @@ import Link from "next/link";
 import { renderContract, ContractVars, DEFAULT_SERVICES } from "@/lib/contractTemplate";
 import { PLAN_CONFIG } from "@/lib/agencia-config";
 
-interface Client { id: string; name: string; document: string | null }
+interface Client { id: string; name: string; document: string | null; status: string }
 
 const initialState = { error: undefined as string | undefined };
 
@@ -104,9 +104,20 @@ export function NewContractForm({ clients }: { clients: Client[] }) {
               className="w-full rounded-xl border border-[#333] bg-[#1a1a1a] px-3 py-2.5 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500"
             >
               <option value="">Selecione o cliente...</option>
-              {clients.map(c => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
+              {clients.filter(c => c.status === "active").length > 0 && (
+                <optgroup label="Clientes ativos">
+                  {clients.filter(c => c.status === "active").map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </optgroup>
+              )}
+              {clients.filter(c => c.status === "prospect").length > 0 && (
+                <optgroup label="Prospects (proposta enviada)">
+                  {clients.filter(c => c.status === "prospect").map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </optgroup>
+              )}
             </select>
           </div>
 
