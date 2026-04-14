@@ -17,6 +17,7 @@ export async function getContractsList() {
     select: {
       id: true,
       title: true,
+      plano: true,
       status: true,
       value: true,
       startDate: true,

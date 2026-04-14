@@ -61,8 +61,8 @@ export default async function ContractsPage() {
         <Table>
           <TableHead>
             <TableRow>
-              <TableTh>Título</TableTh>
               <TableTh>Cliente</TableTh>
+              <TableTh>Plano</TableTh>
               <TableTh>Valor</TableTh>
               <TableTh>Status</TableTh>
               <TableTh>Início</TableTh>
@@ -80,12 +80,12 @@ export default async function ContractsPage() {
                 return (
                   <TableRow key={c.id}>
                     <TableTd>
-                      <span className="font-medium text-white">{c.title}</span>
-                    </TableTd>
-                    <TableTd>
-                      <Link href={`/admin/clients/${c.client.id}`} className="text-gray-400 hover:text-violet-400 transition-colors">
+                      <Link href={`/admin/clients/${c.client.id}`} className="font-medium text-white hover:text-violet-400 transition-colors">
                         {c.client.name}
                       </Link>
+                    </TableTd>
+                    <TableTd>
+                      <span className="text-violet-400 font-medium text-sm">{c.plano ?? "—"}</span>
                     </TableTd>
                     <TableTd>
                       {c.value ? (
