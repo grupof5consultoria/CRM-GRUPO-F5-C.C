@@ -69,6 +69,13 @@ export async function updateChargeStatus(chargeId: string, status: ChargeStatus)
     nextDue.setMonth(nextDue.getMonth() + 1);
     if (charge.recurrenceDay) nextDue.setDate(charge.recurrenceDay);
 
+    // Se a data calculada já passou, avança mais um mês até ficar no futuro
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    while (nextDue < today) {
+      nextDue.setMonth(nextDue.getMonth() + 1);
+    }
+
     // Marca a cobrança atual como paga
     await prisma.charge.update({
       where: { id: chargeId },
