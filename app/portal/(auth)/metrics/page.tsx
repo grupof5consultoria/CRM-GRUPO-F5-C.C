@@ -123,7 +123,12 @@ export default async function PortalMetricsPage({
     if (e.costPerResult) { cprSum += Number(e.costPerResult); cprCount++; }
   }
 
+  // Para campanhas de mensagens, o "resultado" é conversa. Para leads, é lead.
+  const resultados   = leadsFromAds > 0 ? leadsFromAds : conversations;
+  const resultLabel  = leadsFromAds > 0 ? "Resultados (Leads)" : "Resultados (Conversas)";
+
   const costPerConv = conversations > 0 && spend > 0 ? spend / conversations : null;
+  const costPerResult = resultados > 0 && spend > 0 ? spend / resultados : null;
   const cpmAvg      = cpmCount > 0 ? cpmSum / cpmCount : null;
   const cpcAvg      = cpcCount > 0 ? cpcSum / cpcCount : null;
   const ctrAvg      = ctrCount > 0 ? ctrSum / ctrCount : null;
@@ -185,12 +190,12 @@ export default async function PortalMetricsPage({
                 <div className="space-y-2">
                   <p className="text-[11px] text-gray-600 uppercase tracking-widest">Visão geral</p>
                   <div className="grid grid-cols-2 gap-2">
-                    <KpiCard label="Investimento"       value={fmtR(spend)}          icon={<IcoDollar />} />
-                    <KpiCard label="Conversas"          value={fmtN(conversations)}  icon={<IcoChat />} />
-                    <KpiCard label="Custo por Conversa" value={fmtR(costPerConv)}    icon={<IcoChat />} />
-                    <KpiCard label="Impressões"         value={fmtN(impressions)}    icon={<IcoEye />} />
-                    <KpiCard label="Alcance"            value={fmtN(reach)}          icon={<IcoEye />} />
-                    <KpiCard label="Resultados"         value={fmtN(leadsFromAds)}   icon={<IcoUsers />} />
+                    <KpiCard label="Investimento"        value={fmtR(spend)}           icon={<IcoDollar />} />
+                    <KpiCard label={resultLabel}         value={fmtN(resultados)}      icon={<IcoUsers />} />
+                    <KpiCard label="Custo por Resultado" value={fmtR(costPerResult)}   icon={<IcoDollar />} />
+                    <KpiCard label="Conversas WhatsApp"  value={fmtN(conversations)}   icon={<IcoChat />} />
+                    <KpiCard label="Impressões"          value={fmtN(impressions)}     icon={<IcoEye />} />
+                    <KpiCard label="Alcance"             value={fmtN(reach)}           icon={<IcoEye />} />
                   </div>
                 </div>
 

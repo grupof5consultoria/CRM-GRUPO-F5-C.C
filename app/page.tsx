@@ -133,6 +133,45 @@ const steps = [
   },
 ]
 
+const growthCases = [
+  {
+    initials: 'CS',
+    name: 'Dra. Camila Santiago',
+    specialty: 'Odontologia Estética & Implantes',
+    city: 'São Paulo - SP',
+    before: {
+      label: 'Antes',
+      icon: '📍',
+      text: 'Atendia em 3 clínicas populares diferentes, alugando sala por hora. Sem identidade própria, sem controle de agenda e sem previsibilidade de renda.',
+    },
+    after: {
+      label: 'Depois',
+      icon: '🏛️',
+      text: 'Hoje atende em espaço próprio, com agenda lotada, marca consolidada e fluxo constante de pacientes — sem depender de clínicas de terceiros.',
+    },
+    result: 'Do aluguel de sala para o espaço próprio',
+    color: '#7c3aed',
+  },
+  {
+    initials: 'SW',
+    name: 'Dra. Sabrina Wervisch',
+    specialty: 'Harmonização Orofacial & Estética',
+    city: 'São Paulo - SP',
+    before: {
+      label: 'Antes',
+      icon: '📍',
+      text: 'Atuava em clínicas populares sem autonomia, com dificuldade para fidelizar pacientes e dependendo inteiramente de espaços de terceiros para trabalhar.',
+    },
+    after: {
+      label: 'Depois',
+      icon: '🚀',
+      text: 'Com demanda própria e consistente, hoje aluga sala diária para realizar os procedimentos — com autonomia, agenda organizada e pacientes que chegam por ela.',
+    },
+    result: 'Autonomia e demanda própria consolidada',
+    color: '#0ea5e9',
+  },
+]
+
 const testimonials = [
   {
     name: 'Dr. Carlos Mendes', role: 'Clínica Sorriso Perfeito • São Paulo',
@@ -189,6 +228,7 @@ export default function HomePage() {
               ['Metodologia', '#metodologia'],
               ['Serviços',    '#servicos'],
               ['Resultados',  '#resultados'],
+              ['Casos Reais', '#casos'],
               ['Depoimentos', '#depoimentos'],
             ].map(([label, href]) => (
               <a key={label} href={href} className="text-sm text-gray-400 hover:text-white transition-colors duration-200">
@@ -213,7 +253,7 @@ export default function HomePage() {
           style={{ maxHeight: menuOpen ? '320px' : '0', borderBottom: menuOpen ? '1px solid rgba(255,255,255,0.06)' : 'none' }}
         >
           <div className="px-6 py-4 flex flex-col gap-4" style={{ background: 'rgba(8,8,8,0.95)', backdropFilter: 'blur(24px)' }}>
-            {[['Metodologia','#metodologia'],['Serviços','#servicos'],['Resultados','#resultados'],['Depoimentos','#depoimentos']].map(([l,h]) => (
+            {[['Metodologia','#metodologia'],['Serviços','#servicos'],['Resultados','#resultados'],['Casos Reais','#casos'],['Depoimentos','#depoimentos']].map(([l,h]) => (
               <a key={l} href={h} onClick={() => setMenuOpen(false)} className="text-gray-300 hover:text-white transition-colors py-1">{l}</a>
             ))}
             <a href="#contato" onClick={() => setMenuOpen(false)} className="text-center py-3 rounded-xl font-semibold glow-btn">
@@ -360,6 +400,83 @@ export default function HomePage() {
                   {i < steps.length - 1 && (
                     <div className="sm:hidden mt-4 ml-0 w-px h-6 bg-gradient-to-b from-purple-500/30 to-transparent" />
                   )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Casos de Crescimento ────────────────────────────────────────────── */}
+      <section id="casos" className="py-16 sm:py-24 md:py-28" style={{ background: 'rgba(255,255,255,0.01)' }}>
+        <div className="max-w-6xl mx-auto px-5 sm:px-6">
+          <div className="text-center mb-10 sm:mb-16">
+            <Badge>Resultados reais</Badge>
+            <h2 className="mt-4 text-2xl sm:text-3xl md:text-5xl font-bold">
+              Histórias de <span className="gradient-text">transformação</span>
+            </h2>
+            <p className="mt-3 text-gray-400 text-sm sm:text-base max-w-xl mx-auto">
+              Dentistas que começaram sem espaço próprio e hoje constroem carreiras sólidas com demanda previsível.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6">
+            {growthCases.map((c) => (
+              <div key={c.name} className="glass-card relative rounded-2xl overflow-hidden">
+                {/* Top accent line */}
+                <div className="absolute top-0 left-0 right-0 h-px" style={{ background: `linear-gradient(90deg, transparent, ${c.color}, transparent)` }} />
+
+                {/* Header */}
+                <div className="flex items-center gap-4 px-5 sm:px-7 pt-6 pb-5 border-b" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-sm flex-shrink-0 text-white" style={{ background: `linear-gradient(135deg, ${c.color}, ${c.color}99)` }}>
+                    {c.initials}
+                  </div>
+                  <div>
+                    <p className="font-bold text-white text-base">{c.name}</p>
+                    <p className="text-xs text-gray-500">{c.specialty} · {c.city}</p>
+                  </div>
+                </div>
+
+                {/* Before / After */}
+                <div className="px-5 sm:px-7 py-5 space-y-4">
+                  {/* Antes */}
+                  <div className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-base">{c.before.icon}</span>
+                      <span className="text-xs font-bold uppercase tracking-widest text-gray-500">{c.before.label}</span>
+                    </div>
+                    <p className="text-sm text-gray-400 leading-relaxed">{c.before.text}</p>
+                  </div>
+
+                  {/* Seta */}
+                  <div className="flex items-center justify-center gap-3">
+                    <div className="flex-1 h-px" style={{ background: `linear-gradient(90deg, transparent, ${c.color}50)` }} />
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: `${c.color}20`, border: `1px solid ${c.color}40` }}>
+                      <svg className="w-4 h-4" style={{ color: c.color }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" transform="rotate(-90 12 12)" />
+                      </svg>
+                    </div>
+                    <div className="flex-1 h-px" style={{ background: `linear-gradient(90deg, ${c.color}50, transparent)` }} />
+                  </div>
+
+                  {/* Depois */}
+                  <div className="rounded-xl p-4" style={{ background: `${c.color}10`, border: `1px solid ${c.color}30` }}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-base">{c.after.icon}</span>
+                      <span className="text-xs font-bold uppercase tracking-widest" style={{ color: c.color }}>{c.after.label}</span>
+                    </div>
+                    <p className="text-sm text-gray-300 leading-relaxed">{c.after.text}</p>
+                  </div>
+                </div>
+
+                {/* Footer result tag */}
+                <div className="px-5 sm:px-7 pb-6">
+                  <div className="flex items-center gap-2 rounded-xl px-4 py-3" style={{ background: `${c.color}10`, border: `1px solid ${c.color}20` }}>
+                    <svg className="w-4 h-4 flex-shrink-0" style={{ color: c.color }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                    </svg>
+                    <p className="text-xs font-semibold" style={{ color: c.color }}>{c.result}</p>
+                  </div>
                 </div>
               </div>
             ))}

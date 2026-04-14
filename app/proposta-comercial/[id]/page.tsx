@@ -485,6 +485,85 @@ export default async function PropostaComercialPage({ params }: PageProps) {
 
           <div className="divider" />
 
+          {/* ── CASOS DE CRESCIMENTO ──────────────────────────────────── */}
+          <section>
+            <div className="section-label"><span>🚀</span> Resultados reais</div>
+            <h2 style={{ color: "#fff", fontSize: 32, fontWeight: 800, marginBottom: 12, letterSpacing: "-0.02em" }}>
+              Dentistas que <span className="gradient-text">cresceram conosco</span>
+            </h2>
+            <p style={{ color: "#666", fontSize: 15, marginBottom: 48, maxWidth: 520 }}>
+              Histórias reais de profissionais que transformaram sua carreira com estratégia, presença digital e demanda previsível.
+            </p>
+
+            <div className="grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+
+              {/* Dra. Camila */}
+              <div className="card" style={{ padding: 0, overflow: "hidden", position: "relative" }}>
+                <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: "linear-gradient(90deg, transparent, #7c3aed, transparent)" }} />
+                <div style={{ padding: "28px 28px 20px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", gap: 14 }}>
+                  <div style={{ width: 46, height: 46, borderRadius: 14, background: "linear-gradient(135deg, #7c3aed, #5b21b6)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 14, color: "#fff", flexShrink: 0 }}>CS</div>
+                  <div>
+                    <p style={{ color: "#fff", fontWeight: 700, fontSize: 15 }}>Dra. Camila Santiago</p>
+                    <p style={{ color: "#555", fontSize: 12 }}>Odontologia Estética & Implantes · São Paulo</p>
+                  </div>
+                </div>
+                <div style={{ padding: "20px 28px", display: "flex", flexDirection: "column", gap: 12 }}>
+                  <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: "14px 16px" }}>
+                    <p style={{ color: "#555", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>📍 Antes</p>
+                    <p style={{ color: "#777", fontSize: 13, lineHeight: 1.6 }}>Atendia em 3 clínicas populares diferentes, alugando sala por hora. Sem identidade própria e sem previsibilidade de renda.</p>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 8 }}>
+                    <div style={{ flex: 1, height: 1, background: "linear-gradient(90deg, transparent, rgba(124,58,237,0.4))" }} />
+                    <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(124,58,237,0.15)", border: "1px solid rgba(124,58,237,0.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>↓</div>
+                    <div style={{ flex: 1, height: 1, background: "linear-gradient(90deg, rgba(124,58,237,0.4), transparent)" }} />
+                  </div>
+                  <div style={{ background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.25)", borderRadius: 12, padding: "14px 16px" }}>
+                    <p style={{ color: "#a78bfa", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>🏛️ Hoje</p>
+                    <p style={{ color: "#ccc", fontSize: 13, lineHeight: 1.6 }}>Atende em espaço próprio, com agenda lotada e marca consolidada — sem depender de clínicas de terceiros.</p>
+                  </div>
+                  <div style={{ background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.15)", borderRadius: 10, padding: "10px 14px", display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ fontSize: 14 }}>📈</span>
+                    <p style={{ color: "#a78bfa", fontSize: 12, fontWeight: 600 }}>Do aluguel de sala para o espaço próprio</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Dra. Sabrina */}
+              <div className="card" style={{ padding: 0, overflow: "hidden", position: "relative" }}>
+                <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: "linear-gradient(90deg, transparent, #0ea5e9, transparent)" }} />
+                <div style={{ padding: "28px 28px 20px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", gap: 14 }}>
+                  <div style={{ width: 46, height: 46, borderRadius: 14, background: "linear-gradient(135deg, #0ea5e9, #0369a1)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 14, color: "#fff", flexShrink: 0 }}>SW</div>
+                  <div>
+                    <p style={{ color: "#fff", fontWeight: 700, fontSize: 15 }}>Dra. Sabrina Wervisch</p>
+                    <p style={{ color: "#555", fontSize: 12 }}>Harmonização Orofacial & Estética · São Paulo</p>
+                  </div>
+                </div>
+                <div style={{ padding: "20px 28px", display: "flex", flexDirection: "column", gap: 12 }}>
+                  <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: "14px 16px" }}>
+                    <p style={{ color: "#555", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>📍 Antes</p>
+                    <p style={{ color: "#777", fontSize: 13, lineHeight: 1.6 }}>Atuava em clínicas populares sem autonomia, com dificuldade para fidelizar pacientes e dependendo de espaços de terceiros.</p>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 8 }}>
+                    <div style={{ flex: 1, height: 1, background: "linear-gradient(90deg, transparent, rgba(14,165,233,0.4))" }} />
+                    <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(14,165,233,0.15)", border: "1px solid rgba(14,165,233,0.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>↓</div>
+                    <div style={{ flex: 1, height: 1, background: "linear-gradient(90deg, rgba(14,165,233,0.4), transparent)" }} />
+                  </div>
+                  <div style={{ background: "rgba(14,165,233,0.08)", border: "1px solid rgba(14,165,233,0.25)", borderRadius: 12, padding: "14px 16px" }}>
+                    <p style={{ color: "#38bdf8", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>🚀 Hoje</p>
+                    <p style={{ color: "#ccc", fontSize: 13, lineHeight: 1.6 }}>Com demanda própria e consistente, aluga sala diária para realizar procedimentos com total autonomia e agenda organizada.</p>
+                  </div>
+                  <div style={{ background: "rgba(14,165,233,0.08)", border: "1px solid rgba(14,165,233,0.15)", borderRadius: 10, padding: "10px 14px", display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ fontSize: 14 }}>📈</span>
+                    <p style={{ color: "#38bdf8", fontSize: 12, fontWeight: 600 }}>Autonomia e demanda própria consolidada</p>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </section>
+
+          <div className="divider" />
+
           {/* ── DEPOIMENTOS ───────────────────────────────────────────── */}
           <section>
             <div className="section-label"><span>💬</span> Depoimentos</div>

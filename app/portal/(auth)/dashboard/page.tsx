@@ -80,7 +80,10 @@ export default async function PortalDashboardPage({
     month: "long", year: "numeric",
   });
 
-  const firstName = session.name.split(" ")[0];
+  const parts = session.name.split(" ");
+  const firstName = /^Dr[ao]\.?$/i.test(parts[0]) && parts[1]
+    ? `${parts[0]} ${parts[1]}`
+    : parts[0];
 
   return (
     <main className="flex-1 bg-[#0d0d0d] min-h-screen">

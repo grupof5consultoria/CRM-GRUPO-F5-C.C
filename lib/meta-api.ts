@@ -29,6 +29,8 @@ export async function fetchMetaInsights(
       "reach",
       "spend",
       "impressions",
+      "clicks",
+      "ctr",
       "cpm",
       "inline_link_clicks",
       "cost_per_inline_link_click",
@@ -57,29 +59,47 @@ export async function fetchMetaInsights(
     const actions = row.actions as Array<{ action_type: string; value: string }> | undefined;
     const costPerAction = row.cost_per_action_type as Array<{ action_type: string; value: string }> | undefined;
 
-    const leadAction    = actions?.find((a) => a.action_type === "lead" || a.action_type === "onsite_conversion.lead_grouped");
-    const costPerLead   = costPerAction?.find((a) => a.action_type === "lead" || a.action_type === "onsite_conversion.lead_grouped");
+    const leadAction  = actions?.find((a) => a.action_type === "lead" || a.action_type === "onsite_conversion.lead_grouped");
+    const costPerLead = costPerAction?.find((a) => a.action_type === "lead" || a.action_type === "onsite_conversion.lead_grouped");
 
-    // Conversas iniciadas via WhatsApp
+    // Conversas iniciadas via WhatsApp — tenta múltiplos action_types
     const conversationAction = actions?.find((a) =>
       a.action_type === "onsite_conversion.messaging_conversation_started_7d" ||
       a.action_type === "onsite_conversion.total_messaging_connection" ||
-      a.action_type === "onsite_conversion.messaging_first_reply"
+      a.action_type === "onsite_conversion.messaging_first_reply" ||
+      a.action_type === "onsite_conversion.messaging_conversation_started" ||
+      a.action_type === "onsite_conversion.messaging_welcome_message_viewed"
     );
+    const costPerConversation = costPerAction?.find((a) =>
+      a.action_type === "onsite_conversion.messaging_conversation_started_7d" ||
+      a.action_type === "onsite_conversion.total_messaging_connection" ||
+      a.action_type === "onsite_conversion.messaging_first_reply" ||
+      a.action_type === "onsite_conversion.messaging_conversation_started"
+    );
+
+    const conversations = parseInt(conversationAction?.value ?? "0");
+    const leadsFromAds  = parseInt(leadAction?.value ?? "0");
+
+    // Custo por resultado: prioriza lead, depois conversa
+    const rawCostPerResult = costPerLead?.value
+      ? parseFloat(costPerLead.value)
+      : costPerConversation?.value
+        ? parseFloat(costPerConversation.value)
+        : 0;
 
     return {
       date: row.date_start as string,
       spend: parseFloat((row.spend as string) ?? "0"),
       impressions: parseInt((row.impressions as string) ?? "0"),
       clicks: parseInt((row.clicks as string) ?? "0"),
-      leadsFromAds: parseInt(leadAction?.value ?? "0"),
+      leadsFromAds,
       reach: parseInt((row.reach as string) ?? "0"),
       cpm: parseFloat((row.cpm as string) ?? "0"),
       linkClicks: parseInt((row.inline_link_clicks as string) ?? "0"),
       cpc: parseFloat((row.cost_per_inline_link_click as string) ?? "0"),
-      ctr: parseFloat((row.inline_link_click_ctr as string) ?? "0"),
-      costPerResult: parseFloat(costPerLead?.value ?? "0"),
-      conversations: parseInt(conversationAction?.value ?? "0"),
+      ctr: parseFloat((row.ctr as string) ?? "0"),          // CTR geral (todos os cliques)
+      costPerResult: rawCostPerResult,
+      conversations,
     };
   });
 }

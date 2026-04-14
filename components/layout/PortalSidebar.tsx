@@ -159,7 +159,7 @@ export function PortalSidebar({ userName, logoutAction }: PortalSidebarProps) {
           </div>
           <span className="text-white font-bold text-sm">Grupo F5</span>
         </div>
-        <span className="text-xs text-gray-500 truncate max-w-[140px]">{userName}</span>
+        <span className="text-xs text-gray-500 truncate max-w-[180px]">{userName}</span>
       </header>
 
       {/* ── Mobile bottom nav ─────────────────────────────── */}
