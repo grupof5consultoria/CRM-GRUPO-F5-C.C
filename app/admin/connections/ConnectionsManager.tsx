@@ -475,9 +475,20 @@ function PlatformCard({
 
 // ─── Main export ──────────────────────────────────────────────────────────────
 
+const TABS = [
+  { key: "meta",      label: "Meta Ads",   color: "text-blue-400",    border: "border-blue-500",    dot: "bg-blue-500" },
+  { key: "google",    label: "Google Ads", color: "text-red-400",     border: "border-red-500",     dot: "bg-red-500" },
+  { key: "whatsapp",  label: "WhatsApp",   color: "text-emerald-400", border: "border-emerald-500", dot: "bg-emerald-500" },
+] as const;
+
+type TabKey = typeof TABS[number]["key"];
+
 export function ConnectionsManager({ clients }: { clients: Client[] }) {
   const params = useSearchParams();
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
+
+  const rawTab = params.get("tab") as TabKey | null;
+  const activeTab: TabKey = TABS.some(t => t.key === rawTab) ? (rawTab as TabKey) : "meta";
 
   useEffect(() => {
     if (params.get("success") === "google_connected") {
@@ -505,22 +516,55 @@ export function ConnectionsManager({ clients }: { clients: Client[] }) {
           {toast.msg}
         </div>
       )}
-      <PlatformCard
-        platform="meta"
-        title="Meta Ads"
-        subtitle="Facebook · Instagram · anúncios"
-        logo={<MetaLogo />}
-        logoWrapperClass="bg-[#1877F2]/10"
-        clients={clients}
-      />
-      <PlatformCard
-        platform="google"
-        title="Google Ads"
-        subtitle="Search · Display · campanhas"
-        logo={<GoogleAdsLogo />}
-        logoWrapperClass="bg-white/5"
-        clients={clients}
-      />
+
+      {/* Tabs */}
+      <div className="flex gap-2 border-b border-[#1e1e1e] pb-0">
+        {TABS.map(tab => (
+          <a
+            key={tab.key}
+            href={`/admin/connections?tab=${tab.key}`}
+            className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors -mb-px ${
+              activeTab === tab.key
+                ? `${tab.color} ${tab.border}`
+                : "text-gray-600 border-transparent hover:text-gray-400"
+            }`}
+          >
+            <span className={`w-2 h-2 rounded-full ${activeTab === tab.key ? tab.dot : "bg-gray-700"}`} />
+            {tab.label}
+          </a>
+        ))}
+      </div>
+
+      {activeTab === "meta" && (
+        <PlatformCard
+          platform="meta"
+          title="Meta Ads"
+          subtitle="Facebook · Instagram · anúncios"
+          logo={<MetaLogo />}
+          logoWrapperClass="bg-[#1877F2]/10"
+          clients={clients}
+        />
+      )}
+      {activeTab === "google" && (
+        <PlatformCard
+          platform="google"
+          title="Google Ads"
+          subtitle="Search · Display · campanhas"
+          logo={<GoogleAdsLogo />}
+          logoWrapperClass="bg-white/5"
+          clients={clients}
+        />
+      )}
+      {activeTab === "whatsapp" && (
+        <PlatformCard
+          platform="whatsapp"
+          title="WhatsApp"
+          subtitle="Mensagens · conversas · notificações"
+          logo={<WhatsAppLogo />}
+          logoWrapperClass="bg-[#25D366]/10"
+          clients={clients}
+        />
+      )}
     </div>
   );
 }
