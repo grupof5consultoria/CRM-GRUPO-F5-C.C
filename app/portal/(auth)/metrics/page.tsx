@@ -3,6 +3,8 @@ import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { MetricsForm } from "./MetricsForm";
 import { MetricsPeriodSelect } from "./MetricsPeriodSelect";
+import { CampaignsPanel } from "./CampaignsPanel";
+import { AdsPanel } from "./AdsPanel";
 
 export const metadata = { title: "Métricas | Portal do Cliente" };
 
@@ -256,28 +258,16 @@ export default async function PortalMetricsPage({
                   </div>
                 )}
 
-                {/* ── Campanhas (placeholder) ─────────────────────────────── */}
-                <div className="bg-[#111] rounded-2xl overflow-hidden">
-                  <div className="px-5 py-4 border-b border-[#1f1f1f] flex items-center justify-between">
-                    <p className="text-sm font-semibold text-white">Campanhas</p>
-                    <span className="text-[10px] text-gray-600 bg-[#1f1f1f] px-2 py-1 rounded-lg">Em breve</span>
-                  </div>
-                  <div className="px-5 py-8 text-center space-y-1">
-                    <p className="text-xs text-gray-600">Detalhamento por campanha disponível em breve.</p>
-                    <p className="text-[10px] text-gray-700">Requer integração avançada com a Meta Ads API.</p>
-                  </div>
+                {/* ── Campanhas ───────────────────────────────────────────── */}
+                <div className="space-y-2">
+                  <p className="text-[11px] text-gray-600 uppercase tracking-widest">Campanhas</p>
+                  <CampaignsPanel dateFrom={dateFrom} dateTo={dateTo} />
                 </div>
 
-                {/* ── Melhores anúncios (placeholder) ─────────────────────── */}
-                <div className="bg-[#111] rounded-2xl overflow-hidden">
-                  <div className="px-5 py-4 border-b border-[#1f1f1f] flex items-center justify-between">
-                    <p className="text-sm font-semibold text-white">Melhores Anúncios</p>
-                    <span className="text-[10px] text-gray-600 bg-[#1f1f1f] px-2 py-1 rounded-lg">Em breve</span>
-                  </div>
-                  <div className="px-5 py-8 text-center space-y-1">
-                    <p className="text-xs text-gray-600">Ranking de criativos por CPR disponível em breve.</p>
-                    <p className="text-[10px] text-gray-700">Requer integração avançada com a Meta Ads API.</p>
-                  </div>
+                {/* ── Melhores Anúncios ────────────────────────────────────── */}
+                <div className="space-y-2">
+                  <p className="text-[11px] text-gray-600 uppercase tracking-widest">Melhores Anúncios</p>
+                  <AdsPanel dateFrom={dateFrom} dateTo={dateTo} />
                 </div>
               </>
             ) : (
