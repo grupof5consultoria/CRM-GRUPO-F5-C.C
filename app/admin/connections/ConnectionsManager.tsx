@@ -517,24 +517,6 @@ export function ConnectionsManager({ clients }: { clients: Client[] }) {
         </div>
       )}
 
-      {/* Tabs */}
-      <div className="flex gap-2 border-b border-[#1e1e1e] pb-0">
-        {TABS.map(tab => (
-          <a
-            key={tab.key}
-            href={`/admin/connections?tab=${tab.key}`}
-            className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors -mb-px ${
-              activeTab === tab.key
-                ? `${tab.color} ${tab.border}`
-                : "text-gray-600 border-transparent hover:text-gray-400"
-            }`}
-          >
-            <span className={`w-2 h-2 rounded-full ${activeTab === tab.key ? tab.dot : "bg-gray-700"}`} />
-            {tab.label}
-          </a>
-        ))}
-      </div>
-
       {activeTab === "meta" && (
         <PlatformCard
           platform="meta"
