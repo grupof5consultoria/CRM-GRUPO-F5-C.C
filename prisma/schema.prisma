@@ -820,6 +820,32 @@ model LandingPageProject {
   wantsBlog      Boolean  @default(false)
   purpose        String?  // "ads" | "organic" | "both"
   progress       Int      @default(0)
+
+  // ── Campos do Gerador Automático ──────────────────────────────────────────
+  doctorName         String?   // "Dra. Ana Paula Souza"
+  clinicName         String?   // "Instituto Sorriso Premium"
+  city               String?   // "Cuiabá - MT"
+  whatsapp           String?   // "65999991234"
+  specialties        String[]  // ["implantes", "ortodontia", ...]
+  yearsExperience    Int?
+  patientsCount      String?   // "1.000+"
+  proceduresCount    String?   // "1.500+"
+  googleRating       String?   // "5.0"
+  address            String?
+  slug               String?   // "dra-ana-paula" → /dra-ana-paula
+  // Imagens (URLs do Vercel Blob ou base64)
+  photoDentistUrl    String?
+  photoClinic1Url    String?
+  photoClinic2Url    String?
+  photoClinic3Url    String?
+  photoClinic4Url    String?
+  ogImageUrl         String?
+  // Depoimentos (JSON: [{name, text, time, rating}])
+  testimonials       Json?
+  // Status do gerador
+  generatorStatus    String?   // "draft" | "generated" | "deployed"
+  generatedAt        DateTime?
+
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 

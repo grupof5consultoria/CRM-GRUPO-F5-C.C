@@ -6,6 +6,7 @@ import {
   createLandingPageProject,
   updateLandingPageBriefing,
   updateLandingPagePhase,
+  updateLandingPageGenerator,
 } from "@/services/landingPage";
 
 export async function createLandingPageAction(clientId: string, companyName: string) {
@@ -41,6 +42,49 @@ export async function saveBriefingAction(
 
   revalidatePath(`/admin/tasks/landing/${clientId}`);
   revalidatePath(`/admin/tasks/landing`);
+  return { success: true };
+}
+
+export async function saveGeneratorAction(
+  _prev: { error?: string; success?: boolean },
+  formData: FormData
+): Promise<{ error?: string; success?: boolean }> {
+  await requireInternalAuth();
+
+  const projectId = formData.get("projectId") as string;
+  const clientId  = formData.get("clientId") as string;
+
+  const specialtiesRaw = formData.get("specialties") as string;
+  const specialties = specialtiesRaw
+    ? specialtiesRaw.split(",").map(s => s.trim()).filter(Boolean)
+    : [];
+
+  const testimonialsRaw = formData.get("testimonials") as string;
+  let testimonials = null;
+  try { testimonials = testimonialsRaw ? JSON.parse(testimonialsRaw) : null; } catch {}
+
+  await updateLandingPageGenerator(projectId, {
+    doctorName:      (formData.get("doctorName") as string) || null,
+    clinicName:      (formData.get("clinicName") as string) || null,
+    city:            (formData.get("city") as string) || null,
+    whatsapp:        (formData.get("whatsapp") as string) || null,
+    specialties,
+    yearsExperience: formData.get("yearsExperience") ? Number(formData.get("yearsExperience")) : null,
+    patientsCount:   (formData.get("patientsCount") as string) || null,
+    proceduresCount: (formData.get("proceduresCount") as string) || null,
+    googleRating:    (formData.get("googleRating") as string) || null,
+    address:         (formData.get("address") as string) || null,
+    slug:            (formData.get("slug") as string) || null,
+    photoDentistUrl: (formData.get("photoDentistUrl") as string) || null,
+    photoClinic1Url: (formData.get("photoClinic1Url") as string) || null,
+    photoClinic2Url: (formData.get("photoClinic2Url") as string) || null,
+    photoClinic3Url: (formData.get("photoClinic3Url") as string) || null,
+    photoClinic4Url: (formData.get("photoClinic4Url") as string) || null,
+    ogImageUrl:      (formData.get("ogImageUrl") as string) || null,
+    testimonials,
+  });
+
+  revalidatePath(`/admin/tasks/landing/${clientId}`);
   return { success: true };
 }
 

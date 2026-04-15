@@ -62,6 +62,32 @@ export async function updateLandingPageBriefing(projectId: string, data: {
   return prisma.landingPageProject.update({ where: { id: projectId }, data });
 }
 
+export async function updateLandingPageGenerator(projectId: string, data: {
+  doctorName?: string | null;
+  clinicName?: string | null;
+  city?: string | null;
+  whatsapp?: string | null;
+  specialties?: string[];
+  yearsExperience?: number | null;
+  patientsCount?: string | null;
+  proceduresCount?: string | null;
+  googleRating?: string | null;
+  address?: string | null;
+  slug?: string | null;
+  photoDentistUrl?: string | null;
+  photoClinic1Url?: string | null;
+  photoClinic2Url?: string | null;
+  photoClinic3Url?: string | null;
+  photoClinic4Url?: string | null;
+  ogImageUrl?: string | null;
+  testimonials?: unknown;
+}) {
+  return prisma.landingPageProject.update({
+    where: { id: projectId },
+    data: { ...data, generatorStatus: "draft" },
+  });
+}
+
 export async function updateLandingPagePhase(phaseId: string, data: {
   status?: string;
   assignedTo?: string | null;
