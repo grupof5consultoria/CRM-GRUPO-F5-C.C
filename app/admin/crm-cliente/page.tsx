@@ -20,7 +20,7 @@ export default async function CRMClientePage({
 }) {
   const { clientId, dateFrom, dateTo } = await searchParams;
 
-  const [leads, clients] = await Promise.all([
+  const [leads, clients, whatsappAccounts] = await Promise.all([
     prisma.patientLead.findMany({
       where: {
         ...(clientId ? { clientId } : {}),
@@ -45,7 +45,19 @@ export default async function CRMClientePage({
       select: { id: true, name: true },
       orderBy: { name: "asc" },
     }),
+
+    // WhatsApp instances connected via Evolution API
+    prisma.whatsAppAccount.findMany({
+      where:  { status: "active" },
+      select: { clientId: true, phoneNumberId: true },
+    }),
   ]);
+
+  // Map clientId → Evolution instanceName
+  const instanceMap: Record<string, string> = {};
+  for (const acc of whatsappAccounts) {
+    instanceMap[acc.clientId] = acc.phoneNumberId;
+  }
 
   const activeCount = leads.filter(l => l.status !== "perdido").length;
 
@@ -82,7 +94,7 @@ export default async function CRMClientePage({
 
         {/* Kanban */}
         <div className="flex-1 overflow-auto p-6">
-          <KanbanCliente leads={leads} />
+          <KanbanCliente leads={leads} instanceMap={instanceMap} />
         </div>
       </main>
     </>
