@@ -21,7 +21,7 @@ export default async function PortalAtendimentosPage() {
 
   const periods = generatePeriods(6);
 
-  const [services, attendances] = await Promise.all([
+  const [services, attendances, leads] = await Promise.all([
     prisma.clientService.findMany({
       where: { clientId: session.clientId },
       orderBy: { createdAt: "asc" },
@@ -31,6 +31,25 @@ export default async function PortalAtendimentosPage() {
       include: { service: { select: { name: true } } },
       orderBy: { contactDate: "desc" },
       take: 100,
+    }),
+    prisma.patientLead.findMany({
+      where: { clientId: session.clientId },
+      select: {
+        id: true,
+        name: true,
+        phone: true,
+        photoUrl: true,
+        origin: true,
+        source: true,
+        city: true,
+        state: true,
+        device: true,
+        campaignType: true,
+        status: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: "desc" },
+      take: 50,
     }),
   ]);
 
@@ -44,6 +63,7 @@ export default async function PortalAtendimentosPage() {
       <AttendanceClient
         services={services}
         attendances={attendances}
+        leads={leads.map((l) => ({ ...l, status: l.status as string, origin: l.origin as string }))}
         currentPeriod={periods[0]}
         periods={periods}
       />
