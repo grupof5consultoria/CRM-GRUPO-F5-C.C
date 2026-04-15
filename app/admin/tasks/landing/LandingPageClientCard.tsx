@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { LandingPagePanel } from "./LandingPagePanel";
 import { createLandingPageAction } from "./actions";
 
@@ -114,12 +115,24 @@ export function LandingPageClientCard({ client, project }: Props) {
           )}
         </div>
 
-        <svg
-          className={`w-4 h-4 text-gray-600 flex-shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
-          fill="none" stroke="currentColor" viewBox="0 0 24 24"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <Link
+            href={`/admin/tasks/landing/${client.id}?tab=gerador`}
+            onClick={e => e.stopPropagation()}
+            className="text-xs px-2.5 py-1.5 rounded-lg bg-violet-600/10 border border-violet-500/30 text-violet-400 hover:bg-violet-600/20 transition-colors flex items-center gap-1"
+          >
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            Gerador
+          </Link>
+          <svg
+            className={`w-4 h-4 text-gray-600 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+            fill="none" stroke="currentColor" viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
       </button>
 
       {/* Full panel when expanded */}
