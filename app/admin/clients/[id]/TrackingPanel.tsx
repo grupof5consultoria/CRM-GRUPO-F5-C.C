@@ -17,9 +17,14 @@ interface Campaign {
   type: string;
 }
 
+interface ClientOption {
+  id:               string;
+  name:             string;
+  trackingCampaigns: Campaign[];
+}
+
 interface Props {
-  clientId:   string;
-  campaigns:  Campaign[];
+  clients: ClientOption[];
 }
 
 function CopyButton({ url }: { url: string }) {
@@ -45,25 +50,35 @@ function CopyButton({ url }: { url: string }) {
   );
 }
 
-export function TrackingPanel({ clientId, campaigns: initialCampaigns }: Props) {
-  const [campaigns, setCampaigns] = useState<Campaign[]>(initialCampaigns);
-  const [name, setName]           = useState("");
-  const [type, setType]           = useState("frio");
-  const [creating, setCreating]   = useState(false);
-  const [selected, setSelected]   = useState<string>(initialCampaigns[0]?.id ?? "");
+export function TrackingPanel({ clients }: Props) {
+  const [selectedClientId, setSelectedClientId] = useState(clients[0]?.id ?? "");
+  const [campaigns, setCampaigns]               = useState<Campaign[]>(() =>
+    clients.find(c => c.id === clients[0]?.id)?.trackingCampaigns ?? []
+  );
+  const [name, setName]         = useState("");
+  const [type, setType]         = useState("frio");
+  const [creating, setCreating] = useState(false);
+  const [selected, setSelected] = useState<string>(clients[0]?.trackingCampaigns[0]?.id ?? "");
+
+  function handleClientChange(id: string) {
+    setSelectedClientId(id);
+    const clientCampaigns = clients.find(c => c.id === id)?.trackingCampaigns ?? [];
+    setCampaigns(clientCampaigns);
+    setSelected(clientCampaigns[0]?.id ?? "");
+  }
 
   async function createCampaign() {
-    if (!name.trim()) return;
+    if (!name.trim() || !selectedClientId) return;
     setCreating(true);
     try {
       const res  = await fetch("/api/admin/tracking/campaigns", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ clientId, name: name.trim(), type }),
+        body: JSON.stringify({ clientId: selectedClientId, name: name.trim(), type }),
       });
       const data = await res.json();
       if (data.id) {
-        const next = [...campaigns, data];
+        const next = [data, ...campaigns];
         setCampaigns(next);
         setSelected(data.id);
         setName("");
@@ -75,45 +90,64 @@ export function TrackingPanel({ clientId, campaigns: initialCampaigns }: Props) 
 
   const activeCampaign = campaigns.find(c => c.id === selected);
 
+  const inputClass = "w-full bg-[#111] border border-[#333] rounded-xl px-3 py-2.5 text-sm text-gray-300 placeholder-gray-700 focus:outline-none focus:border-violet-500";
+
   return (
     <div className="space-y-6">
 
-      {/* Criar campanha */}
-      <div className="bg-[#111] border border-[#262626] rounded-2xl overflow-hidden">
-        <div className="px-6 py-4 border-b border-[#1e1e1e] bg-[#0d0d0d]">
-          <h2 className="text-sm font-bold text-white">Nova Campanha de Rastreamento</h2>
-          <p className="text-xs text-gray-500 mt-0.5">Crie uma campanha para gerar as URLs de rastreamento</p>
+      {/* Client + Nova campanha */}
+      <div className="bg-[#1a1a1a] border border-[#262626] rounded-2xl p-5 space-y-4">
+        <div className="flex items-center gap-4 flex-wrap">
+          <div className="flex-1 min-w-[200px]">
+            <label className="block text-xs text-gray-500 mb-1.5">Cliente</label>
+            <select
+              value={selectedClientId}
+              onChange={e => handleClientChange(e.target.value)}
+              className={inputClass}
+            >
+              {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          </div>
         </div>
-        <div className="p-6 flex flex-col sm:flex-row gap-3">
-          <input
-            type="text"
-            value={name}
-            onChange={e => setName(e.target.value)}
-            placeholder="Nome da campanha (ex: Implante Frio Janeiro)"
-            className="flex-1 bg-[#1a1a1a] border border-[#2e2e2e] rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-violet-500"
-          />
-          <select
-            value={type}
-            onChange={e => setType(e.target.value)}
-            className="bg-[#1a1a1a] border border-[#2e2e2e] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-violet-500"
-          >
-            <option value="frio">Lead Frio</option>
-            <option value="remarketing">Remarketing</option>
-          </select>
-          <button
-            onClick={createCampaign}
-            disabled={creating || !name.trim()}
-            className="px-5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 disabled:opacity-40 text-white text-sm font-semibold transition-colors"
-          >
-            {creating ? "Criando..." : "Criar"}
-          </button>
+
+        <div className="border-t border-[#262626] pt-4">
+          <p className="text-xs text-gray-500 mb-3 font-semibold uppercase tracking-wider">Nova Campanha de Rastreamento</p>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <input
+              type="text"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              placeholder="Nome da campanha (ex: Implante Frio Janeiro)"
+              className={inputClass + " flex-1"}
+            />
+            <select
+              value={type}
+              onChange={e => setType(e.target.value)}
+              className="bg-[#111] border border-[#333] rounded-xl px-4 py-2.5 text-sm text-gray-300 focus:outline-none focus:border-violet-500"
+            >
+              <option value="frio">Lead Frio</option>
+              <option value="remarketing">Remarketing</option>
+            </select>
+            <button
+              onClick={createCampaign}
+              disabled={creating || !name.trim()}
+              className="px-5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 disabled:opacity-40 text-white text-sm font-semibold transition-colors"
+            >
+              {creating ? "Criando..." : "Criar"}
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Selecionar campanha */}
-      {campaigns.length > 0 && (
-        <div className="bg-[#111] border border-[#262626] rounded-2xl overflow-hidden">
-          <div className="px-6 py-4 border-b border-[#1e1e1e] bg-[#0d0d0d]">
+      {/* URLs de rastreamento */}
+      {campaigns.length === 0 ? (
+        <div className="bg-[#1a1a1a] border border-[#262626] rounded-2xl p-12 text-center">
+          <p className="text-sm text-gray-600">Nenhuma campanha criada para este cliente.</p>
+          <p className="text-xs text-gray-700 mt-1">Crie uma campanha acima para gerar os links de rastreamento.</p>
+        </div>
+      ) : (
+        <div className="bg-[#1a1a1a] border border-[#262626] rounded-2xl overflow-hidden">
+          <div className="px-6 py-4 border-b border-[#262626] bg-[#111]">
             <h2 className="text-sm font-bold text-white">URLs de Rastreamento</h2>
             <p className="text-xs text-gray-500 mt-0.5">Selecione a campanha e copie a URL para cada plataforma</p>
           </div>
@@ -145,9 +179,9 @@ export function TrackingPanel({ clientId, campaigns: initialCampaigns }: Props) 
 
             {/* URLs per platform */}
             {activeCampaign && (
-              <div className="space-y-3 mt-2">
+              <div className="space-y-3">
                 {SOURCES.map(src => {
-                  const url = `${BASE_URL}/r/${clientId}?camp=${activeCampaign.id}&src=${src.key}`;
+                  const url = `${BASE_URL}/r/${selectedClientId}?camp=${activeCampaign.id}&src=${src.key}`;
                   return (
                     <div key={src.key} className="bg-[#0d0d0d] border border-[#1e1e1e] rounded-xl p-4">
                       <div className="flex items-center justify-between mb-2">
@@ -162,13 +196,13 @@ export function TrackingPanel({ clientId, campaigns: initialCampaigns }: Props) 
                   );
                 })}
 
-                <div className="mt-4 bg-blue-500/10 border border-blue-500/20 rounded-xl p-4">
+                <div className="mt-2 bg-blue-500/10 border border-blue-500/20 rounded-xl p-4">
                   <p className="text-xs text-blue-400 font-semibold mb-1">Como usar</p>
                   <ul className="text-xs text-blue-300/70 space-y-1 list-disc list-inside">
-                    <li>Coloque a URL do <strong>Meta Ads</strong> como destino do anúncio de conversa</li>
-                    <li>Coloque a URL do <strong>Google Ads</strong> na campanha de tráfego</li>
-                    <li>Coloque a URL do <strong>Instagram Bio</strong> no link da bio</li>
-                    <li>Coloque a URL do <strong>Google Meu Negócio</strong> no botão de contato</li>
+                    <li>Cole a URL do <strong>Meta Ads</strong> como destino do anúncio de conversa</li>
+                    <li>Cole a URL do <strong>Google Ads</strong> na campanha de tráfego</li>
+                    <li>Cole a URL do <strong>Instagram Bio</strong> no link da bio</li>
+                    <li>Cole a URL do <strong>Google Meu Negócio</strong> no botão de contato</li>
                   </ul>
                 </div>
               </div>
