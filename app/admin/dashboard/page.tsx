@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { getSession } from "@/lib/auth";
 import { AnimatedBackground } from "@/components/ui/AnimatedBackground";
+import { CountUp } from "@/components/ui/CountUp";
+import { AnimatedBar } from "@/components/ui/AnimatedBar";
 
 export const metadata = { title: "Dashboard | Gestão Interna" };
 
@@ -253,7 +255,9 @@ function StatCard({ label, value, href, icon, gradient, iconBg, textColor }: {
         <div className="relative z-10 flex items-start justify-between">
           <div>
             <p className={`text-xs font-medium uppercase tracking-wider mb-2 ${textColor} opacity-80`}>{label}</p>
-            <p className="text-4xl font-bold text-white drop-shadow-sm">{value}</p>
+            <p className="text-4xl font-bold text-white drop-shadow-sm">
+              <CountUp to={value} duration={1600} />
+            </p>
           </div>
           <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${iconBg} ${textColor}`}>{icon}</div>
         </div>
@@ -318,7 +322,9 @@ export default async function DashboardPage() {
             </div>
             <div className="hidden sm:flex flex-col items-end justify-center px-5 py-3 rounded-2xl border border-violet-500/20" style={{ background: "linear-gradient(135deg, rgba(109,40,217,0.18) 0%, rgba(124,58,237,0.08) 100%)" }}>
               <p className="text-[10px] text-violet-400/70 uppercase tracking-widest font-semibold mb-0.5">MRR Ativo</p>
-              <p className="text-2xl font-bold text-violet-300">R$ {fmt(data.mrr)}</p>
+              <p className="text-2xl font-bold text-violet-300">
+                R$ <CountUp to={data.mrr} decimals={2} duration={2000} />
+              </p>
             </div>
           </div>
 
@@ -356,7 +362,7 @@ export default async function DashboardPage() {
                   <div className="space-y-4">
                     {/* Origens */}
                     <div className="space-y-2">
-                      {data.patientLeadsByOrigin.map(r => {
+                      {data.patientLeadsByOrigin.map((r, idx) => {
                         const pct = data.totalPatientLeadsMonth > 0 ? (r._count.id / data.totalPatientLeadsMonth) * 100 : 0;
                         return (
                           <div key={r.origin}>
@@ -368,7 +374,7 @@ export default async function DashboardPage() {
                               <span className="text-xs font-semibold text-white">{r._count.id}</span>
                             </div>
                             <div className="h-1 bg-[#2a2a2a] rounded-full overflow-hidden">
-                              <div className={`h-full rounded-full ${ORIGIN_COLOR[r.origin] ?? "bg-gray-500"}`} style={{ width: `${pct}%` }} />
+                              <AnimatedBar pct={pct} colorClass={ORIGIN_COLOR[r.origin] ?? "bg-gray-500"} delay={idx * 80} />
                             </div>
                           </div>
                         );
@@ -520,7 +526,7 @@ export default async function DashboardPage() {
                                 <span className={`text-[9px] font-semibold ${textColor}`}>{pct.toFixed(0)}%</span>
                               </div>
                               <div className="h-1 bg-[#1a1a1a] rounded-full overflow-hidden">
-                                <div className={`h-full ${barColor} rounded-full transition-all duration-700`} style={{ width: `${pct}%` }} />
+                                <AnimatedBar pct={pct} colorClass={barColor} height="h-1" />
                               </div>
                             </div>
                           </div>
@@ -554,7 +560,7 @@ export default async function DashboardPage() {
                   <div className="w-1.5 h-5 rounded-full bg-emerald-500" />
                   <h3 className="text-sm font-semibold text-white uppercase tracking-wider">Cobranças Pagas</h3>
                 </div>
-                <p className="text-3xl font-bold text-emerald-400 mb-1">R$ {fmt(data.chargesPaidValue)}</p>
+                <p className="text-3xl font-bold text-emerald-400 mb-1">R$ <CountUp to={data.chargesPaidValue} decimals={2} duration={1800} /></p>
                 <p className="text-xs text-gray-600">{data.chargesPaidCount} cobrança{data.chargesPaidCount !== 1 ? "s" : ""} recebida{data.chargesPaidCount !== 1 ? "s" : ""} no mês</p>
                 <div className="mt-4 pt-4 border-t border-[#262626]">
                   <div className="flex items-center justify-between">
@@ -564,7 +570,7 @@ export default async function DashboardPage() {
                     </span>
                   </div>
                   <div className="mt-1.5 h-1.5 bg-[#2a2a2a] rounded-full overflow-hidden">
-                    <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${data.mrr > 0 ? Math.min((data.chargesPaidValue / data.mrr) * 100, 100) : 0}%` }} />
+                    <AnimatedBar pct={data.mrr > 0 ? Math.min((data.chargesPaidValue / data.mrr) * 100, 100) : 0} colorClass="bg-emerald-500" height="h-1.5" delay={300} />
                   </div>
                 </div>
               </div>
@@ -575,7 +581,7 @@ export default async function DashboardPage() {
                   <div className="w-1.5 h-5 rounded-full bg-violet-500" />
                   <h3 className="text-sm font-semibold text-white uppercase tracking-wider">Tratamentos Fechados</h3>
                 </div>
-                <p className="text-3xl font-bold text-violet-400 mb-1">R$ {fmt(data.attendanceRevenue)}</p>
+                <p className="text-3xl font-bold text-violet-400 mb-1">R$ <CountUp to={data.attendanceRevenue} decimals={2} duration={1800} /></p>
                 <p className="text-xs text-gray-600">{data.attendanceClosed} atendimento{data.attendanceClosed !== 1 ? "s" : ""} fechado{data.attendanceClosed !== 1 ? "s" : ""} no mês</p>
                 <p className="text-[10px] text-gray-700 mt-4">Soma dos tratamentos fechados pelos portais das clínicas</p>
               </div>
