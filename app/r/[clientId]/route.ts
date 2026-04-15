@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { headers } from "next/headers";
+import { encodeRefZW } from "@/lib/tracking-encode";
 
 const SOURCE_LABELS: Record<string, string> = {
   "google-ads":          "Google Ads",
@@ -93,12 +94,12 @@ export async function GET(
     // Non-blocking — proceed even if DB fails
   }
 
-  // Build pre-filled WhatsApp message
-  const baseMessage  = campaign?.message?.trim() || "Olá! Gostaria de saber mais sobre os serviços.";
-  const messageParts = [baseMessage];
-  if (ref) messageParts.push(`[TRK:${ref}]`);
+  // Build pre-filled WhatsApp message with invisible tracking code
+  const baseMessage = campaign?.message?.trim() || "Olá! Gostaria de saber mais sobre os serviços.";
+  const invisible   = ref ? encodeRefZW(ref) : "";
+  const fullMessage = baseMessage + invisible;
 
-  const message     = encodeURIComponent(messageParts.join(" "));
+  const message = encodeURIComponent(fullMessage);
   const waUrl       = `https://wa.me/${whatsapp}?text=${message}`;
 
   return NextResponse.redirect(waUrl);

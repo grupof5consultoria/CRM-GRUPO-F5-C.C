@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         url:     WEBHOOK_URL,
         enabled: true,
-        events:  ["CONNECTION_UPDATE"],
+        events:  ["CONNECTION_UPDATE", "MESSAGES_UPSERT"],
       }),
     }).catch(() => {}); // non-blocking
 
