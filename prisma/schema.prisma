@@ -124,10 +124,13 @@ enum AttendanceOrigin {
 
 enum PatientLeadStatus {
   novo_lead           // entrou pelo tráfego
-  em_contato          // equipe entrou em contato
+  em_contato          // equipe entrou em contato (legado)
+  followup_1          // 1º follow-up
+  followup_2          // 2º follow-up
+  followup_3          // 3º follow-up
   agendado            // consulta marcada
   consulta_realizada  // paciente compareceu
-  proposta_enviada    // proposta de tratamento enviada
+  proposta_enviada    // proposta de tratamento enviada (legado)
   fechado             // tratamento fechado/pago
   perdido             // não converteu
 }
