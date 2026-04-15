@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 
-const EVO_URL = process.env.EVOLUTION_API_URL?.replace(/\/$/, "");
-const EVO_KEY = process.env.EVOLUTION_API_KEY;
+const EVO_URL    = process.env.EVOLUTION_API_URL?.replace(/\/$/, "");
+const EVO_KEY    = process.env.EVOLUTION_API_KEY;
+const WEBHOOK_URL = "https://crm-grupo-f5-c-c.vercel.app/api/webhooks/evolution";
 
 export async function POST(req: NextRequest) {
   const session = await getSession();
@@ -33,6 +34,17 @@ export async function POST(req: NextRequest) {
     });
 
     const createData = await createRes.json();
+
+    // Register webhook for disconnection events
+    await fetch(`${EVO_URL}/webhook/set/${instanceName}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", apikey: EVO_KEY },
+      body: JSON.stringify({
+        url:     WEBHOOK_URL,
+        enabled: true,
+        events:  ["CONNECTION_UPDATE"],
+      }),
+    }).catch(() => {}); // non-blocking
 
     // QR returned directly on create
     if (createData?.qrcode?.base64) {
