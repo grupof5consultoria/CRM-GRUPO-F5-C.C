@@ -89,12 +89,22 @@ export default async function ReportsPage({
     };
   }
 
+  // Period boundaries for lead filtering
+  const [periodYear, periodMonth] = period.split("-").map(Number);
+  const periodStart = new Date(periodYear, periodMonth - 1, 1);
+  const periodEnd   = new Date(periodYear, periodMonth, 0, 23, 59, 59, 999);
+
   // These tables may not exist yet if prisma db push hasn't been run
   let dbReady = true;
   let attendances: Awaited<ReturnType<typeof prisma.attendance.findMany<{
     include: { service: { select: { name: true } } }
   }>>> = [];
   let services: Awaited<ReturnType<typeof prisma.clientService.findMany>> = [];
+  let patientLeads: Array<{
+    id: string; name: string; phone: string | null; photoUrl: string | null;
+    origin: string; source: string | null; city: string | null; state: string | null;
+    device: string | null; campaignType: string | null; status: string; createdAt: Date;
+  }> = [];
   try {
     const results = await Promise.all([
       prisma.attendance.findMany({
@@ -106,9 +116,22 @@ export default async function ReportsPage({
         where: { clientId: selectedClientId },
         orderBy: { name: "asc" },
       }),
+      prisma.patientLead.findMany({
+        where: {
+          clientId: selectedClientId,
+          createdAt: { gte: periodStart, lte: periodEnd },
+        },
+        select: {
+          id: true, name: true, phone: true, photoUrl: true,
+          origin: true, source: true, city: true, state: true,
+          device: true, campaignType: true, status: true, createdAt: true,
+        },
+        orderBy: { createdAt: "desc" },
+      }),
     ]);
     attendances = results[0];
     services = results[1];
+    patientLeads = results[2].map((l) => ({ ...l, origin: l.origin as string, status: l.status as string }));
   } catch {
     dbReady = false;
   }
@@ -136,6 +159,7 @@ export default async function ReportsPage({
           metricEntry={metricEntry}
           attendances={attendances}
           services={services}
+          patientLeads={patientLeads}
         />
       </main>
     </>

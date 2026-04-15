@@ -112,6 +112,21 @@ interface ClientService {
 
 interface SimpleClient { id: string; name: string; }
 
+interface PatientLeadEntry {
+  id: string;
+  name: string;
+  phone: string | null;
+  photoUrl: string | null;
+  origin: string;
+  source: string | null;
+  city: string | null;
+  state: string | null;
+  device: string | null;
+  campaignType: string | null;
+  status: string;
+  createdAt: Date;
+}
+
 interface Props {
   clients: SimpleClient[];
   selectedClientId: string;
@@ -120,6 +135,7 @@ interface Props {
   metricEntry: MetricEntry | null;
   attendances: Attendance[];
   services: ClientService[];
+  patientLeads: PatientLeadEntry[];
 }
 
 function fmtR(v: { toString(): string } | null | undefined) {
@@ -141,7 +157,31 @@ function StatCard({ label, value, sub, accent }: { label: string; value: string;
   );
 }
 
-export function ReportView({ clients, selectedClientId, period, periods, metricEntry, attendances, services }: Props) {
+const LEAD_ORIGIN_CONFIG: Record<string, { label: string; color: string; bg: string; border: string }> = {
+  meta_ads:       { label: "Meta Ads",       color: "text-blue-400",    bg: "bg-blue-400/10",    border: "border-blue-400/25" },
+  google_ads:     { label: "Google Ads",     color: "text-yellow-400",  bg: "bg-yellow-400/10",  border: "border-yellow-400/25" },
+  instagram:      { label: "Instagram",      color: "text-pink-400",    bg: "bg-pink-400/10",    border: "border-pink-400/25" },
+  google_organic: { label: "Google Orgânico",color: "text-green-400",   bg: "bg-green-400/10",   border: "border-green-400/25" },
+  referral:       { label: "Indicação",      color: "text-violet-400",  bg: "bg-violet-400/10",  border: "border-violet-400/25" },
+  organic:        { label: "Orgânico",       color: "text-emerald-400", bg: "bg-emerald-400/10", border: "border-emerald-400/25" },
+  other:          { label: "Outro",          color: "text-gray-400",    bg: "bg-gray-400/10",    border: "border-gray-400/25" },
+};
+
+const CAMPAIGN_TYPE_LABELS: Record<string, string> = {
+  frio: "Lead Frio", remarketing: "Remarketing", organico: "Orgânico",
+};
+
+const DEVICE_ICON: Record<string, string> = {
+  mobile: "📱", tablet: "📟", desktop: "🖥️",
+};
+
+function fmtDatetime(d: Date) {
+  return new Date(d).toLocaleString("pt-BR", {
+    day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit",
+  });
+}
+
+export function ReportView({ clients, selectedClientId, period, periods, metricEntry, attendances, services, patientLeads }: Props) {
   const router = useRouter();
 
   function navigate(clientId: string, p: string) {
@@ -233,6 +273,96 @@ export function ReportView({ clients, selectedClientId, period, periods, metricE
         <StatCard label="Não Fecharam" value={String(notClosed.length)} sub={notClosed.length > 0 ? `${sortedReasons[0]?.[0] ?? ""}` : undefined} accent="text-red-400" />
         <StatCard label="Total Follow-ups" value={String(totalFollowUps)} sub={`média ${attendances.length > 0 ? (totalFollowUps / attendances.length).toFixed(1) : "0"} por atendimento`} accent="text-amber-400" />
       </div>
+
+      {/* ── Leads Rastreados via WhatsApp ───────────────────────────────────── */}
+      {patientLeads.length > 0 && (
+        <div className="bg-[#1a1a1a] border border-[#262626] rounded-2xl overflow-hidden">
+          <div className="px-4 py-3 border-b border-[#262626] flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              {/* WhatsApp icon */}
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "#25D366" }}>
+                <svg className="w-4 h-4" fill="white" viewBox="0 0 24 24">
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+                  <path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.122 1.529 5.855L0 24l6.335-1.502A11.954 11.954 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.935 0-3.741-.516-5.299-1.415l-.38-.224-3.762.892.952-3.655-.247-.397A9.96 9.96 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/>
+                </svg>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-white">Leads Rastreados</p>
+                <p className="text-xs text-gray-600">Capturados automaticamente via WhatsApp em {period}</p>
+              </div>
+            </div>
+            <span className="text-sm font-bold text-white bg-[#25D366]/15 text-[#25D366] px-3 py-1 rounded-full border border-[#25D366]/25">
+              {patientLeads.length}
+            </span>
+          </div>
+
+          {/* Origin summary bar */}
+          {(() => {
+            const countByOrigin: Record<string, number> = {};
+            patientLeads.forEach((l) => { countByOrigin[l.origin] = (countByOrigin[l.origin] ?? 0) + 1; });
+            const sorted = Object.entries(countByOrigin).sort((a, b) => b[1] - a[1]);
+            return (
+              <div className="px-4 pt-3 pb-2 flex flex-wrap gap-2">
+                {sorted.map(([origin, count]) => {
+                  const cfg = LEAD_ORIGIN_CONFIG[origin] ?? LEAD_ORIGIN_CONFIG.other;
+                  return (
+                    <span key={origin} className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg border ${cfg.bg} ${cfg.border} ${cfg.color}`}>
+                      {cfg.label} <span className="font-bold">{count}</span>
+                    </span>
+                  );
+                })}
+              </div>
+            );
+          })()}
+
+          {/* Leads list */}
+          <div className="divide-y divide-[#1e1e1e]">
+            {patientLeads.map((lead) => {
+              const cfg = LEAD_ORIGIN_CONFIG[lead.origin] ?? LEAD_ORIGIN_CONFIG.other;
+              const initials = lead.name.split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase();
+              return (
+                <div key={lead.id} className="flex items-center gap-3 px-4 py-3 hover:bg-[#222] transition-colors">
+                  {/* Avatar */}
+                  <div className="w-9 h-9 rounded-full overflow-hidden bg-[#262626] flex items-center justify-center flex-shrink-0">
+                    {lead.photoUrl
+                      // eslint-disable-next-line @next/next/no-img-element
+                      ? <img src={lead.photoUrl} alt={lead.name} className="w-full h-full object-cover" />
+                      : <span className="text-xs font-bold text-gray-400">{initials}</span>
+                    }
+                  </div>
+
+                  {/* Name + phone */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-200 truncate">{lead.name}</p>
+                    <p className="text-xs text-gray-600">{lead.phone ?? "sem telefone"}</p>
+                  </div>
+
+                  {/* Origin badge */}
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-lg border flex-shrink-0 ${cfg.bg} ${cfg.border} ${cfg.color}`}>
+                    {cfg.label}
+                  </span>
+
+                  {/* Campaign type */}
+                  {lead.campaignType && (
+                    <span className="text-xs text-gray-500 bg-[#262626] px-2 py-0.5 rounded-lg flex-shrink-0 hidden sm:inline">
+                      {CAMPAIGN_TYPE_LABELS[lead.campaignType] ?? lead.campaignType}
+                    </span>
+                  )}
+
+                  {/* City + device */}
+                  <div className="text-right flex-shrink-0 hidden md:block">
+                    {lead.city && <p className="text-xs text-gray-500">{lead.city}{lead.state ? `, ${lead.state}` : ""}</p>}
+                    {lead.device && <p className="text-xs text-gray-700">{DEVICE_ICON[lead.device] ?? ""} {lead.device}</p>}
+                  </div>
+
+                  {/* Datetime */}
+                  <p className="text-xs text-gray-600 flex-shrink-0 whitespace-nowrap">{fmtDatetime(lead.createdAt)}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Meta Ads data strip */}
       {metricEntry && (
