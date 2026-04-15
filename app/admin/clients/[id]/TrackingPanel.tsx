@@ -2,6 +2,19 @@
 
 import { useState } from "react";
 
+// Quais plataformas aparecem para cada tipo de campanha
+const TYPE_SOURCES: Record<string, string[]> = {
+  frio:        ["google-ads", "meta-ads"],
+  remarketing: ["google-ads", "meta-ads"],
+  organico:    ["google-meu-negocio", "instagram-bio"],
+};
+
+const CAMPAIGN_TYPES = [
+  { value: "frio",        label: "🧊 Lead Frio",      desc: "Tráfego pago para público novo — Google Ads e Meta Ads" },
+  { value: "remarketing", label: "🎯 Remarketing",    desc: "Tráfego pago para quem já interagiu — Google Ads e Meta Ads" },
+  { value: "organico",    label: "🌱 Orgânico",       desc: "Tráfego gratuito — Instagram Bio e Google Meu Negócio" },
+];
+
 const SOURCES = [
   {
     key:   "google-ads",
@@ -115,6 +128,8 @@ export function TrackingPanel({ clients }: Props) {
   const [creating, setCreating] = useState(false);
   const [showForm, setShowForm] = useState(false);
 
+  const selectedType = CAMPAIGN_TYPES.find(t => t.value === type);
+
   function handleClientChange(id: string) {
     setSelectedClientId(id);
     const c = clients.find(cl => cl.id === id)?.trackingCampaigns ?? [];
@@ -182,29 +197,43 @@ export function TrackingPanel({ clients }: Props) {
         <div className="bg-[#111] border border-violet-500/30 rounded-2xl p-5 space-y-4"
           style={{ boxShadow: "0 0 30px rgba(124,58,237,0.08)" }}>
           <p className="text-sm font-semibold text-white">Nova campanha de rastreamento</p>
+
+          {/* Type selector */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            {CAMPAIGN_TYPES.map(t => (
+              <button
+                key={t.value}
+                onClick={() => setType(t.value)}
+                className="text-left p-3 rounded-xl border transition-all"
+                style={type === t.value ? {
+                  background: "rgba(124,58,237,0.12)",
+                  borderColor: "rgba(124,58,237,0.4)",
+                } : {
+                  background: "#0d0d0d",
+                  borderColor: "#2a2a2a",
+                }}
+              >
+                <p className={`text-xs font-semibold ${type === t.value ? "text-violet-300" : "text-gray-400"}`}>{t.label}</p>
+                <p className="text-[10px] text-gray-600 mt-0.5 leading-tight">{t.desc}</p>
+              </button>
+            ))}
+          </div>
+
           <div className="flex flex-col sm:flex-row gap-3">
             <input
               type="text"
               value={name}
               onChange={e => setName(e.target.value)}
-              placeholder="Ex: Implante Frio Janeiro"
+              placeholder={type === "organico" ? "Ex: Bio Instagram Dra. Letícia" : "Ex: Implante Frio Janeiro"}
               className="flex-1 bg-[#0d0d0d] border border-[#2e2e2e] rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-violet-500 transition-colors"
             />
-            <select
-              value={type}
-              onChange={e => setType(e.target.value)}
-              className="bg-[#0d0d0d] border border-[#2e2e2e] rounded-xl px-4 py-2.5 text-sm text-gray-300 focus:outline-none focus:border-violet-500"
-            >
-              <option value="frio">🧊 Lead Frio</option>
-              <option value="remarketing">🎯 Remarketing</option>
-            </select>
             <button
               onClick={createCampaign}
               disabled={creating || !name.trim()}
               className="px-5 py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-40 transition-all"
               style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)" }}
             >
-              {creating ? "Criando..." : "Criar"}
+              {creating ? "Criando..." : "Criar campanha"}
             </button>
           </div>
         </div>
@@ -258,60 +287,67 @@ export function TrackingPanel({ clients }: Props) {
           style={{ boxShadow: "0 4px 40px rgba(0,0,0,0.4)" }}>
 
           {/* Campaign header */}
-          <div className="px-6 py-4 border-b border-[#1e1e1e] flex items-center justify-between"
-            style={{ background: "linear-gradient(90deg, rgba(124,58,237,0.08), transparent)" }}>
-            <div>
-              <p className="text-sm font-bold text-white">{activeCampaign.name}</p>
-              <div className="flex items-center gap-2 mt-0.5">
-                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                  activeCampaign.type === "remarketing"
-                    ? "bg-amber-500/15 text-amber-400 border border-amber-500/20"
-                    : "bg-blue-500/15 text-blue-400 border border-blue-500/20"
-                }`}>
-                  {activeCampaign.type === "remarketing" ? "🎯 Remarketing" : "🧊 Lead Frio"}
-                </span>
-                {activeCampaign._count !== undefined && (
-                  <span className="text-[10px] text-gray-600">{activeCampaign._count.clicks} clique{activeCampaign._count.clicks !== 1 ? "s" : ""} registrado{activeCampaign._count.clicks !== 1 ? "s" : ""}</span>
-                )}
-              </div>
-            </div>
-            <p className="text-xs text-gray-600">4 URLs geradas</p>
-          </div>
-
-          {/* Platform cards */}
-          <div className="divide-y divide-[#1a1a1a]">
-            {SOURCES.map(src => {
-              const url = `${BASE_URL}/r/${selectedClientId}?camp=${activeCampaign.id}&src=${src.key}`;
-              return (
-                <div key={src.key} className="px-6 py-4 flex items-center gap-4 group hover:bg-white/[0.02] transition-colors">
-                  {/* Platform icon */}
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-105"
-                    style={{ background: src.bg, border: `1px solid ${src.border}`, color: src.color }}>
-                    {src.icon}
+          {(() => {
+            const typeInfo = CAMPAIGN_TYPES.find(t => t.value === activeCampaign.type);
+            const activeSources = TYPE_SOURCES[activeCampaign.type] ?? Object.keys(TYPE_SOURCES).flatMap(k => TYPE_SOURCES[k]);
+            return (
+              <>
+                <div className="px-6 py-4 border-b border-[#1e1e1e] flex items-center justify-between"
+                  style={{ background: "linear-gradient(90deg, rgba(124,58,237,0.08), transparent)" }}>
+                  <div>
+                    <p className="text-sm font-bold text-white">{activeCampaign.name}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                        activeCampaign.type === "remarketing" ? "bg-amber-500/15 text-amber-400 border border-amber-500/20"
+                        : activeCampaign.type === "organico"  ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/20"
+                        : "bg-blue-500/15 text-blue-400 border border-blue-500/20"
+                      }`}>
+                        {typeInfo?.label ?? activeCampaign.type}
+                      </span>
+                      {activeCampaign._count !== undefined && (
+                        <span className="text-[10px] text-gray-600">{activeCampaign._count.clicks} clique{activeCampaign._count.clicks !== 1 ? "s" : ""} registrado{activeCampaign._count.clicks !== 1 ? "s" : ""}</span>
+                      )}
+                    </div>
                   </div>
-
-                  {/* Label + URL */}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-white mb-0.5">{src.label}</p>
-                    <p className="text-[11px] text-gray-600 font-mono truncate">{url}</p>
-                  </div>
-
-                  <CopyButton url={url} />
+                  <p className="text-xs text-gray-600">{activeSources.length} URL{activeSources.length !== 1 ? "s" : ""} gerada{activeSources.length !== 1 ? "s" : ""}</p>
                 </div>
-              );
-            })}
-          </div>
 
-          {/* Footer tip */}
-          <div className="px-6 py-4 border-t border-[#1a1a1a] bg-[#0d0d0d]">
-            <div className="flex items-start gap-2.5">
-              <span className="text-base mt-0.5">💡</span>
-              <div className="text-xs text-gray-600 space-y-1">
-                <p>Cada clique captura <span className="text-gray-400">cidade, estado e dispositivo</span> automaticamente via IP.</p>
-                <p>Use a URL do <span className="text-gray-400">Meta Ads</span> como destino do anúncio · <span className="text-gray-400">Instagram Bio</span> no link da bio · <span className="text-gray-400">Google Meu Negócio</span> no botão de contato.</p>
-              </div>
-            </div>
-          </div>
+                {/* Platform cards */}
+                <div className="divide-y divide-[#1a1a1a]">
+                  {SOURCES.filter(s => activeSources.includes(s.key)).map(src => {
+                    const url = `${BASE_URL}/r/${selectedClientId}?camp=${activeCampaign.id}&src=${src.key}`;
+                    return (
+                      <div key={src.key} className="px-6 py-4 flex items-center gap-4 group hover:bg-white/[0.02] transition-colors">
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-105"
+                          style={{ background: src.bg, border: `1px solid ${src.border}`, color: src.color }}>
+                          {src.icon}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-white mb-0.5">{src.label}</p>
+                          <p className="text-[11px] text-gray-600 font-mono truncate">{url}</p>
+                        </div>
+                        <CopyButton url={url} />
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Footer tip */}
+                <div className="px-6 py-4 border-t border-[#1a1a1a] bg-[#0d0d0d]">
+                  <div className="flex items-start gap-2.5">
+                    <span className="text-base mt-0.5">💡</span>
+                    <div className="text-xs text-gray-600 space-y-1">
+                      <p>Cada clique captura <span className="text-gray-400">cidade, estado e dispositivo</span> automaticamente via IP.</p>
+                      {activeCampaign.type === "organico"
+                        ? <p>Cole a URL do <span className="text-gray-400">Instagram Bio</span> no link da bio e a do <span className="text-gray-400">Google Meu Negócio</span> no botão de contato do perfil.</p>
+                        : <p>Cole a URL do <span className="text-gray-400">Meta Ads</span> como destino do anúncio e a do <span className="text-gray-400">Google Ads</span> na campanha de tráfego.</p>
+                      }
+                    </div>
+                  </div>
+                </div>
+              </>
+            );
+          })()}
         </div>
       )}
     </div>
