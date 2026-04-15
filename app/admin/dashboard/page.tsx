@@ -394,67 +394,137 @@ export default async function DashboardPage() {
               </div>
 
               {/* Resultados dos anúncios */}
-              <div className="bg-[#1a1a1a] border border-[#262626] rounded-2xl p-6">
-                <div className="flex items-center justify-between mb-5">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-1.5 h-5 rounded-full bg-pink-500" />
-                    <h3 className="text-sm font-semibold text-white uppercase tracking-wider">Resultados dos Anúncios</h3>
+              <div className="relative bg-[#111] border border-[#1e1e1e] rounded-2xl overflow-hidden">
+                {/* Glow top */}
+                <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-pink-500/40 to-transparent" />
+
+                {/* Header */}
+                <div className="px-6 pt-6 pb-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-pink-500/10 border border-pink-500/20 flex items-center justify-center">
+                      <svg className="w-4 h-4 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-semibold text-white">Resultados dos Anúncios</h3>
+                      <p className="text-[10px] text-gray-600 mt-0.5">{monthLabel}</p>
+                    </div>
                   </div>
-                  <span className="text-xs text-gray-600">{monthLabel}</span>
+                  <span className="text-[10px] font-medium px-2.5 py-1 rounded-full bg-pink-500/10 text-pink-400 border border-pink-500/20">
+                    {totalAdLeads > 0 ? `${fmtInt(totalAdLeads)} leads` : "ao vivo"}
+                  </span>
                 </div>
 
                 {totalAdSpend === 0 && totalAdLeads === 0 ? (
-                  <div className="text-center py-8 text-gray-600 text-sm">Nenhuma métrica registrada este mês</div>
+                  <div className="px-6 pb-8 text-center py-8 text-gray-600 text-sm">Nenhuma métrica registrada este mês</div>
                 ) : (
-                  <div className="space-y-4">
-                    {/* Total geral */}
+                  <div className="px-6 pb-6 space-y-5">
+
+                    {/* KPIs totais */}
                     <div className="grid grid-cols-3 gap-3">
                       {[
-                        { label: "Investido", value: `R$ ${fmt(totalAdSpend)}`, color: "text-white" },
-                        { label: "Leads", value: fmtInt(totalAdLeads), color: "text-emerald-400" },
-                        { label: "CPL médio", value: cpl(totalAdSpend, totalAdLeads), color: "text-amber-400" },
+                        { label: "Investido", value: `R$ ${fmt(totalAdSpend)}`, sub: "total geral", color: "text-white", glow: "bg-white/5 border-white/10" },
+                        { label: "Leads", value: fmtInt(totalAdLeads), sub: "gerados", color: "text-emerald-400", glow: "bg-emerald-500/5 border-emerald-500/15" },
+                        { label: "CPL Médio", value: cpl(totalAdSpend, totalAdLeads), sub: "custo/lead", color: "text-amber-400", glow: "bg-amber-500/5 border-amber-500/15" },
                       ].map(m => (
-                        <div key={m.label} className="bg-[#111] border border-[#2a2a2a] rounded-xl p-3 text-center">
-                          <p className="text-[10px] text-gray-600 uppercase tracking-wider mb-1">{m.label}</p>
-                          <p className={`text-sm font-bold ${m.color}`}>{m.value}</p>
+                        <div key={m.label} className={`${m.glow} border rounded-xl p-3 text-center`}>
+                          <p className="text-[9px] text-gray-600 uppercase tracking-widest font-medium mb-1">{m.label}</p>
+                          <p className={`text-base font-bold ${m.color}`}>{m.value}</p>
+                          <p className="text-[9px] text-gray-700 mt-0.5">{m.sub}</p>
                         </div>
                       ))}
                     </div>
 
-                    {/* Meta vs Google */}
-                    <div className="space-y-2 pt-1">
+                    {/* Plataformas */}
+                    <div className="space-y-3">
                       {[
-                        { platform: "Meta Ads", icon: "🟦", d: data.adMeta, color: "blue" },
-                        { platform: "Google Ads", icon: "🟥", d: data.adGoogle, color: "red" },
-                      ].map(({ platform, icon, d, color }) => (
-                        <div key={platform} className={`p-3 rounded-xl border bg-[#111] border-${color}-500/10`}>
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-xs font-semibold text-gray-300">{icon} {platform}</span>
-                            <span className={`text-xs font-bold text-${color}-400`}>
-                              {d.leads > 0 ? `${d.leads} leads` : "sem dados"}
-                            </span>
+                        {
+                          platform: "Meta Ads",
+                          d: data.adMeta,
+                          accent: "#1877F2",
+                          textColor: "text-blue-400",
+                          bgColor: "bg-blue-500/5",
+                          borderColor: "border-blue-500/15",
+                          barColor: "bg-blue-500",
+                          logo: (
+                            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                            </svg>
+                          ),
+                        },
+                        {
+                          platform: "Google Ads",
+                          d: data.adGoogle,
+                          accent: "#EA4335",
+                          textColor: "text-red-400",
+                          bgColor: "bg-red-500/5",
+                          borderColor: "border-red-500/15",
+                          barColor: "bg-red-500",
+                          logo: (
+                            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+                              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                            </svg>
+                          ),
+                        },
+                      ].map(({ platform, d, textColor, bgColor, borderColor, barColor, logo }) => {
+                        const pct = totalAdSpend > 0 ? Math.min((d.spend / totalAdSpend) * 100, 100) : 0;
+                        return (
+                          <div key={platform} className={`${bgColor} ${borderColor} border rounded-xl p-4 space-y-3`}>
+                            {/* Platform header */}
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <div className={`w-6 h-6 rounded-lg ${bgColor} ${borderColor} border flex items-center justify-center ${textColor}`}>
+                                  {logo}
+                                </div>
+                                <span className="text-xs font-semibold text-gray-300">{platform}</span>
+                              </div>
+                              <span className={`text-xs font-bold ${d.leads > 0 ? textColor : "text-gray-700"}`}>
+                                {d.leads > 0 ? `${d.leads} leads` : "sem dados"}
+                              </span>
+                            </div>
+
+                            {/* Métricas */}
+                            <div className="grid grid-cols-3 gap-2 text-center">
+                              <div>
+                                <p className="text-[9px] text-gray-600 uppercase tracking-wider">Investido</p>
+                                <p className="text-xs text-white font-semibold mt-0.5">R$ {fmt(d.spend)}</p>
+                              </div>
+                              <div>
+                                <p className="text-[9px] text-gray-600 uppercase tracking-wider">Impressões</p>
+                                <p className="text-xs text-gray-300 font-semibold mt-0.5">{fmtInt(d.impressions)}</p>
+                              </div>
+                              <div>
+                                <p className="text-[9px] text-gray-600 uppercase tracking-wider">CPL</p>
+                                <p className="text-xs text-amber-400 font-semibold mt-0.5">{cpl(d.spend, d.leads)}</p>
+                              </div>
+                            </div>
+
+                            {/* Share bar */}
+                            <div className="space-y-1">
+                              <div className="flex justify-between items-center">
+                                <span className="text-[9px] text-gray-700">% do investimento total</span>
+                                <span className={`text-[9px] font-semibold ${textColor}`}>{pct.toFixed(0)}%</span>
+                              </div>
+                              <div className="h-1 bg-[#1a1a1a] rounded-full overflow-hidden">
+                                <div className={`h-full ${barColor} rounded-full transition-all duration-700`} style={{ width: `${pct}%` }} />
+                              </div>
+                            </div>
                           </div>
-                          <div className="grid grid-cols-3 gap-2 text-center">
-                            <div>
-                              <p className="text-[10px] text-gray-700">Investido</p>
-                              <p className="text-xs text-white font-semibold">R$ {fmt(d.spend)}</p>
-                            </div>
-                            <div>
-                              <p className="text-[10px] text-gray-700">Impressões</p>
-                              <p className="text-xs text-gray-300 font-semibold">{fmtInt(d.impressions)}</p>
-                            </div>
-                            <div>
-                              <p className="text-[10px] text-gray-700">CPL</p>
-                              <p className="text-xs text-amber-400 font-semibold">{cpl(d.spend, d.leads)}</p>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
 
                     {totalAdRevenue > 0 && (
-                      <div className="flex items-center justify-between pt-2 border-t border-[#262626]">
-                        <span className="text-xs text-gray-500">Faturamento atribuído aos anúncios</span>
+                      <div className="flex items-center justify-between pt-3 border-t border-[#1e1e1e]">
+                        <div className="flex items-center gap-2">
+                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                          <span className="text-xs text-gray-500">Faturamento atribuído</span>
+                        </div>
                         <span className="text-sm font-bold text-emerald-400">R$ {fmt(totalAdRevenue)}</span>
                       </div>
                     )}
