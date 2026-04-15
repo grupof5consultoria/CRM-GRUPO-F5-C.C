@@ -69,7 +69,11 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ error: "Não foi possível obter o QR Code. Verifique a Evolution API." }, { status: 500 });
   } catch (err) {
-    console.error("[evolution/connect]", err);
-    return NextResponse.json({ error: "Falha ao conectar à Evolution API" }, { status: 500 });
+    const detail = err instanceof Error ? err.message : String(err);
+    console.error("[evolution/connect] URL:", EVO_URL, "Error:", detail);
+    return NextResponse.json(
+      { error: "Falha ao conectar à Evolution API", detail },
+      { status: 500 }
+    );
   }
 }

@@ -167,7 +167,7 @@ function WhatsAppForm({ client, onClose }: { client: Client; onClose: () => void
     });
     const data = await res.json();
 
-    if (data.error) { setError(data.error); setStep("error"); return; }
+    if (data.error) { setError(data.detail ? `${data.error}: ${data.detail}` : data.error); setStep("error"); return; }
     if (data.qr)    { setQrBase64(data.qr); setStep("qr"); startPolling(); return; }
     // already connected
     setConnectedNumber(data.phone ?? null);
