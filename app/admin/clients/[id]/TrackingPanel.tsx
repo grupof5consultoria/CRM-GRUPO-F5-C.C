@@ -76,6 +76,7 @@ interface Campaign {
   id:        string;
   name:      string;
   type:      string;
+  message?:  string;
   createdAt?: string;
   _count?:   { clicks: number };
 }
@@ -125,6 +126,7 @@ export function TrackingPanel({ clients }: Props) {
   );
   const [name, setName]         = useState("");
   const [type, setType]         = useState("frio");
+  const [message, setMessage]   = useState("");
   const [creating, setCreating] = useState(false);
   const [showForm, setShowForm] = useState(false);
 
@@ -145,7 +147,7 @@ export function TrackingPanel({ clients }: Props) {
       const res  = await fetch("/api/admin/tracking/campaigns", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ clientId: selectedClientId, name: name.trim(), type }),
+        body: JSON.stringify({ clientId: selectedClientId, name: name.trim(), type, message }),
       });
       const data = await res.json();
       if (data.id) {
@@ -153,6 +155,7 @@ export function TrackingPanel({ clients }: Props) {
         setCampaigns(next);
         setSelectedCampaignId(data.id);
         setName("");
+        setMessage("");
         setShowForm(false);
       }
     } finally {
@@ -219,23 +222,42 @@ export function TrackingPanel({ clients }: Props) {
             ))}
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-3">
-            <input
-              type="text"
-              value={name}
-              onChange={e => setName(e.target.value)}
-              placeholder={type === "organico" ? "Ex: Bio Instagram Dra. Letícia" : "Ex: Implante Frio Janeiro"}
-              className="flex-1 bg-[#0d0d0d] border border-[#2e2e2e] rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-violet-500 transition-colors"
+          <input
+            type="text"
+            value={name}
+            onChange={e => setName(e.target.value)}
+            placeholder={type === "organico" ? "Ex: Bio Instagram Dra. Letícia" : "Ex: Implante Frio Janeiro"}
+            className="w-full bg-[#0d0d0d] border border-[#2e2e2e] rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-violet-500 transition-colors"
+          />
+
+          <div>
+            <label className="block text-xs text-gray-500 mb-1.5">
+              Mensagem pré-preenchida no WhatsApp
+            </label>
+            <textarea
+              value={message}
+              onChange={e => setMessage(e.target.value)}
+              rows={3}
+              placeholder={
+                type === "organico"
+                  ? "Ex: Olá! Vi o perfil da doutora no Instagram e gostaria de agendar uma avaliação."
+                  : "Ex: Olá! Vi o anúncio e gostaria de saber mais sobre implantes dentários."
+              }
+              className="w-full bg-[#0d0d0d] border border-[#2e2e2e] rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-violet-500 transition-colors resize-none"
             />
-            <button
-              onClick={createCampaign}
-              disabled={creating || !name.trim()}
-              className="px-5 py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-40 transition-all"
-              style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)" }}
-            >
-              {creating ? "Criando..." : "Criar campanha"}
-            </button>
+            <p className="text-[11px] text-gray-700 mt-1">
+              O código de rastreamento <span className="text-violet-400 font-mono">[TRK:...]</span> é adicionado automaticamente ao final.
+            </p>
           </div>
+
+          <button
+            onClick={createCampaign}
+            disabled={creating || !name.trim()}
+            className="w-full sm:w-auto px-5 py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-40 transition-all"
+            style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)" }}
+          >
+            {creating ? "Criando..." : "Criar campanha"}
+          </button>
         </div>
       )}
 

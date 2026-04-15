@@ -39,12 +39,15 @@ export async function GET(
   const source     = searchParams.get("src") ?? "other";
 
   // Validate client and campaign
-  const client = await prisma.client.findUnique({
-    where: { id: clientId },
-    include: {
-      whatsappAccounts: { where: { status: "active" }, take: 1 },
-    },
-  });
+  const [client, campaign] = await Promise.all([
+    prisma.client.findUnique({
+      where: { id: clientId },
+      include: { whatsappAccounts: { where: { status: "active" }, take: 1 } },
+    }),
+    campaignId
+      ? prisma.trackingCampaign.findUnique({ where: { id: campaignId }, select: { message: true } })
+      : null,
+  ]);
 
   if (!client) {
     return NextResponse.redirect("https://wa.me/");
@@ -91,8 +94,8 @@ export async function GET(
   }
 
   // Build pre-filled WhatsApp message
-  const sourceLabel = SOURCE_LABELS[source] ?? source;
-  const messageParts = ["Olá! Gostaria de saber mais sobre os serviços."];
+  const baseMessage  = campaign?.message?.trim() || "Olá! Gostaria de saber mais sobre os serviços.";
+  const messageParts = [baseMessage];
   if (ref) messageParts.push(`[TRK:${ref}]`);
 
   const message     = encodeURIComponent(messageParts.join(" "));

@@ -913,7 +913,8 @@ model TrackingCampaign {
   clientId     String
   client       Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
   name         String   // "Implante Frio Janeiro"
-  type         String   // "frio" | "remarketing"
+  type         String   // "frio" | "remarketing" | "organico"
+  message      String   @default("Olá! Gostaria de saber mais sobre os serviços.")
   isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())
 

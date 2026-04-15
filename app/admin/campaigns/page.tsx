@@ -18,6 +18,7 @@ export default async function CampaignsPage() {
           id: true,
           name: true,
           type: true,
+          message: true,
           createdAt: true,
           _count: { select: { clicks: true } },
         },
