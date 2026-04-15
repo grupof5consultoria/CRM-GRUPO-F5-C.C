@@ -63,6 +63,10 @@ export async function saveGeneratorAction(
   let testimonials = null;
   try { testimonials = testimonialsRaw ? JSON.parse(testimonialsRaw) : null; } catch {}
 
+  const beforeAfterRaw = formData.get("beforeAfterPhotos") as string;
+  let beforeAfterPhotos = null;
+  try { beforeAfterPhotos = beforeAfterRaw ? JSON.parse(beforeAfterRaw) : null; } catch {}
+
   await updateLandingPageGenerator(projectId, {
     doctorName:      (formData.get("doctorName") as string) || null,
     clinicName:      (formData.get("clinicName") as string) || null,
@@ -82,6 +86,7 @@ export async function saveGeneratorAction(
     photoClinic4Url: (formData.get("photoClinic4Url") as string) || null,
     ogImageUrl:      (formData.get("ogImageUrl") as string) || null,
     testimonials,
+    beforeAfterPhotos,
   });
 
   revalidatePath(`/admin/tasks/landing/${clientId}`);

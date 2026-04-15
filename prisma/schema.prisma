@@ -842,6 +842,8 @@ model LandingPageProject {
   ogImageUrl         String?
   // Depoimentos (JSON: [{name, text, time, rating}])
   testimonials       Json?
+  // Antes e Depois (JSON: [{label, beforeUrl, afterUrl}])
+  beforeAfterPhotos  Json?
   // Status do gerador
   generatorStatus    String?   // "draft" | "generated" | "deployed"
   generatedAt        DateTime?

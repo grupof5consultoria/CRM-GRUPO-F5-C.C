@@ -13,6 +13,12 @@ interface Testimonial {
   rating: number;
 }
 
+interface BeforeAfterItem {
+  label: string;
+  beforeUrl: string;
+  afterUrl: string;
+}
+
 interface Project {
   id: string;
   clientId: string;
@@ -35,6 +41,7 @@ interface Project {
   photoClinic4Url?: string | null;
   ogImageUrl?: string | null;
   testimonials?: Testimonial[] | null;
+  beforeAfterPhotos?: BeforeAfterItem[] | null;
   generatorStatus?: string | null;
   generatedAt?: Date | string | null;
 }
@@ -246,6 +253,15 @@ export function LandingGenerator({ project }: { project: Project }) {
   ];
   const [testimonials, setTestimonials] = useState<Testimonial[]>(defaultTestimonials);
 
+  // Before / After
+  const defaultBA: BeforeAfterItem[] = (project.beforeAfterPhotos as BeforeAfterItem[] | null) ?? [
+    { label: "", beforeUrl: "", afterUrl: "" },
+    { label: "", beforeUrl: "", afterUrl: "" },
+    { label: "", beforeUrl: "", afterUrl: "" },
+    { label: "", beforeUrl: "", afterUrl: "" },
+  ];
+  const [beforeAfter, setBeforeAfter] = useState<BeforeAfterItem[]>(defaultBA);
+
   // Generated code
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -257,6 +273,10 @@ export function LandingGenerator({ project }: { project: Project }) {
     if (field === "photoClinic3Url") setPhotoClinic3(url);
     if (field === "photoClinic4Url") setPhotoClinic4(url);
     if (field === "ogImageUrl")      setOgImage(url);
+  }
+
+  function handleBAImageUploaded(index: number, side: "beforeUrl" | "afterUrl", url: string) {
+    setBeforeAfter(prev => prev.map((item, i) => i === index ? { ...item, [side]: url } : item));
   }
 
   function handleGenerate() {
@@ -279,6 +299,7 @@ export function LandingGenerator({ project }: { project: Project }) {
       photoClinic3Url: photoClinic3,
       photoClinic4Url: photoClinic4,
       testimonials: testimonials.filter(t => t.name && t.text),
+      beforeAfterPhotos: beforeAfter.filter(b => b.beforeUrl || b.afterUrl),
     };
     const code = generateLandingPageCode(data);
     setGeneratedCode(code);
@@ -307,7 +328,8 @@ export function LandingGenerator({ project }: { project: Project }) {
       <input type="hidden" name="photoClinic2Url" value={photoClinic2} />
       <input type="hidden" name="photoClinic3Url" value={photoClinic3} />
       <input type="hidden" name="photoClinic4Url" value={photoClinic4} />
-      <input type="hidden" name="ogImageUrl"      value={ogImage} />
+      <input type="hidden" name="ogImageUrl"           value={ogImage} />
+      <input type="hidden" name="beforeAfterPhotos"  value={JSON.stringify(beforeAfter)} />
 
       {state.error   && <p className="text-red-400 text-xs bg-red-500/10 px-3 py-2 rounded-lg">{state.error}</p>}
       {state.success && <p className="text-emerald-400 text-xs bg-emerald-500/10 px-3 py-2 rounded-lg">Dados salvos!</p>}
@@ -405,6 +427,61 @@ export function LandingGenerator({ project }: { project: Project }) {
           <ImageUpload label="🔗 Imagem OG (WhatsApp/Social)" fieldName="ogImageUrl" currentUrl={ogImage} slug={slug} onUploaded={handleImageUploaded} />
         </div>
         <p className="text-[10px] text-gray-700 mt-2">Imagens serão hospedadas no Vercel Blob e referenciadas na landing page automaticamente.</p>
+      </Section>
+
+      {/* ── Seção 5: Antes e Depois ───────────────────────────────────────── */}
+      <Section title="Fotos Antes e Depois" icon="✨">
+        <p className="text-xs text-gray-600 -mt-1">Adicione pares de fotos mostrando o resultado dos procedimentos. Ex: Implante, Clareamento, Facetas...</p>
+        <div className="space-y-4">
+          {beforeAfter.map((item, i) => (
+            <div key={i} className="bg-[#111] border border-[#2a2a2a] rounded-xl p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold text-gray-500">Par {i + 1}</p>
+                {beforeAfter.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => setBeforeAfter(prev => prev.filter((_, j) => j !== i))}
+                    className="text-[10px] text-red-500 hover:text-red-400 transition-colors"
+                  >
+                    Remover
+                  </button>
+                )}
+              </div>
+              <div>
+                <label className="text-[10px] text-gray-600 block mb-1">Nome do procedimento</label>
+                <input
+                  value={item.label}
+                  onChange={e => setBeforeAfter(prev => prev.map((x, j) => j === i ? { ...x, label: e.target.value } : x))}
+                  placeholder="Ex: Implante, Clareamento, Facetas..."
+                  className={INP}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <ImageUpload
+                  label="ANTES"
+                  fieldName={`before_${i}`}
+                  currentUrl={item.beforeUrl}
+                  slug={slug}
+                  onUploaded={(_, url) => handleBAImageUploaded(i, "beforeUrl", url)}
+                />
+                <ImageUpload
+                  label="DEPOIS"
+                  fieldName={`after_${i}`}
+                  currentUrl={item.afterUrl}
+                  slug={slug}
+                  onUploaded={(_, url) => handleBAImageUploaded(i, "afterUrl", url)}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+        <button
+          type="button"
+          onClick={() => setBeforeAfter(prev => [...prev, { label: "", beforeUrl: "", afterUrl: "" }])}
+          className="text-xs text-violet-400 hover:text-violet-300 transition-colors mt-1"
+        >
+          + Adicionar par antes/depois
+        </button>
       </Section>
 
       {/* ── Actions ───────────────────────────────────────────────────────── */}

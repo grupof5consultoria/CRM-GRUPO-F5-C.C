@@ -81,6 +81,7 @@ export async function updateLandingPageGenerator(projectId: string, data: {
   photoClinic4Url?: string | null;
   ogImageUrl?: string | null;
   testimonials?: unknown;
+  beforeAfterPhotos?: unknown;
 }) {
   return prisma.landingPageProject.update({
     where: { id: projectId },

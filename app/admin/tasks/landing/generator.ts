@@ -8,6 +8,12 @@ interface Testimonial {
   rating: number;
 }
 
+interface BeforeAfterItem {
+  label: string;
+  beforeUrl: string;
+  afterUrl: string;
+}
+
 interface GeneratorData {
   slug: string;
   doctorName: string;
@@ -27,6 +33,7 @@ interface GeneratorData {
   photoClinic3Url?: string;
   photoClinic4Url?: string;
   testimonials: Testimonial[];
+  beforeAfterPhotos?: BeforeAfterItem[];
 }
 
 function hexToRgb(hex: string) {
@@ -66,6 +73,7 @@ export function generateLandingPageCode(data: GeneratorData): string {
     photoClinic3Url,
     photoClinic4Url,
     testimonials,
+    beforeAfterPhotos,
   } = data;
 
   const primaryLight = lighten(colorPrimary, 40);
@@ -85,6 +93,11 @@ export function generateLandingPageCode(data: GeneratorData): string {
 
   const specialtiesCode = specialties
     .map(s => `  { title: "${s}", desc: "Tratamento especializado e moderno.", emoji: "🦷" }`)
+    .join(",\n");
+
+  const baItems = (beforeAfterPhotos ?? []).filter(b => b.beforeUrl || b.afterUrl);
+  const baCode  = baItems
+    .map(b => `  { label: "${b.label || "Resultado"}", beforeUrl: "${b.beforeUrl}", afterUrl: "${b.afterUrl}" }`)
     .join(",\n");
 
   return `'use client';
@@ -116,6 +129,10 @@ ${specialtiesCode}
 
 const TESTIMONIALS = [
 ${testimonialsCode}
+];
+
+const BEFORE_AFTER = [
+${baCode}
 ];
 
 // ─── Counter ──────────────────────────────────────────────────────────────────
@@ -363,6 +380,47 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      ${baCode.length > 0 ? `
+      {/* ── Antes e Depois ── */}
+      <section id="resultados" style={{ padding: "6rem 1.5rem", background: "#fff" }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+          <p style={{ textAlign: "center", fontSize: 13, fontWeight: 700, letterSpacing: "0.12em", color: PRIMARY, textTransform: "uppercase", marginBottom: 12 }}>Resultados Reais</p>
+          <h2 style={{ textAlign: "center", fontSize: "clamp(1.8rem, 3vw, 2.5rem)", fontWeight: 800, color: "#1C1917", marginBottom: 16 }}>Transformações que falam por si</h2>
+          <p style={{ textAlign: "center", color: "#78716C", fontSize: 16, maxWidth: 520, margin: "0 auto 48px" }}>Cada sorriso transformado é uma história de confiança e dedicação.</p>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 28 }}>
+            {BEFORE_AFTER.map((item, i) => (
+              <div key={i} style={{ borderRadius: 20, overflow: "hidden", boxShadow: "0 8px 32px rgba(0,0,0,0.10)", background: "#fafafa" }}>
+                <div style={{ position: "relative", height: 200 }}>
+                  <div style={{ position: "absolute", inset: 0 }}>
+                    {item.beforeUrl ? (
+                      <Image src={item.beforeUrl} alt={"Antes — " + item.label} fill style={{ objectFit: "cover" }} />
+                    ) : (
+                      <div style={{ width: "100%", height: "100%", background: "#E5E7EB", display: "flex", alignItems: "center", justifyContent: "center", color: "#9CA3AF", fontSize: 13 }}>Foto Antes</div>
+                    )}
+                  </div>
+                  <span style={{ position: "absolute", top: 10, left: 10, background: "rgba(0,0,0,0.7)", color: "#fff", fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", padding: "4px 10px", borderRadius: 6 }}>ANTES</span>
+                </div>
+                <div style={{ position: "relative", height: 200 }}>
+                  <div style={{ position: "absolute", inset: 0 }}>
+                    {item.afterUrl ? (
+                      <Image src={item.afterUrl} alt={"Depois — " + item.label} fill style={{ objectFit: "cover" }} />
+                    ) : (
+                      <div style={{ width: "100%", height: "100%", background: "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", color: "#9CA3AF", fontSize: 13 }}>Foto Depois</div>
+                    )}
+                  </div>
+                  <span style={{ position: "absolute", top: 10, left: 10, background: PRIMARY, color: "#fff", fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", padding: "4px 10px", borderRadius: 6 }}>DEPOIS</span>
+                </div>
+                {item.label && (
+                  <div style={{ padding: "14px 16px", textAlign: "center" }}>
+                    <p style={{ fontWeight: 700, fontSize: 14, color: "#1C1917", margin: 0 }}>{item.label}</p>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>` : ``}
 
       ${testimonialsCode.length > 0 ? `
       {/* ── Avaliações ── */}
