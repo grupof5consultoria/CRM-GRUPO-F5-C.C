@@ -411,6 +411,7 @@ model Client {
   landingPageProject   LandingPageProject?
   patientLeads         PatientLead[]
   commercialProposals  CommercialProposal[]
+  trackingCampaigns    TrackingCampaign[]
 
   @@map("clients")
 }
@@ -883,8 +884,13 @@ model PatientLead {
   name           String
   phone          String?
   email          String?
+  photoUrl       String?           // foto de perfil do WhatsApp
+  city           String?           // cidade capturada via IP ou informada
+  state          String?           // estado capturado via IP
+  device         String?           // mobile | desktop | tablet
   status         PatientLeadStatus @default(novo_lead)
   origin         AttendanceOrigin  @default(other)
+  campaignType   String?           // frio | remarketing
   treatmentValue Decimal?          @db.Decimal(10, 2)
   lostReason     String?
   scheduledAt    DateTime?
@@ -892,10 +898,46 @@ model PatientLead {
   source         String?           // campanha, anúncio, UTM, etc.
   assigneeId     String?
   assignee       User?             @relation("PatientLeadAssignee", fields: [assigneeId], references: [id])
+  trackingClickId String?          @unique
+  trackingClick   TrackingClick?   @relation(fields: [trackingClickId], references: [id])
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
 
   @@map("patient_leads")
+}
+
+// ─── Rastreamento de Links ────────────────────────────────────────────────────
+
+model TrackingCampaign {
+  id           String   @id @default(cuid())
+  clientId     String
+  client       Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  name         String   // "Implante Frio Janeiro"
+  type         String   // "frio" | "remarketing"
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  clicks TrackingClick[]
+
+  @@map("tracking_campaigns")
+}
+
+model TrackingClick {
+  id         String           @id @default(cuid())
+  campaignId String
+  campaign   TrackingCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  source     String           // google-ads | meta-ads | google-meu-negocio | instagram-bio
+  city       String?
+  state      String?
+  country    String?
+  device     String?          // mobile | desktop | tablet
+  ip         String?
+  ref        String           @unique @default(cuid()) // usado na mensagem do WhatsApp [TRK:ref]
+  clickedAt  DateTime         @default(now())
+
+  patientLead PatientLead?
+
+  @@map("tracking_clicks")
 }
 
 // ─── Estratégias ──────────────────────────────────────────────────────────────

@@ -13,6 +13,8 @@ import { DeleteContactButton } from "./DeleteContactButton";
 import { ClientSidebar } from "./ClientSidebar";
 import { OnboardingPanel } from "./OnboardingPanel";
 import { ChurnClientButton } from "./ChurnClientButton";
+import { TrackingPanel } from "./TrackingPanel";
+import { prisma } from "@/lib/prisma";
 import { headers } from "next/headers";
 // searchParams no longer used (meta connection moved to /admin/connections)
 
@@ -27,7 +29,15 @@ export default async function ClientDetailPage({ params }: PageProps) {
   const protocol = host.includes("localhost") ? "http" : "https";
   const portalUrl = `${protocol}://${host}/portal/login`;
 
-  const [client, users] = await Promise.all([getClientById(id), getInternalUsersForSelect()]);
+  const [client, users, trackingCampaigns] = await Promise.all([
+    getClientById(id),
+    getInternalUsersForSelect(),
+    prisma.trackingCampaign.findMany({
+      where: { clientId: id, isActive: true },
+      orderBy: { createdAt: "desc" },
+      select: { id: true, name: true, type: true },
+    }),
+  ]);
   if (!client) notFound();
 
   return (
@@ -190,6 +200,11 @@ export default async function ClientDetailPage({ params }: PageProps) {
               <OnboardingPanel clientId={client.id} clientName={client.name} />
             </div>
           </div>
+        </div>
+
+        {/* Tracking Panel */}
+        <div className="mt-6">
+          <TrackingPanel clientId={client.id} campaigns={trackingCampaigns} />
         </div>
 
 
