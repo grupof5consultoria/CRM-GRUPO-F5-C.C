@@ -222,7 +222,7 @@ const DEFAULT_NAV_ITEMS: NavItem[] = [
     ),
   },
   {
-    label: "Campanhas",
+    label: "Rastreamento",
     href: "/admin/campaigns",
     icon: (
       <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
