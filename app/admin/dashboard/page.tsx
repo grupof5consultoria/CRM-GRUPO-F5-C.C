@@ -94,13 +94,13 @@ async function getDashboardData() {
     // Métricas Meta do mês (via ClientMetricEntry)
     prisma.clientMetricEntry.aggregate({
       where: { platform: "meta", date: { startsWith: period } },
-      _sum: { spend: true, impressions: true, clicks: true, leadsFromAds: true, revenue: true },
+      _sum: { spend: true, impressions: true, clicks: true, leadsFromAds: true, revenue: true, conversations: true },
     }),
 
     // Métricas Google do mês
     prisma.clientMetricEntry.aggregate({
       where: { platform: "google", date: { startsWith: period } },
-      _sum: { spend: true, impressions: true, clicks: true, leadsFromAds: true, revenue: true },
+      _sum: { spend: true, impressions: true, clicks: true, leadsFromAds: true, revenue: true, conversations: true },
     }),
 
     // Cobranças pagas no mês
@@ -159,6 +159,7 @@ async function getDashboardData() {
       impressions: Number(adMetricsMeta._sum.impressions ?? 0),
       clicks: Number(adMetricsMeta._sum.clicks ?? 0),
       leads: Number(adMetricsMeta._sum.leadsFromAds ?? 0),
+      conversations: Number(adMetricsMeta._sum.conversations ?? 0),
       revenue: Number(adMetricsMeta._sum.revenue ?? 0),
     },
     adGoogle: {
@@ -166,6 +167,7 @@ async function getDashboardData() {
       impressions: Number(adMetricsGoogle._sum.impressions ?? 0),
       clicks: Number(adMetricsGoogle._sum.clicks ?? 0),
       leads: Number(adMetricsGoogle._sum.leadsFromAds ?? 0),
+      conversations: Number(adMetricsGoogle._sum.conversations ?? 0),
       revenue: Number(adMetricsGoogle._sum.revenue ?? 0),
     },
     // Faturamento
@@ -295,9 +297,10 @@ export default async function DashboardPage() {
   const monthName = now.toLocaleString("pt-BR", { month: "long" });
   const monthLabel = `${monthName.charAt(0).toUpperCase() + monthName.slice(1)} ${now.getFullYear()}`;
 
-  const totalAdSpend  = data.adMeta.spend + data.adGoogle.spend;
-  const totalAdLeads  = data.adMeta.leads + data.adGoogle.leads;
-  const totalAdRevenue = data.adMeta.revenue + data.adGoogle.revenue;
+  const totalAdSpend         = data.adMeta.spend + data.adGoogle.spend;
+  const totalAdLeads         = data.adMeta.leads + data.adGoogle.leads;
+  const totalAdConversations = data.adMeta.conversations + data.adGoogle.conversations;
+  const totalAdRevenue       = data.adMeta.revenue + data.adGoogle.revenue;
 
   return (
     <>
@@ -413,11 +416,11 @@ export default async function DashboardPage() {
                     </div>
                   </div>
                   <span className="text-[10px] font-medium px-2.5 py-1 rounded-full bg-pink-500/10 text-pink-400 border border-pink-500/20">
-                    {totalAdLeads > 0 ? `${fmtInt(totalAdLeads)} leads` : "ao vivo"}
+                    {totalAdConversations > 0 ? `${fmtInt(totalAdConversations)} conversas` : totalAdLeads > 0 ? `${fmtInt(totalAdLeads)} leads` : "ao vivo"}
                   </span>
                 </div>
 
-                {totalAdSpend === 0 && totalAdLeads === 0 ? (
+                {totalAdSpend === 0 && totalAdLeads === 0 && totalAdConversations === 0 ? (
                   <div className="px-6 pb-8 text-center py-8 text-gray-600 text-sm">Nenhuma métrica registrada este mês</div>
                 ) : (
                   <div className="px-6 pb-6 space-y-5">
@@ -426,8 +429,8 @@ export default async function DashboardPage() {
                     <div className="grid grid-cols-3 gap-3">
                       {[
                         { label: "Investido", value: `R$ ${fmt(totalAdSpend)}`, sub: "total geral", color: "text-white", glow: "bg-white/5 border-white/10" },
-                        { label: "Leads", value: fmtInt(totalAdLeads), sub: "gerados", color: "text-emerald-400", glow: "bg-emerald-500/5 border-emerald-500/15" },
-                        { label: "CPL Médio", value: cpl(totalAdSpend, totalAdLeads), sub: "custo/lead", color: "text-amber-400", glow: "bg-amber-500/5 border-amber-500/15" },
+                        { label: "Conversas", value: fmtInt(totalAdConversations), sub: "iniciadas", color: "text-emerald-400", glow: "bg-emerald-500/5 border-emerald-500/15" },
+                        { label: "Custo/Conversa", value: totalAdConversations > 0 ? `R$ ${fmt(totalAdSpend / totalAdConversations)}` : "—", sub: "médio", color: "text-amber-400", glow: "bg-amber-500/5 border-amber-500/15" },
                       ].map(m => (
                         <div key={m.label} className={`${m.glow} border rounded-xl p-3 text-center`}>
                           <p className="text-[9px] text-gray-600 uppercase tracking-widest font-medium mb-1">{m.label}</p>
@@ -443,11 +446,17 @@ export default async function DashboardPage() {
                         {
                           platform: "Meta Ads",
                           d: data.adMeta,
-                          accent: "#1877F2",
                           textColor: "text-blue-400",
                           bgColor: "bg-blue-500/5",
                           borderColor: "border-blue-500/15",
                           barColor: "bg-blue-500",
+                          badge: data.adMeta.conversations > 0 ? `${fmtInt(data.adMeta.conversations)} conversas` : "sem dados",
+                          hasBadge: data.adMeta.conversations > 0,
+                          metrics: [
+                            { label: "Investido", value: `R$ ${fmt(data.adMeta.spend)}`, color: "text-white" },
+                            { label: "Conversas", value: fmtInt(data.adMeta.conversations), color: "text-blue-400" },
+                            { label: "Custo/Conv.", value: data.adMeta.conversations > 0 ? `R$ ${fmt(data.adMeta.spend / data.adMeta.conversations)}` : "—", color: "text-amber-400" },
+                          ],
                           logo: (
                             <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
                               <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
@@ -457,11 +466,17 @@ export default async function DashboardPage() {
                         {
                           platform: "Google Ads",
                           d: data.adGoogle,
-                          accent: "#EA4335",
                           textColor: "text-red-400",
                           bgColor: "bg-red-500/5",
                           borderColor: "border-red-500/15",
                           barColor: "bg-red-500",
+                          badge: data.adGoogle.leads > 0 ? `${fmtInt(data.adGoogle.leads)} conversões` : "sem dados",
+                          hasBadge: data.adGoogle.leads > 0,
+                          metrics: [
+                            { label: "Investido", value: `R$ ${fmt(data.adGoogle.spend)}`, color: "text-white" },
+                            { label: "Conversões", value: fmtInt(data.adGoogle.leads), color: "text-red-400" },
+                            { label: "Custo/Conv.", value: data.adGoogle.leads > 0 ? `R$ ${fmt(data.adGoogle.spend / data.adGoogle.leads)}` : "—", color: "text-amber-400" },
+                          ],
                           logo: (
                             <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
                               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -471,7 +486,7 @@ export default async function DashboardPage() {
                             </svg>
                           ),
                         },
-                      ].map(({ platform, d, textColor, bgColor, borderColor, barColor, logo }) => {
+                      ].map(({ platform, d, textColor, bgColor, borderColor, barColor, badge, hasBadge, metrics, logo }) => {
                         const pct = totalAdSpend > 0 ? Math.min((d.spend / totalAdSpend) * 100, 100) : 0;
                         return (
                           <div key={platform} className={`${bgColor} ${borderColor} border rounded-xl p-4 space-y-3`}>
@@ -483,25 +498,19 @@ export default async function DashboardPage() {
                                 </div>
                                 <span className="text-xs font-semibold text-gray-300">{platform}</span>
                               </div>
-                              <span className={`text-xs font-bold ${d.leads > 0 ? textColor : "text-gray-700"}`}>
-                                {d.leads > 0 ? `${d.leads} leads` : "sem dados"}
+                              <span className={`text-xs font-bold ${hasBadge ? textColor : "text-gray-700"}`}>
+                                {badge}
                               </span>
                             </div>
 
                             {/* Métricas */}
                             <div className="grid grid-cols-3 gap-2 text-center">
-                              <div>
-                                <p className="text-[9px] text-gray-600 uppercase tracking-wider">Investido</p>
-                                <p className="text-xs text-white font-semibold mt-0.5">R$ {fmt(d.spend)}</p>
-                              </div>
-                              <div>
-                                <p className="text-[9px] text-gray-600 uppercase tracking-wider">Impressões</p>
-                                <p className="text-xs text-gray-300 font-semibold mt-0.5">{fmtInt(d.impressions)}</p>
-                              </div>
-                              <div>
-                                <p className="text-[9px] text-gray-600 uppercase tracking-wider">CPL</p>
-                                <p className="text-xs text-amber-400 font-semibold mt-0.5">{cpl(d.spend, d.leads)}</p>
-                              </div>
+                              {metrics.map(m => (
+                                <div key={m.label}>
+                                  <p className="text-[9px] text-gray-600 uppercase tracking-wider">{m.label}</p>
+                                  <p className={`text-xs font-semibold mt-0.5 ${m.color}`}>{m.value}</p>
+                                </div>
+                              ))}
                             </div>
 
                             {/* Share bar */}
