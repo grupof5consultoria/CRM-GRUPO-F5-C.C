@@ -46,7 +46,7 @@ export async function GET(
       include: { whatsappAccounts: { where: { status: "active" }, take: 1 } },
     }),
     campaignId
-      ? prisma.trackingCampaign.findUnique({ where: { id: campaignId }, select: { message: true } })
+      ? prisma.trackingCampaign.findUnique({ where: { id: campaignId }, select: { message: true, landingPageUrl: true } })
       : null,
   ]);
 
@@ -94,13 +94,20 @@ export async function GET(
     // Non-blocking — proceed even if DB fails
   }
 
+  // Se a campanha tem landing page configurada, redireciona para ela com ?src=
+  // O clique já foi rastreado acima (cidade, dispositivo, etc.)
+  if (campaign?.landingPageUrl) {
+    const lpBase = campaign.landingPageUrl.replace(/\/$/, "");
+    return NextResponse.redirect(`${lpBase}?src=${encodeURIComponent(source)}`);
+  }
+
   // Build pre-filled WhatsApp message with invisible tracking code
   const baseMessage = campaign?.message?.trim() || "Olá! Gostaria de saber mais sobre os serviços.";
   const invisible   = ref ? encodeRefZW(ref) : "";
   const fullMessage = baseMessage + invisible;
 
   const message = encodeURIComponent(fullMessage);
-  const waUrl       = `https://wa.me/${whatsapp}?text=${message}`;
+  const waUrl   = `https://wa.me/${whatsapp}?text=${message}`;
 
   return NextResponse.redirect(waUrl);
 }

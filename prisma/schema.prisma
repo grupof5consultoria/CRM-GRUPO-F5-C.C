@@ -909,14 +909,15 @@ model PatientLead {
 // ─── Rastreamento de Links ────────────────────────────────────────────────────
 
 model TrackingCampaign {
-  id           String   @id @default(cuid())
-  clientId     String
-  client       Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  name         String   // "Implante Frio Janeiro"
-  type         String   // "frio" | "remarketing" | "organico"
-  message      String   @default("Olá! Gostaria de saber mais sobre os serviços.")
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
+  id             String   @id @default(cuid())
+  clientId       String
+  client         Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  name           String   // "Implante Frio Janeiro"
+  type           String   // "frio" | "remarketing" | "organico"
+  message        String   @default("Olá! Gostaria de saber mais sobre os serviços.")
+  landingPageUrl String?  // se preenchido, o /r/ redireciona para a LP com ?src= em vez do WhatsApp
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
 
   clicks TrackingClick[]
 

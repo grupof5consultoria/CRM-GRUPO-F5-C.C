@@ -6,7 +6,7 @@ export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
 
-  const { clientId, name, type, message } = await req.json();
+  const { clientId, name, type, message, landingPageUrl } = await req.json();
   if (!clientId || !name || !type) {
     return NextResponse.json({ error: "clientId, name e type são obrigatórios" }, { status: 400 });
   }
@@ -16,7 +16,8 @@ export async function POST(req: NextRequest) {
       clientId,
       name,
       type,
-      message: message?.trim() || "Olá! Gostaria de saber mais sobre os serviços.",
+      message:        message?.trim() || "Olá! Gostaria de saber mais sobre os serviços.",
+      landingPageUrl: landingPageUrl?.trim() || null,
     },
   });
 

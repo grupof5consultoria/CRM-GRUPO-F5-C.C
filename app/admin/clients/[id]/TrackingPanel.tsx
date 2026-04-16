@@ -73,12 +73,13 @@ const SOURCES = [
 const BASE_URL = "https://crm-grupo-f5-c-c.vercel.app";
 
 interface Campaign {
-  id:        string;
-  name:      string;
-  type:      string;
-  message?:  string;
-  createdAt?: string;
-  _count?:   { clicks: number };
+  id:             string;
+  name:           string;
+  type:           string;
+  message?:       string;
+  landingPageUrl?: string | null;
+  createdAt?:     string;
+  _count?:        { clicks: number };
 }
 
 interface ClientOption {
@@ -124,11 +125,12 @@ export function TrackingPanel({ clients }: Props) {
   const [selectedCampaignId, setSelectedCampaignId] = useState<string>(
     () => clients[0]?.trackingCampaigns[0]?.id ?? ""
   );
-  const [name, setName]         = useState("");
-  const [type, setType]         = useState("frio");
-  const [message, setMessage]   = useState("");
-  const [creating, setCreating] = useState(false);
-  const [showForm, setShowForm] = useState(false);
+  const [name, setName]               = useState("");
+  const [type, setType]               = useState("frio");
+  const [message, setMessage]         = useState("");
+  const [landingPageUrl, setLpUrl]    = useState("");
+  const [creating, setCreating]       = useState(false);
+  const [showForm, setShowForm]       = useState(false);
 
   const selectedType = CAMPAIGN_TYPES.find(t => t.value === type);
 
@@ -147,7 +149,7 @@ export function TrackingPanel({ clients }: Props) {
       const res  = await fetch("/api/admin/tracking/campaigns", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ clientId: selectedClientId, name: name.trim(), type, message }),
+        body: JSON.stringify({ clientId: selectedClientId, name: name.trim(), type, message, landingPageUrl }),
       });
       const data = await res.json();
       if (data.id) {
@@ -156,6 +158,7 @@ export function TrackingPanel({ clients }: Props) {
         setSelectedCampaignId(data.id);
         setName("");
         setMessage("");
+        setLpUrl("");
         setShowForm(false);
       }
     } finally {
@@ -230,25 +233,47 @@ export function TrackingPanel({ clients }: Props) {
             className="w-full bg-[#0d0d0d] border border-[#2e2e2e] rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-violet-500 transition-colors"
           />
 
-          <div>
-            <label className="block text-xs text-gray-500 mb-1.5">
-              Mensagem pré-preenchida no WhatsApp
-            </label>
-            <textarea
-              value={message}
-              onChange={e => setMessage(e.target.value)}
-              rows={3}
-              placeholder={
-                type === "organico"
-                  ? "Ex: Olá! Vi o perfil da doutora no Instagram e gostaria de agendar uma avaliação."
-                  : "Ex: Olá! Vi o anúncio e gostaria de saber mais sobre implantes dentários."
-              }
-              className="w-full bg-[#0d0d0d] border border-[#2e2e2e] rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-violet-500 transition-colors resize-none"
-            />
-            <p className="text-[11px] text-gray-700 mt-1">
-              O código de rastreamento <span className="text-violet-400 font-mono">[TRK:...]</span> é adicionado automaticamente ao final.
-            </p>
-          </div>
+          {/* Landing Page URL — só para orgânico */}
+          {type === "organico" && (
+            <div>
+              <label className="block text-xs text-gray-500 mb-1.5">
+                URL da Landing Page <span className="text-gray-700">(opcional)</span>
+              </label>
+              <input
+                type="url"
+                value={landingPageUrl}
+                onChange={e => setLpUrl(e.target.value)}
+                placeholder="Ex: https://www.dracamilasantiago.com.br"
+                className="w-full bg-[#0d0d0d] border border-[#2e2e2e] rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-violet-500 transition-colors font-mono"
+              />
+              <p className="text-[11px] text-gray-700 mt-1">
+                Se preenchido, o link leva o usuário para a LP com <span className="text-violet-400 font-mono">?src=</span> — ideal para Instagram Bio e Google Meu Negócio.
+              </p>
+            </div>
+          )}
+
+          {/* Mensagem WhatsApp — só sem LP */}
+          {!(type === "organico" && landingPageUrl.trim()) && (
+            <div>
+              <label className="block text-xs text-gray-500 mb-1.5">
+                Mensagem pré-preenchida no WhatsApp
+              </label>
+              <textarea
+                value={message}
+                onChange={e => setMessage(e.target.value)}
+                rows={3}
+                placeholder={
+                  type === "organico"
+                    ? "Ex: Olá! Vi o perfil da doutora no Instagram e gostaria de agendar uma avaliação."
+                    : "Ex: Olá! Vi o anúncio e gostaria de saber mais sobre implantes dentários."
+                }
+                className="w-full bg-[#0d0d0d] border border-[#2e2e2e] rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-violet-500 transition-colors resize-none"
+              />
+              <p className="text-[11px] text-gray-700 mt-1">
+                O código de rastreamento <span className="text-violet-400 font-mono">[TRK:...]</span> é adicionado automaticamente ao final.
+              </p>
+            </div>
+          )}
 
           <button
             onClick={createCampaign}
@@ -345,7 +370,14 @@ export function TrackingPanel({ clients }: Props) {
                           {src.icon}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-white mb-0.5">{src.label}</p>
+                          <div className="flex items-center gap-2 mb-0.5">
+                            <p className="text-sm font-semibold text-white">{src.label}</p>
+                            {activeCampaign.landingPageUrl ? (
+                              <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-violet-500/10 text-violet-400 border border-violet-500/20">→ Landing Page</span>
+                            ) : (
+                              <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">→ WhatsApp</span>
+                            )}
+                          </div>
                           <p className="text-[11px] text-gray-600 font-mono truncate">{url}</p>
                         </div>
                         <CopyButton url={url} />
