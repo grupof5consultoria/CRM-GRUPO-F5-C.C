@@ -1,5 +1,6 @@
 import { Topbar } from "@/components/layout/Topbar";
-import { requireInternalAuth } from "@/lib/auth";
+import { getSession, isInternalRole } from "@/lib/auth";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { ReportView } from "./ReportView";
 
@@ -20,7 +21,8 @@ export default async function ReportsPage({
 }: {
   searchParams: Promise<{ clientId?: string; period?: string }>;
 }) {
-  await requireInternalAuth();
+  const session = await getSession();
+  if (!session || !isInternalRole(session.role)) redirect("/login");
 
   const { clientId, period: rawPeriod } = await searchParams;
   const periods = generatePeriods(12);
