@@ -294,7 +294,7 @@ function ClientPlatformRow({
   client,
   platform,
   connected,
-  detail,
+  detail: initialDetail,
 }: {
   client: Client;
   platform: FormType;
@@ -302,7 +302,28 @@ function ClientPlatformRow({
   detail?: string;
 }) {
   const [open, setOpen] = useState(false);
+  const [detail, setDetail] = useState(initialDetail);
+  const [refreshing, setRefreshing] = useState(false);
   const initials = client.name.split(" ").slice(0, 2).map(w => w[0]).join("").toUpperCase();
+
+  // Detect if the stored phone looks wrong (not a real number)
+  const phoneOk = !detail || /^\+\d{7,}/.test(detail);
+
+  async function refreshPhone() {
+    if (refreshing) return;
+    const active = client.whatsappAccounts.find(a => a.status === "active");
+    if (!active) return;
+    setRefreshing(true);
+    try {
+      const res  = await fetch(
+        `/api/admin/whatsapp/evolution/status?instanceName=${encodeURIComponent(active.phoneNumberId)}&clientId=${client.id}`
+      );
+      const data = await res.json();
+      if (data.phone) setDetail(data.phone);
+    } finally {
+      setRefreshing(false);
+    }
+  }
 
   const accentConnected = {
     meta: "text-[#1877F2] bg-[#1877F2]/10 border-[#1877F2]/25",
@@ -330,7 +351,28 @@ function ClientPlatformRow({
         {/* Name + detail */}
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-white truncate">{client.name}</p>
-          {detail && <p className="text-xs text-gray-600 font-mono truncate">{detail}</p>}
+          {detail && (
+            <div className="flex items-center gap-1.5">
+              <p className={`text-xs font-mono truncate ${phoneOk ? "text-gray-600" : "text-yellow-600"}`}>{detail}</p>
+              {platform === "whatsapp" && connected && !phoneOk && (
+                <button
+                  onClick={e => { e.stopPropagation(); refreshPhone(); }}
+                  title="Buscar número conectado"
+                  className="text-[10px] text-yellow-500 hover:text-yellow-300 flex-shrink-0"
+                >
+                  {refreshing ? "..." : "↻"}
+                </button>
+              )}
+            </div>
+          )}
+          {platform === "whatsapp" && connected && !detail && (
+            <button
+              onClick={e => { e.stopPropagation(); refreshPhone(); }}
+              className="text-[10px] text-gray-600 hover:text-gray-400 font-mono"
+            >
+              {refreshing ? "buscando..." : "↻ buscar número"}
+            </button>
+          )}
         </div>
 
         {/* Status badge */}
@@ -447,9 +489,13 @@ function PlatformCard({
               } else {
                 const active = client.whatsappAccounts.find(a => a.status === "active");
                 connected = !!active;
-                detail = active
-                  ? `${active.phoneNumber}${active.displayName ? ` · ${active.displayName}` : ""}`
-                  : undefined;
+                if (active) {
+                  // Show phone number only — avoid repeating displayName when it equals phoneNumber
+                  const phone = active.phoneNumber && active.phoneNumber !== active.phoneNumberId
+                    ? active.phoneNumber
+                    : null;
+                  detail = phone ?? active.phoneNumberId;
+                }
               }
 
               return (

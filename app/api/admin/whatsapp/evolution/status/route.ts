@@ -28,10 +28,39 @@ export async function GET(req: NextRequest) {
     const state = data?.instance?.state ?? data?.state ?? "unknown";
 
     if (state === "open") {
-      // Parse phone — Evolution returns "5511999999999@s.whatsapp.net" or just the number
-      const rawPhone = data?.instance?.owner ?? data?.instance?.profileName ?? "";
-      const phone    = rawPhone.replace(/@.*$/, "").replace(/^\+/, "");
-      const display  = `+${phone}`;
+      // Parse phone — Evolution API v2 may use ownerJid, owner, or profileName
+      let rawPhone =
+        data?.instance?.ownerJid ??
+        data?.instance?.owner ??
+        data?.ownerJid ??
+        data?.instance?.profileName ??
+        "";
+
+      // If phone is still empty, try /instance/fetchInstances for richer data
+      if (!rawPhone) {
+        try {
+          const fetchRes  = await fetch(`${EVO_URL}/instance/fetchInstances`, {
+            headers: { apikey: EVO_KEY },
+          });
+          const fetchData = await fetchRes.json();
+          const instances = Array.isArray(fetchData) ? fetchData : (fetchData?.instances ?? [fetchData]);
+          const match     = instances.find(
+            (i: Record<string, unknown>) =>
+              (i.instance as Record<string, unknown>)?.instanceName === instanceName ||
+              (i.instanceName as string) === instanceName
+          );
+          rawPhone =
+            (match?.instance as Record<string, unknown>)?.ownerJid as string ??
+            (match?.instance as Record<string, unknown>)?.owner as string ??
+            (match?.ownerJid as string) ??
+            (match?.owner as string) ??
+            (match?.profileName as string) ??
+            "";
+        } catch (_) { /* ignore */ }
+      }
+
+      const phone   = rawPhone.replace(/@.*$/, "").replace(/^\+/, "");
+      const display = phone ? `+${phone}` : "";
 
       // Save to database if clientId provided
       if (clientId) {
@@ -45,9 +74,9 @@ export async function GET(req: NextRequest) {
           await prisma.whatsAppAccount.create({
             data: {
               clientId,
-              phoneNumber:   display || `+${instanceName}`,
+              phoneNumber:   display || instanceName,
               phoneNumberId: instanceName,
-              displayName:   instanceName,
+              displayName:   display || instanceName,
               accessToken:   instanceName, // Evolution uses instanceName, not a token
               status:        "active",
               verifiedAt:    new Date(),
@@ -58,7 +87,7 @@ export async function GET(req: NextRequest) {
         }
       }
 
-      return NextResponse.json({ status: "open", phone: display });
+      return NextResponse.json({ status: "open", phone: display || instanceName });
     }
 
     // QR may have rotated — return new one if present
