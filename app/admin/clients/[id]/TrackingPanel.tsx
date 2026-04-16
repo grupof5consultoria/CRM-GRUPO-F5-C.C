@@ -362,7 +362,13 @@ export function TrackingPanel({ clients }: Props) {
                 {/* Platform cards */}
                 <div className="divide-y divide-[#1a1a1a]">
                   {SOURCES.filter(s => activeSources.includes(s.key)).map(src => {
-                    const url = `${BASE_URL}/r/${selectedClientId}?camp=${activeCampaign.id}&src=${src.key}`;
+                    // Se tem LP configurada, o link que o usuário vai usar é o da LP com ?src=
+                    // O rastreamento via /r/ ainda existe, mas o link principal é o da LP
+                    const lpUrl      = activeCampaign.landingPageUrl?.replace(/\/$/, "");
+                    const url        = lpUrl
+                      ? `${lpUrl}?src=${src.key}`
+                      : `${BASE_URL}/r/${selectedClientId}?camp=${activeCampaign.id}&src=${src.key}`;
+                    const trackingUrl = `${BASE_URL}/r/${selectedClientId}?camp=${activeCampaign.id}&src=${src.key}`;
                     return (
                       <div key={src.key} className="px-6 py-4 flex items-center gap-4 group hover:bg-white/[0.02] transition-colors">
                         <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-105"
@@ -372,13 +378,18 @@ export function TrackingPanel({ clients }: Props) {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-0.5">
                             <p className="text-sm font-semibold text-white">{src.label}</p>
-                            {activeCampaign.landingPageUrl ? (
+                            {lpUrl ? (
                               <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-violet-500/10 text-violet-400 border border-violet-500/20">→ Landing Page</span>
                             ) : (
                               <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">→ WhatsApp</span>
                             )}
                           </div>
                           <p className="text-[11px] text-gray-600 font-mono truncate">{url}</p>
+                          {lpUrl && (
+                            <p className="text-[10px] text-gray-700 font-mono truncate mt-0.5">
+                              rastreio: <span className="text-gray-600">{trackingUrl}</span>
+                            </p>
+                          )}
                         </div>
                         <CopyButton url={url} />
                       </div>

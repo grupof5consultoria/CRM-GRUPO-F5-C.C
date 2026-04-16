@@ -249,10 +249,58 @@ function WhatsAppForm({ client, onClose }: { client: Client; onClose: () => void
             </div>
           </div>
 
+          {/* Ações do QR — para o cliente escanear sem precisar de print */}
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={() => {
+                const src = qrBase64.startsWith("data:") ? qrBase64 : `data:image/png;base64,${qrBase64}`;
+                const a = document.createElement("a");
+                a.href = src;
+                a.download = "qrcode-whatsapp.png";
+                a.click();
+              }}
+              className="flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold text-white bg-[#25D366]/20 hover:bg-[#25D366]/30 border border-[#25D366]/30 transition-colors"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              Baixar QR
+            </button>
+            <button
+              onClick={() => {
+                const src = qrBase64.startsWith("data:") ? qrBase64 : `data:image/png;base64,${qrBase64}`;
+                const w = window.open("", "_blank");
+                if (w) {
+                  w.document.write(`
+                    <html><head><title>QR Code WhatsApp</title>
+                    <meta name="viewport" content="width=device-width,initial-scale=1">
+                    <style>body{margin:0;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:16px;font-family:sans-serif;}
+                    img{width:min(90vw,380px);height:auto;background:#fff;padding:16px;border-radius:16px;}
+                    p{color:#aaa;font-size:13px;text-align:center;padding:0 16px;}
+                    small{color:#555;font-size:11px;}</style></head>
+                    <body>
+                    <img src="${src}" alt="QR Code WhatsApp"/>
+                    <p>Abra o WhatsApp → Aparelhos conectados → Conectar aparelho<br>e escaneie este QR code</p>
+                    <small>O QR code expira em ~60s. Feche e peça um novo se precisar.</small>
+                    </body></html>
+                  `);
+                  w.document.close();
+                }
+              }}
+              className="flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold text-gray-300 bg-[#1a1a1a] hover:bg-[#222] border border-[#2a2a2a] transition-colors"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+              Abrir em nova aba
+            </button>
+          </div>
+          <p className="text-[10px] text-gray-600 text-center">Baixe a imagem ou abra em nova aba e envie para a doutora escanear</p>
+
           <ol className="space-y-1.5 text-xs text-gray-500">
-            <li className="flex items-start gap-2"><span className="text-[#25D366] font-bold flex-shrink-0">1.</span> Abra o WhatsApp no celular do cliente</li>
+            <li className="flex items-start gap-2"><span className="text-[#25D366] font-bold flex-shrink-0">1.</span> Abra o WhatsApp no celular da cliente</li>
             <li className="flex items-start gap-2"><span className="text-[#25D366] font-bold flex-shrink-0">2.</span> Vá em <strong className="text-gray-300">Configurações → Aparelhos conectados → Conectar aparelho</strong></li>
-            <li className="flex items-start gap-2"><span className="text-[#25D366] font-bold flex-shrink-0">3.</span> Aponte a câmera para o QR Code acima</li>
+            <li className="flex items-start gap-2"><span className="text-[#25D366] font-bold flex-shrink-0">3.</span> Aponte a câmera para o QR Code</li>
           </ol>
 
           <p className="text-[10px] text-gray-700 text-center">O QR Code expira em ~60 segundos e é atualizado automaticamente</p>
