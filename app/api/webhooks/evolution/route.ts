@@ -165,20 +165,39 @@ export async function POST(req: NextRequest) {
       }
 
       // ── Create new lead ────────────────────────────────────────────────────
-      await prisma.patientLead.create({
+      const origin = mapSource(clickData?.source ?? "");
+      const now    = new Date();
+      const period = now.toISOString().slice(0, 7); // "YYYY-MM"
+
+      const newLead = await prisma.patientLead.create({
         data: {
           clientId,
-          name:           senderName || `+${phone}`,
-          phone:          `+${phone}`,
-          photoUrl:       photoUrl ?? undefined,
-          city:           clickData?.city    ?? undefined,
-          state:          clickData?.state   ?? undefined,
-          device:         clickData?.device  ?? undefined,
-          source:         clickData?.campaign.name ?? instanceName,
-          campaignType:   clickData?.campaign.type ?? undefined,
-          origin:         mapSource(clickData?.source ?? ""),
+          name:            senderName || `+${phone}`,
+          phone:           `+${phone}`,
+          photoUrl:        photoUrl ?? undefined,
+          city:            clickData?.city    ?? undefined,
+          state:           clickData?.state   ?? undefined,
+          device:          clickData?.device  ?? undefined,
+          source:          clickData?.campaign.name ?? instanceName,
+          campaignType:    clickData?.campaign.type ?? undefined,
+          origin,
           trackingClickId: trackingClickId ?? undefined,
-          status:         "novo_lead",
+          status:          "novo_lead",
+        },
+      });
+
+      // Auto-create Attendance so the doctor only needs to update the status
+      await prisma.attendance.create({
+        data: {
+          clientId,
+          leadName:  newLead.name,
+          leadPhone: newLead.phone,
+          origin,
+          status:    "follow_up",
+          followUpCount: 0,
+          contactDate: now,
+          period,
+          notes: clickData?.campaign.name ? `Campanha: ${clickData.campaign.name}` : "Lead via WhatsApp",
         },
       });
 
